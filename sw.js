@@ -3,7 +3,7 @@
    تخزين مؤقت لتشغيل التطبيق بدون إنترنت
    ============================================ */
 
-const CACHE_NAME = 'bulkmode-v3';
+const CACHE_NAME = 'bulkmode-v4';
 const ASSETS = [
   './',
   './index.html',

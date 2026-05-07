@@ -35,6 +35,15 @@ function fmtDurationLong(sec){
   return `${h}س ${mm}د`;
 }
 
+function abBadgeHTML(exerciseId){
+  const ex = EXERCISE_BY_ID[exerciseId];
+  if (!ex) return '';
+  const m = (ex.dayId || '').match(/-(a|b)$/i);
+  if (!m) return '';
+  const v = m[1].toLowerCase();
+  return `<span class="ab-badge ab-${v}">${v.toUpperCase()}</span>`;
+}
+
 function vibrate(pattern){
   if (Store.getSettings().vibrationOn && navigator.vibrate) {
     try { navigator.vibrate(pattern); } catch(e){}
@@ -296,7 +305,7 @@ Router.handlers.day = ({id}) => {
       <div class="exercise-item">
         <div class="ex-num">${i+1}</div>
         <div class="ex-info">
-          <div class="ex-name">${ex.name}</div>
+          <div class="ex-name">${abBadgeHTML(ex.id)}${ex.name}</div>
           <div class="ex-note">${ex.note}</div>
           ${best ? `<div class="ex-rest">🏆 أفضل: <b style="color:var(--g2)">${best.weight} كجم × ${best.reps}</b></div>` : ''}
         </div>
@@ -455,7 +464,7 @@ function renderSession(){
         <div class="se-head">
           <div class="ex-num">${exIdx+1}</div>
           <div class="ex-info">
-            <div class="ex-name">${ex.name}</div>
+            <div class="ex-name">${abBadgeHTML(ex.exerciseId)}${ex.name}</div>
             ${programEx.note ? `<div class="ex-note">${programEx.note}</div>` : ''}
             <div class="se-target">الهدف: ${ex.targetSets} × ${ex.targetReps} • راحة ${ex.targetRest}ث</div>
           </div>
@@ -698,15 +707,19 @@ function renderPickerList(){
   // اجمع تمارين المكتبة + المخصّصة المضافة في هذه الجلسة
   const libraryItems = Object.values(EXERCISE_BY_ID).map(ex => {
     const day = DAY_BY_ID[ex.dayId];
-    return { ...ex, type: day ? day.type : 'push', tagText: day ? day.tag : '' };
+    // استخرج النسخة A أو B من معرّف اليوم (مثلاً push-a → a)
+    const m = (ex.dayId || '').match(/-(a|b)$/i);
+    const variant = m ? m[1].toLowerCase() : '';
+    return { ...ex, type: day ? day.type : 'push', tagText: day ? day.tag : '', variant };
   });
   const customItems = selected.filter(s => s._isCustom).map(s => ({
     id: s.exerciseId, name: s.name, sets: s.targetSets, reps: s.targetReps, rest: s.targetRest,
-    dayTitle: 'تمرين مخصّص', type: 'custom', tagText: 'حر', _isCustom: true
+    dayTitle: 'تمرين مخصّص', type: 'custom', tagText: 'حر', _isCustom: true, variant: ''
   }));
 
   let items = filter === 'custom' ? customItems
             : filter === 'all' ? [...libraryItems, ...customItems]
+            : (filter === 'a' || filter === 'b') ? libraryItems.filter(it => it.variant === filter)
             : libraryItems.filter(it => it.type === filter);
 
   if (ql) items = items.filter(it => it.name.toLowerCase().includes(ql));
@@ -719,11 +732,14 @@ function renderPickerList(){
   listEl.innerHTML = items.map(ex => {
     const isSelected = selected.some(s => s.exerciseId === ex.id);
     const isExisting = existingIds.includes(ex.id);
+    const abBadge = ex.variant
+      ? `<span class="ab-badge ab-${ex.variant}">${ex.variant.toUpperCase()}</span>`
+      : '';
     return `
       <button class="picker-item ${isSelected ? 'selected' : ''}" data-ex-id="${ex.id}" ${isExisting ? 'disabled' : ''}>
         <div class="picker-check">${isSelected ? '✓' : ''}</div>
         <div class="picker-item-body">
-          <div class="picker-item-name">${ex.name}${isExisting ? ' (موجود)' : ''}</div>
+          <div class="picker-item-name">${abBadge}<span class="picker-item-name-text">${ex.name}</span>${isExisting ? ' <span style="color:var(--grn);font-size:10px">(مضاف)</span>' : ''}</div>
           <div class="picker-item-meta">${ex.dayTitle} • ${ex.sets}×${ex.reps} • راحة ${ex.rest}ث</div>
         </div>
         <span class="picker-item-tag tag-${ex.type}">${ex.tagText}</span>
@@ -1114,7 +1130,7 @@ Router.handlers['session-detail'] = ({id}) => {
     }).join('');
     return `
       <div class="detail-ex">
-        <div class="detail-ex-name">${ex.name}</div>
+        <div class="detail-ex-name">${abBadgeHTML(ex.exerciseId)}${ex.name}</div>
         <div class="detail-sets">${setsHTML}</div>
       </div>
     `;
