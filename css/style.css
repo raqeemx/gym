@@ -658,12 +658,26 @@ body::after{
 
 /* ============== EXERCISE PICKER ============== */
 .picker-card{
-  max-height:88vh;display:flex;flex-direction:column;gap:0;
+  max-height:90vh;display:flex;flex-direction:column;gap:0;
+  padding-bottom:calc(14px + var(--safe-bottom));
 }
+.picker-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.picker-count{
+  background:linear-gradient(135deg,var(--g1),var(--g3));color:#0A0B0F;
+  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;
+  min-width:32px;height:32px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(212,168,83,.25);
+  transition:.25s;
+}
+.picker-count.zero{background:rgba(255,255,255,.05);color:var(--tx3);box-shadow:none}
 .picker-tabs{
   display:flex;background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.05);
-  border-radius:12px;padding:3px;margin-bottom:14px;
+  border-radius:12px;padding:3px;margin-bottom:12px;
 }
 .ptab{
   flex:1;background:none;border:none;cursor:pointer;
@@ -687,16 +701,33 @@ body::after{
   outline:none;border-color:rgba(212,168,83,.45);
   background:rgba(212,168,83,.04);
 }
+.picker-filters{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.picker-filters::-webkit-scrollbar{display:none}
+.pchip{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  color:var(--tx2);padding:7px 13px;border-radius:10px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:11.5px;
+  white-space:nowrap;transition:.2s;flex-shrink:0;
+}
+.pchip:hover{color:var(--g2);border-color:rgba(212,168,83,.25)}
+.pchip.active{
+  background:linear-gradient(135deg,rgba(212,168,83,.18),rgba(212,168,83,.06));
+  border-color:rgba(212,168,83,.4);color:var(--g2);
+}
 .picker-list{
-  overflow-y:auto;max-height:52vh;
+  overflow-y:auto;flex:1;
   display:flex;flex-direction:column;gap:6px;
   margin:4px -2px 0;padding:2px;
+  min-height:200px;max-height:48vh;
 }
 .picker-item{
   background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.05);
   border-radius:12px;padding:11px 14px;cursor:pointer;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  display:flex;align-items:center;gap:12px;
   text-align:right;transition:.15s;width:100%;
   font-family:'Rubik',sans-serif;
 }
@@ -705,8 +736,27 @@ body::after{
   background:rgba(212,168,83,.04);
 }
 .picker-item:active:not(:disabled){transform:scale(.98)}
-.picker-item:disabled{opacity:.4;cursor:not-allowed}
-.picker-item-name{font-weight:600;font-size:13.5px;color:#fff}
+.picker-item:disabled{opacity:.35;cursor:not-allowed}
+.picker-item.selected{
+  background:linear-gradient(135deg,rgba(212,168,83,.14),rgba(212,168,83,.04));
+  border-color:rgba(212,168,83,.5);
+  box-shadow:0 0 0 1px rgba(212,168,83,.2);
+}
+.picker-check{
+  width:24px;height:24px;border-radius:8px;
+  border:2px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:14px;color:#0A0B0F;font-weight:800;transition:.15s;
+}
+.picker-item.selected .picker-check{
+  background:linear-gradient(135deg,var(--g1),var(--g3));
+  border-color:var(--g1);
+}
+.picker-item-body{flex:1;min-width:0;text-align:right}
+.picker-item-name{
+  font-weight:600;font-size:13.5px;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .picker-item-meta{font-size:10.5px;color:var(--tx3);margin-top:2px}
 .picker-item-tag{
   font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:6px;
@@ -720,7 +770,16 @@ body::after{
 .picker-empty{
   text-align:center;padding:30px 16px;color:var(--tx3);font-size:12.5px;
 }
-.picker-close-btn{margin-top:14px}
+.picker-footer{
+  display:grid;grid-template-columns:auto 1fr;gap:10px;
+  margin-top:14px;padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+#pickerSubmit:disabled{
+  opacity:.4;cursor:not-allowed;
+  background:rgba(255,255,255,.05);color:var(--tx3);
+  box-shadow:none;
+}
 
 /* زر إضافة تمرين داخل الجلسة */
 .add-ex-btn{

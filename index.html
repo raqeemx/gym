@@ -151,7 +151,10 @@
 <!-- ========== EXERCISE PICKER MODAL ========== -->
 <div class="modal" id="pickerModal">
   <div class="modal-card picker-card">
-    <div class="modal-title">إضافة تمرين</div>
+    <div class="picker-head">
+      <div class="modal-title" id="pickerTitle">اختر تمارينك</div>
+      <div class="picker-count" id="pickerCount">0</div>
+    </div>
     <div class="picker-tabs">
       <button class="ptab active" data-ptab="library">من القائمة</button>
       <button class="ptab" data-ptab="custom">تمرين مخصّص</button>
@@ -159,6 +162,13 @@
 
     <div class="ppanel" id="ppanelLibrary">
       <input type="search" class="picker-search" id="pickerSearch" placeholder="🔍 ابحث عن تمرين..." autocomplete="off">
+      <div class="picker-filters" id="pickerFilters">
+        <button class="pchip active" data-filter="all">الكل</button>
+        <button class="pchip" data-filter="push">💪 دفع</button>
+        <button class="pchip" data-filter="pull">🔙 سحب</button>
+        <button class="pchip" data-filter="legs">🦵 أرجل</button>
+        <button class="pchip" data-filter="custom">⭐ مخصّص</button>
+      </div>
       <div class="picker-list" id="pickerList"></div>
     </div>
 
@@ -181,10 +191,13 @@
           <input type="number" class="picker-input" id="cstRest" value="60" min="0" max="600">
         </div>
       </div>
-      <button class="btn-primary" id="cstAdd">إضافة التمرين</button>
+      <button class="btn-ghost" id="cstAdd">+ أضف للقائمة</button>
     </div>
 
-    <button class="btn-ghost picker-close-btn" id="pickerClose">إغلاق</button>
+    <div class="picker-footer">
+      <button class="btn-ghost" id="pickerClose">إلغاء</button>
+      <button class="btn-primary" id="pickerSubmit" disabled>اختر تمارين</button>
+    </div>
   </div>
 </div>
 

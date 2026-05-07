@@ -599,12 +599,28 @@ window.finishSession = (silent=false) => {
   confirmModal('إنهاء الجلسة؟', `سجّلت ${doneSets} سيت في ${fmtDurationLong(s.durationSec)}. حفظ الجلسة وعرض ملخصها؟`, finalize, 'حفظ', 'متابعة');
 };
 
-// ====== EXERCISE PICKER (اختيار أي تمرين) ======
-function openPicker(onSelect, opts = {}){
+// ====== EXERCISE PICKER (اختيار متعدّد) ======
+let _pickerState = null;
+
+function openPicker(onSubmit, opts = {}){
   const modal = $('#pickerModal');
   const searchInput = $('#pickerSearch');
   const listEl = $('#pickerList');
   const existingIds = opts.existingIds || [];
+  const submitLabel = opts.submitLabel || 'إضافة';
+  const title = opts.title || 'اختر تمارينك';
+
+  // selected: array of normalized exercise data { exerciseId, name, targetSets, targetReps, targetRest }
+  _pickerState = {
+    selected: [],
+    filter: 'all',
+    query: '',
+    onSubmit,
+    submitLabel,
+    existingIds
+  };
+
+  $('#pickerTitle').textContent = title;
 
   // إعادة تعيين التبويبات
   $$('.ptab').forEach(t => t.classList.toggle('active', t.dataset.ptab === 'library'));
@@ -612,52 +628,24 @@ function openPicker(onSelect, opts = {}){
   $('#ppanelCustom').style.display = 'none';
   searchInput.value = '';
 
-  const renderList = (q='') => {
-    const ql = q.trim().toLowerCase();
-    const items = Object.values(EXERCISE_BY_ID).filter(ex => {
-      if (!ql) return true;
-      return ex.name.toLowerCase().includes(ql) || (ex.note||'').toLowerCase().includes(ql);
-    });
-    if (items.length === 0){
-      listEl.innerHTML = `<div class="picker-empty">لا توجد نتائج. جرّب تبويب "تمرين مخصّص" ←</div>`;
-      return;
-    }
-    listEl.innerHTML = items.map(ex => {
-      const inSession = existingIds.includes(ex.id);
-      const day = DAY_BY_ID[ex.dayId];
-      const tagType = day ? day.type : 'push';
-      const tagText = day ? day.tag : '';
-      return `
-        <button class="picker-item" data-ex-id="${ex.id}" ${inSession ? 'disabled' : ''}>
-          <div style="flex:1;text-align:right;min-width:0">
-            <div class="picker-item-name">${ex.name}${inSession ? ' ✓' : ''}</div>
-            <div class="picker-item-meta">${ex.dayTitle} • ${ex.sets}×${ex.reps} • راحة ${ex.rest}ث</div>
-          </div>
-          <span class="picker-item-tag tag-${tagType}">${tagText}</span>
-        </button>
-      `;
-    }).join('');
+  // إعادة تعيين الفلاتر
+  $$('.pchip').forEach(c => c.classList.toggle('active', c.dataset.filter === 'all'));
 
-    $$('.picker-item', listEl).forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        const id = btn.dataset.exId;
-        const ex = EXERCISE_BY_ID[id];
-        if (!ex) return;
-        closePicker();
-        onSelect({
-          exerciseId: ex.id,
-          name: ex.name,
-          targetSets: ex.sets,
-          targetReps: ex.reps,
-          targetRest: ex.rest
-        });
-      });
-    });
+  renderPickerList();
+  updatePickerCount();
+
+  searchInput.oninput = (e) => {
+    _pickerState.query = e.target.value;
+    renderPickerList();
   };
-  renderList();
 
-  searchInput.oninput = (e) => renderList(e.target.value);
+  $$('.pchip').forEach(chip => {
+    chip.onclick = () => {
+      _pickerState.filter = chip.dataset.filter;
+      $$('.pchip').forEach(c => c.classList.toggle('active', c === chip));
+      renderPickerList();
+    };
+  });
 
   $$('.ptab').forEach(t => {
     t.onclick = () => {
@@ -674,45 +662,149 @@ function openPicker(onSelect, opts = {}){
     const sets = Math.max(1, Math.min(20, parseInt($('#cstSets').value) || 3));
     const reps = $('#cstReps').value.trim() || '10-12';
     const rest = Math.max(0, Math.min(600, parseInt($('#cstRest').value) || 60));
-    closePicker();
-    onSelect({
+    _pickerState.selected.push({
       exerciseId: 'cust_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-      name, targetSets: sets, targetReps: reps, targetRest: rest
+      name, targetSets: sets, targetReps: reps, targetRest: rest,
+      _isCustom: true
     });
-    // إعادة تعيين الحقول
     $('#cstName').value = ''; $('#cstSets').value = 3;
     $('#cstReps').value = '10-12'; $('#cstRest').value = 60;
+    toast('أُضيف ' + name + ' للقائمة');
+    updatePickerCount();
+    // ارجع لتبويب المكتبة لإكمال الاختيار
+    $$('.ptab').forEach(t => t.classList.toggle('active', t.dataset.ptab === 'library'));
+    $('#ppanelLibrary').style.display = '';
+    $('#ppanelCustom').style.display = 'none';
+    renderPickerList();
+  };
+
+  $('#pickerSubmit').onclick = () => {
+    if (_pickerState.selected.length === 0) return;
+    const out = _pickerState.selected.slice();
+    closePicker();
+    onSubmit(out);
   };
 
   $('#pickerClose').onclick = closePicker;
   modal.classList.add('active');
 }
 
-function closePicker(){
-  $('#pickerModal').classList.remove('active');
+function renderPickerList(){
+  if (!_pickerState) return;
+  const { filter, query, selected, existingIds } = _pickerState;
+  const listEl = $('#pickerList');
+  const ql = query.trim().toLowerCase();
+
+  // اجمع تمارين المكتبة + المخصّصة المضافة في هذه الجلسة
+  const libraryItems = Object.values(EXERCISE_BY_ID).map(ex => {
+    const day = DAY_BY_ID[ex.dayId];
+    return { ...ex, type: day ? day.type : 'push', tagText: day ? day.tag : '' };
+  });
+  const customItems = selected.filter(s => s._isCustom).map(s => ({
+    id: s.exerciseId, name: s.name, sets: s.targetSets, reps: s.targetReps, rest: s.targetRest,
+    dayTitle: 'تمرين مخصّص', type: 'custom', tagText: 'حر', _isCustom: true
+  }));
+
+  let items = filter === 'custom' ? customItems
+            : filter === 'all' ? [...libraryItems, ...customItems]
+            : libraryItems.filter(it => it.type === filter);
+
+  if (ql) items = items.filter(it => it.name.toLowerCase().includes(ql));
+
+  if (items.length === 0){
+    listEl.innerHTML = `<div class="picker-empty">لا توجد نتائج. جرّب فلتر آخر أو أنشئ "تمرين مخصّص" ←</div>`;
+    return;
+  }
+
+  listEl.innerHTML = items.map(ex => {
+    const isSelected = selected.some(s => s.exerciseId === ex.id);
+    const isExisting = existingIds.includes(ex.id);
+    return `
+      <button class="picker-item ${isSelected ? 'selected' : ''}" data-ex-id="${ex.id}" ${isExisting ? 'disabled' : ''}>
+        <div class="picker-check">${isSelected ? '✓' : ''}</div>
+        <div class="picker-item-body">
+          <div class="picker-item-name">${ex.name}${isExisting ? ' (موجود)' : ''}</div>
+          <div class="picker-item-meta">${ex.dayTitle} • ${ex.sets}×${ex.reps} • راحة ${ex.rest}ث</div>
+        </div>
+        <span class="picker-item-tag tag-${ex.type}">${ex.tagText}</span>
+      </button>
+    `;
+  }).join('');
+
+  $$('.picker-item', listEl).forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      const id = btn.dataset.exId;
+      togglePickerSelection(id);
+    });
+  });
 }
 
+function togglePickerSelection(id){
+  const sel = _pickerState.selected;
+  const idx = sel.findIndex(s => s.exerciseId === id);
+  if (idx >= 0){
+    // إذا كان مخصّصاً، احذفه نهائياً
+    sel.splice(idx, 1);
+  } else {
+    const ex = EXERCISE_BY_ID[id];
+    if (ex){
+      sel.push({
+        exerciseId: ex.id, name: ex.name,
+        targetSets: ex.sets, targetReps: ex.reps, targetRest: ex.rest
+      });
+      vibrate(20);
+    }
+  }
+  updatePickerCount();
+  renderPickerList();
+}
+
+function updatePickerCount(){
+  const n = _pickerState.selected.length;
+  const cnt = $('#pickerCount');
+  cnt.textContent = n;
+  cnt.classList.toggle('zero', n === 0);
+  const btn = $('#pickerSubmit');
+  btn.disabled = n === 0;
+  btn.textContent = n === 0
+    ? 'اختر تمارين'
+    : `${_pickerState.submitLabel} (${n} ${n === 1 ? 'تمرين' : n === 2 ? 'تمرينين' : 'تمارين'})`;
+}
+
+function closePicker(){
+  $('#pickerModal').classList.remove('active');
+  _pickerState = null;
+}
+
+// إضافة تمارين متعددة لجلسة قائمة
 window.openAddExercise = () => {
   const s = Store.getActiveSession();
   if (!s) return;
-  openPicker((exData) => {
-    const last = Store.getLastSetsForExercise(exData.exerciseId);
-    s.exercises.push({
-      exerciseId: exData.exerciseId,
-      name: exData.name,
-      targetSets: exData.targetSets,
-      targetReps: exData.targetReps,
-      targetRest: exData.targetRest,
-      sets: Array.from({length: exData.targetSets}, (_, i) => ({
-        weight: last && last.sets[i] ? last.sets[i].weight : '',
-        reps: last && last.sets[i] ? last.sets[i].reps : '',
-        done: false
-      }))
+  openPicker((exDataArr) => {
+    exDataArr.forEach(exData => {
+      const last = Store.getLastSetsForExercise(exData.exerciseId);
+      s.exercises.push({
+        exerciseId: exData.exerciseId,
+        name: exData.name,
+        targetSets: exData.targetSets,
+        targetReps: exData.targetReps,
+        targetRest: exData.targetRest,
+        sets: Array.from({length: exData.targetSets}, (_, i) => ({
+          weight: last && last.sets[i] ? last.sets[i].weight : '',
+          reps: last && last.sets[i] ? last.sets[i].reps : '',
+          done: false
+        }))
+      });
     });
     Store.setActiveSession(s);
     renderSession();
-    toast('أُضيف ' + exData.name + ' ✓');
-  }, { existingIds: s.exercises.map(e => e.exerciseId) });
+    toast(`أُضيف ${exDataArr.length} تمرين ✓`);
+  }, {
+    existingIds: s.exercises.map(e => e.exerciseId),
+    submitLabel: 'إضافة',
+    title: 'إضافة تمارين للجلسة'
+  });
 };
 
 window.removeExerciseFromSession = (exIdx) => {
@@ -739,29 +831,48 @@ window.startCustomSession = () => {
   if (active){
     confirmModal('هناك جلسة جارية', 'يوجد جلسة لم تنتهِ بعد. هل تريد إنهاءها وبدء تمرين حر؟', () => {
       finishSession(true);
-      _createCustomSession();
+      _openCustomPicker();
     }, 'إنهاء وبدء حر', 'متابعة القديمة');
     return;
   }
-  _createCustomSession();
+  _openCustomPicker();
 };
 
-function _createCustomSession(){
-  const session = {
-    id: uid(),
-    dayId: 'custom',
-    dayTitle: 'تمرين حر',
-    dayType: 'custom',
-    startedAt: Date.now(),
-    finishedAt: null,
-    durationSec: 0,
-    notes: '',
-    exercises: []
-  };
-  Store.setActiveSession(session);
-  Router.go('session');
-  // افتح المنتقي مباشرة بعد لحظة لتختار تمرينك الأول
-  setTimeout(() => openAddExercise(), 280);
+function _openCustomPicker(){
+  openPicker((exDataArr) => {
+    if (exDataArr.length === 0) return;
+    const session = {
+      id: uid(),
+      dayId: 'custom',
+      dayTitle: 'تمرين حر',
+      dayType: 'custom',
+      startedAt: Date.now(),
+      finishedAt: null,
+      durationSec: 0,
+      notes: '',
+      exercises: exDataArr.map(d => {
+        const last = Store.getLastSetsForExercise(d.exerciseId);
+        return {
+          exerciseId: d.exerciseId,
+          name: d.name,
+          targetSets: d.targetSets,
+          targetReps: d.targetReps,
+          targetRest: d.targetRest,
+          sets: Array.from({length: d.targetSets}, (_, i) => ({
+            weight: last && last.sets[i] ? last.sets[i].weight : '',
+            reps: last && last.sets[i] ? last.sets[i].reps : '',
+            done: false
+          }))
+        };
+      })
+    };
+    Store.setActiveSession(session);
+    Router.go('session');
+    toast(`بدأت جلسة حرّة بـ ${exDataArr.length} تمرين`);
+  }, {
+    submitLabel: 'ابدأ التمرين',
+    title: 'اختر تمارين اليوم'
+  });
 }
 
 // ====== REST TIMER ======
