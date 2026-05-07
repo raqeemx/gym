@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050608">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BULK MODE">
+<meta name="mobile-web-app-capable" content="yes">
+<title>BULK MODE — مدرّب التضخيم</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23050608'/%3E%3Ctext x='50' y='66' font-family='Outfit,sans-serif' font-size='48' font-weight='800' text-anchor='middle' fill='%23D4A853'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23050608'/%3E%3Ctext x='50' y='66' font-family='Outfit,sans-serif' font-size='48' font-weight='800' text-anchor='middle' fill='%23D4A853'%3EB%3C/text%3E%3C/svg%3E">
+
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ========== HEADER ========== -->
+  <header class="app-header" id="appHeader">
+    <button class="hbtn back-btn" id="backBtn" style="display:none" aria-label="رجوع">‹</button>
+    <div class="brand" id="brandBtn">
+      BULK MODE
+      <span class="brand-sub" id="brandSub">مدرّبك الشخصي للتضخيم</span>
+    </div>
+    <button class="hbtn" id="menuBtn" aria-label="القائمة">⋮</button>
+  </header>
+
+  <!-- ========== HOME VIEW ========== -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="hl"><span class="dot"></span><span>BULK MODE</span></div>
+      <h1 class="fu fu1">برنامج <em>التضخيم</em> النهائي</h1>
+      <p class="hsub fu fu2">سجّل تمارينك، تتبّع تقدمك، اكسر أرقامك السابقة</p>
+      <div class="sbar fu fu3" id="heroStats"></div>
+    </div>
+
+    <div class="content">
+      <!-- بطاقة اليوم -->
+      <div id="todayBlock"></div>
+
+      <!-- جلسة جارية إن وُجدت -->
+      <div id="activeBlock"></div>
+
+      <div class="section-title">
+        <h2>أيام الأسبوع</h2><span class="line"></span>
+      </div>
+      <div id="daysList"></div>
+
+      <div class="section-title">
+        <h2>آخر الجلسات</h2><span class="line"></span>
+      </div>
+      <div id="recentList"></div>
+    </div>
+  </section>
+
+  <!-- ========== DAY DETAIL VIEW ========== -->
+  <section class="view" id="view-day">
+    <div class="day-detail" id="dayDetail"></div>
+  </section>
+
+  <!-- ========== SESSION VIEW (التمرين الحي) ========== -->
+  <section class="view" id="view-session">
+    <div class="session-bar">
+      <div>
+        <span class="sb-time-label">المدة</span>
+        <div class="sb-time" id="sbTime">00:00</div>
+      </div>
+      <div class="sb-progress"><div class="sb-progress-fill" id="sbProgress"></div></div>
+      <div class="sb-count" id="sbCount">0/0</div>
+    </div>
+    <div class="content" id="sessionContent"></div>
+  </section>
+
+  <!-- ========== HISTORY/STATS VIEW ========== -->
+  <section class="view" id="view-history">
+    <div class="content">
+      <div class="tabs">
+        <button class="tab active" data-tab="history">السجل</button>
+        <button class="tab" data-tab="stats">الإحصائيات</button>
+      </div>
+      <div id="tabHistory"></div>
+      <div id="tabStats" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- ========== SESSION DETAIL VIEW ========== -->
+  <section class="view" id="view-session-detail">
+    <div class="content" id="sessionDetailContent"></div>
+  </section>
+
+</div>
+
+<!-- ========== BOTTOM NAV ========== -->
+<nav class="bottom-nav">
+  <button class="bn-btn active" data-nav="home"><span class="ic">🏠</span><span>الرئيسية</span></button>
+  <button class="bn-btn" data-nav="today"><span class="ic">💪</span><span>تمرين اليوم</span></button>
+  <button class="bn-btn" data-nav="history"><span class="ic">📊</span><span>السجل</span></button>
+</nav>
+
+<!-- ========== REST TIMER OVERLAY ========== -->
+<div class="rest-overlay" id="restOverlay">
+  <div class="rest-card">
+    <div class="rest-label">⏱️ راحة</div>
+    <div class="rest-time" id="restTime">90</div>
+    <div class="rest-target">الهدف: <span id="restTarget">90 ثانية</span></div>
+    <div class="rest-actions">
+      <button class="rest-quick" data-rest="30">30</button>
+      <button class="rest-quick" data-rest="60">60</button>
+      <button class="rest-quick" data-rest="90">90</button>
+      <button class="rest-quick" data-rest="120">120</button>
+      <button class="rest-quick" data-rest="180">180</button>
+    </div>
+    <div class="flex-row" style="justify-content:center;gap:8px;margin-bottom:6px">
+      <button class="rest-quick" id="restAdd15">+15ث</button>
+      <button class="rest-quick" id="restSub15">-15ث</button>
+    </div>
+    <button class="rest-skip" id="restSkip">تخطّي ✕</button>
+  </div>
+</div>
+
+<!-- ========== TOAST ========== -->
+<div class="toast" id="toast">تم الحفظ ✓</div>
+
+<!-- ========== MODAL ========== -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-title" id="modalTitle">تأكيد</div>
+    <div class="modal-text" id="modalText">هل أنت متأكد؟</div>
+    <div class="modal-actions" id="modalActions">
+      <button class="btn-ghost" id="modalCancel">إلغاء</button>
+      <button class="btn-primary" id="modalOk">تأكيد</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/program-data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
