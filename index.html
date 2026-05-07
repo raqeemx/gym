@@ -52,6 +52,15 @@
       </div>
       <div id="daysList"></div>
 
+      <button class="free-card" onclick="startCustomSession()">
+        <div class="ico">🎯</div>
+        <div class="info">
+          <div class="ttl">تمرين حر</div>
+          <div class="sub">اختر تمارينك بنفسك من القائمة أو أضف تمارين مخصّصة</div>
+        </div>
+        <span class="arrow">‹</span>
+      </button>
+
       <div class="section-title">
         <h2>آخر الجلسات</h2><span class="line"></span>
       </div>
@@ -136,6 +145,46 @@
       <button class="btn-ghost" id="modalCancel">إلغاء</button>
       <button class="btn-primary" id="modalOk">تأكيد</button>
     </div>
+  </div>
+</div>
+
+<!-- ========== EXERCISE PICKER MODAL ========== -->
+<div class="modal" id="pickerModal">
+  <div class="modal-card picker-card">
+    <div class="modal-title">إضافة تمرين</div>
+    <div class="picker-tabs">
+      <button class="ptab active" data-ptab="library">من القائمة</button>
+      <button class="ptab" data-ptab="custom">تمرين مخصّص</button>
+    </div>
+
+    <div class="ppanel" id="ppanelLibrary">
+      <input type="search" class="picker-search" id="pickerSearch" placeholder="🔍 ابحث عن تمرين..." autocomplete="off">
+      <div class="picker-list" id="pickerList"></div>
+    </div>
+
+    <div class="ppanel" id="ppanelCustom" style="display:none">
+      <div>
+        <label class="picker-label">اسم التمرين</label>
+        <input type="text" class="picker-input" id="cstName" placeholder="مثال: Cable Crossover" autocomplete="off">
+      </div>
+      <div class="picker-row">
+        <div>
+          <label class="picker-label">السيتات</label>
+          <input type="number" class="picker-input" id="cstSets" value="3" min="1" max="20">
+        </div>
+        <div>
+          <label class="picker-label">التكرارات</label>
+          <input type="text" class="picker-input" id="cstReps" value="10-12" autocomplete="off">
+        </div>
+        <div>
+          <label class="picker-label">الراحة (ث)</label>
+          <input type="number" class="picker-input" id="cstRest" value="60" min="0" max="600">
+        </div>
+      </div>
+      <button class="btn-primary" id="cstAdd">إضافة التمرين</button>
+    </div>
+
+    <button class="btn-ghost picker-close-btn" id="pickerClose">إغلاق</button>
   </div>
 </div>
 

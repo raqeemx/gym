@@ -196,10 +196,11 @@ function renderActiveBlock(){
   const block = $('#activeBlock');
   if (!active) { block.innerHTML = ''; return; }
   const day = DAY_BY_ID[active.dayId];
+  const title = day ? day.title : (active.dayTitle || 'تمرين');
   block.innerHTML = `
     <div class="today-card fu" style="border-color:rgba(90,230,138,.3)">
       <div class="tc-label" style="color:var(--grn)"><span class="dot" style="background:var(--grn)"></span>جلسة جارية</div>
-      <div class="tc-day">${day ? day.title : 'تمرين'}</div>
+      <div class="tc-day">${title}</div>
       <div class="tc-muscle">بدأت ${fmtTime(active.startedAt)} • ${fmtDate(active.startedAt)}</div>
       <button class="btn-primary" onclick="resumeSession()" style="background:linear-gradient(135deg,var(--grn),#3ECC72);box-shadow:0 8px 24px rgba(90,230,138,.25)">متابعة الجلسة ⏵</button>
     </div>
@@ -263,7 +264,7 @@ function renderHistItem(s){
         <div class="m">${ARABIC_MONTHS[d.getMonth()].slice(0,3)}</div>
       </div>
       <div class="hist-info">
-        <div class="hist-title">${day ? day.title : 'تمرين'}</div>
+        <div class="hist-title">${day ? day.title : (s.dayTitle || 'تمرين')}</div>
         <div class="hist-meta">
           <b>${totalSets}</b> سيت •
           <b>${fmtDurationLong(s.durationSec)}</b> •
@@ -458,6 +459,7 @@ function renderSession(){
             ${programEx.note ? `<div class="ex-note">${programEx.note}</div>` : ''}
             <div class="se-target">الهدف: ${ex.targetSets} × ${ex.targetReps} • راحة ${ex.targetRest}ث</div>
           </div>
+          <button class="ex-remove-btn" onclick="removeExerciseFromSession(${exIdx})" aria-label="حذف التمرين" title="حذف التمرين">✕</button>
         </div>
         ${lastHint}
         <table class="sets-table">
@@ -491,8 +493,14 @@ function renderSession(){
     `;
   }).join('');
 
+  const emptyHint = s.exercises.length === 0
+    ? `<div class="empty-state" style="margin:20px 0"><div class="ico">🎯</div><div class="ttl">جلسة فارغة</div><div class="sub">اضغط الزر أدناه لإضافة تمرين</div></div>`
+    : '';
+
   $('#sessionContent').innerHTML = `
     ${html}
+    ${emptyHint}
+    <button class="add-ex-btn" onclick="openAddExercise()">+ إضافة تمرين</button>
     <div class="notes-card">
       <label>ملاحظات الجلسة</label>
       <textarea class="notes-input" id="sessionNotes" placeholder="كيف كان الأداء؟ أي ألم؟ ملاحظات للمرة القادمة..."
@@ -590,6 +598,171 @@ window.finishSession = (silent=false) => {
   if (silent) return finalize();
   confirmModal('إنهاء الجلسة؟', `سجّلت ${doneSets} سيت في ${fmtDurationLong(s.durationSec)}. حفظ الجلسة وعرض ملخصها؟`, finalize, 'حفظ', 'متابعة');
 };
+
+// ====== EXERCISE PICKER (اختيار أي تمرين) ======
+function openPicker(onSelect, opts = {}){
+  const modal = $('#pickerModal');
+  const searchInput = $('#pickerSearch');
+  const listEl = $('#pickerList');
+  const existingIds = opts.existingIds || [];
+
+  // إعادة تعيين التبويبات
+  $$('.ptab').forEach(t => t.classList.toggle('active', t.dataset.ptab === 'library'));
+  $('#ppanelLibrary').style.display = '';
+  $('#ppanelCustom').style.display = 'none';
+  searchInput.value = '';
+
+  const renderList = (q='') => {
+    const ql = q.trim().toLowerCase();
+    const items = Object.values(EXERCISE_BY_ID).filter(ex => {
+      if (!ql) return true;
+      return ex.name.toLowerCase().includes(ql) || (ex.note||'').toLowerCase().includes(ql);
+    });
+    if (items.length === 0){
+      listEl.innerHTML = `<div class="picker-empty">لا توجد نتائج. جرّب تبويب "تمرين مخصّص" ←</div>`;
+      return;
+    }
+    listEl.innerHTML = items.map(ex => {
+      const inSession = existingIds.includes(ex.id);
+      const day = DAY_BY_ID[ex.dayId];
+      const tagType = day ? day.type : 'push';
+      const tagText = day ? day.tag : '';
+      return `
+        <button class="picker-item" data-ex-id="${ex.id}" ${inSession ? 'disabled' : ''}>
+          <div style="flex:1;text-align:right;min-width:0">
+            <div class="picker-item-name">${ex.name}${inSession ? ' ✓' : ''}</div>
+            <div class="picker-item-meta">${ex.dayTitle} • ${ex.sets}×${ex.reps} • راحة ${ex.rest}ث</div>
+          </div>
+          <span class="picker-item-tag tag-${tagType}">${tagText}</span>
+        </button>
+      `;
+    }).join('');
+
+    $$('.picker-item', listEl).forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        const id = btn.dataset.exId;
+        const ex = EXERCISE_BY_ID[id];
+        if (!ex) return;
+        closePicker();
+        onSelect({
+          exerciseId: ex.id,
+          name: ex.name,
+          targetSets: ex.sets,
+          targetReps: ex.reps,
+          targetRest: ex.rest
+        });
+      });
+    });
+  };
+  renderList();
+
+  searchInput.oninput = (e) => renderList(e.target.value);
+
+  $$('.ptab').forEach(t => {
+    t.onclick = () => {
+      $$('.ptab').forEach(x => x.classList.toggle('active', x === t));
+      $('#ppanelLibrary').style.display = t.dataset.ptab === 'library' ? '' : 'none';
+      $('#ppanelCustom').style.display = t.dataset.ptab === 'custom' ? '' : 'none';
+      if (t.dataset.ptab === 'custom') setTimeout(() => $('#cstName').focus(), 100);
+    };
+  });
+
+  $('#cstAdd').onclick = () => {
+    const name = $('#cstName').value.trim();
+    if (!name){ $('#cstName').focus(); toast('اكتب اسم التمرين'); return; }
+    const sets = Math.max(1, Math.min(20, parseInt($('#cstSets').value) || 3));
+    const reps = $('#cstReps').value.trim() || '10-12';
+    const rest = Math.max(0, Math.min(600, parseInt($('#cstRest').value) || 60));
+    closePicker();
+    onSelect({
+      exerciseId: 'cust_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      name, targetSets: sets, targetReps: reps, targetRest: rest
+    });
+    // إعادة تعيين الحقول
+    $('#cstName').value = ''; $('#cstSets').value = 3;
+    $('#cstReps').value = '10-12'; $('#cstRest').value = 60;
+  };
+
+  $('#pickerClose').onclick = closePicker;
+  modal.classList.add('active');
+}
+
+function closePicker(){
+  $('#pickerModal').classList.remove('active');
+}
+
+window.openAddExercise = () => {
+  const s = Store.getActiveSession();
+  if (!s) return;
+  openPicker((exData) => {
+    const last = Store.getLastSetsForExercise(exData.exerciseId);
+    s.exercises.push({
+      exerciseId: exData.exerciseId,
+      name: exData.name,
+      targetSets: exData.targetSets,
+      targetReps: exData.targetReps,
+      targetRest: exData.targetRest,
+      sets: Array.from({length: exData.targetSets}, (_, i) => ({
+        weight: last && last.sets[i] ? last.sets[i].weight : '',
+        reps: last && last.sets[i] ? last.sets[i].reps : '',
+        done: false
+      }))
+    });
+    Store.setActiveSession(s);
+    renderSession();
+    toast('أُضيف ' + exData.name + ' ✓');
+  }, { existingIds: s.exercises.map(e => e.exerciseId) });
+};
+
+window.removeExerciseFromSession = (exIdx) => {
+  const s = Store.getActiveSession();
+  if (!s) return;
+  const ex = s.exercises[exIdx];
+  if (!ex) return;
+  const hasDone = ex.sets.some(x => x.done);
+  const remove = () => {
+    s.exercises.splice(exIdx, 1);
+    Store.setActiveSession(s);
+    renderSession();
+    toast('تم حذف ' + ex.name);
+  };
+  if (hasDone) {
+    confirmModal('حذف التمرين؟', `سيتم حذف "${ex.name}" مع كل السيتات المسجّلة.`, remove, 'حذف', 'إلغاء');
+  } else {
+    remove();
+  }
+};
+
+window.startCustomSession = () => {
+  const active = Store.getActiveSession();
+  if (active){
+    confirmModal('هناك جلسة جارية', 'يوجد جلسة لم تنتهِ بعد. هل تريد إنهاءها وبدء تمرين حر؟', () => {
+      finishSession(true);
+      _createCustomSession();
+    }, 'إنهاء وبدء حر', 'متابعة القديمة');
+    return;
+  }
+  _createCustomSession();
+};
+
+function _createCustomSession(){
+  const session = {
+    id: uid(),
+    dayId: 'custom',
+    dayTitle: 'تمرين حر',
+    dayType: 'custom',
+    startedAt: Date.now(),
+    finishedAt: null,
+    durationSec: 0,
+    notes: '',
+    exercises: []
+  };
+  Store.setActiveSession(session);
+  Router.go('session');
+  // افتح المنتقي مباشرة بعد لحظة لتختار تمرينك الأول
+  setTimeout(() => openAddExercise(), 280);
+}
 
 // ====== REST TIMER ======
 function startRest(seconds){
@@ -797,7 +970,8 @@ Router.handlers['session-detail'] = ({id}) => {
   const s = Store.getSessionById(id);
   if (!s) return Router.go('history');
   const day = DAY_BY_ID[s.dayId];
-  $('#brandSub').textContent = day ? day.title : 'تفاصيل الجلسة';
+  const tagText = day ? day.tag : (s.dayType === 'custom' ? 'حر' : '');
+  $('#brandSub').textContent = day ? day.title : (s.dayTitle || 'تفاصيل الجلسة');
 
   const totalSets = s.exercises.reduce((a,ex) => a + ex.sets.filter(x=>x.done).length, 0);
   const vol = Store.totalVolume(s);
@@ -843,7 +1017,7 @@ Router.handlers['session-detail'] = ({id}) => {
 
   $('#sessionDetailContent').innerHTML = `
     <div class="dd-hero">
-      <span class="dc-tag tag-${s.dayType} dd-tag">${day ? day.tag : ''}</span>
+      <span class="dc-tag tag-${s.dayType} dd-tag">${tagText}</span>
       <div class="dd-title">${s.dayTitle}</div>
       <div class="dd-muscles">${fmtDateFull(s.startedAt)}</div>
       <div class="dd-desc">⏰ ${fmtTime(s.startedAt)}${s.finishedAt ? ' — ' + fmtTime(s.finishedAt) : ''}</div>
@@ -868,7 +1042,9 @@ Router.handlers['session-detail'] = ({id}) => {
 
     <div class="btn-row mt-12">
       <button class="btn-ghost" onclick="deleteSession('${s.id}')" style="color:var(--red);border-color:rgba(255,90,95,.2)">🗑️ حذف</button>
-      <button class="btn-primary" onclick="startSession('${s.dayId}')">🔁 كرر هذا اليوم</button>
+      ${s.dayType === 'custom'
+        ? `<button class="btn-primary" onclick="startCustomSession()">+ تمرين حر جديد</button>`
+        : `<button class="btn-primary" onclick="startSession('${s.dayId}')">🔁 كرر هذا اليوم</button>`}
     </div>
   `;
 };
@@ -919,6 +1095,9 @@ function bindGlobalEvents(){
   // Modal close on backdrop click
   $('#modal').addEventListener('click', (e) => {
     if (e.target === $('#modal')) $('#modal').classList.remove('active');
+  });
+  $('#pickerModal').addEventListener('click', (e) => {
+    if (e.target === $('#pickerModal')) closePicker();
   });
 
   // منع إغلاق الصفحة بالخطأ أثناء التمرين

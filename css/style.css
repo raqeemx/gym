@@ -655,3 +655,115 @@ body::after{
 @media (display-mode: standalone){
   body{padding-top:env(safe-area-inset-top,0px)}
 }
+
+/* ============== EXERCISE PICKER ============== */
+.picker-card{
+  max-height:88vh;display:flex;flex-direction:column;gap:0;
+}
+.picker-tabs{
+  display:flex;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:12px;padding:3px;margin-bottom:14px;
+}
+.ptab{
+  flex:1;background:none;border:none;cursor:pointer;
+  padding:9px;border-radius:9px;color:var(--tx2);
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;
+  transition:.2s;
+}
+.ptab.active{
+  background:linear-gradient(135deg,var(--g1),var(--g3));color:#0A0B0F;
+  box-shadow:0 4px 14px rgba(212,168,83,.3);
+}
+.ppanel{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.picker-search,.picker-input{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:#fff;padding:11px 14px;border-radius:12px;
+  font-family:'Rubik',sans-serif;font-size:14px;width:100%;
+  transition:.2s;
+}
+.picker-search:focus,.picker-input:focus{
+  outline:none;border-color:rgba(212,168,83,.45);
+  background:rgba(212,168,83,.04);
+}
+.picker-list{
+  overflow-y:auto;max-height:52vh;
+  display:flex;flex-direction:column;gap:6px;
+  margin:4px -2px 0;padding:2px;
+}
+.picker-item{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:12px;padding:11px 14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  text-align:right;transition:.15s;width:100%;
+  font-family:'Rubik',sans-serif;
+}
+.picker-item:hover:not(:disabled){
+  border-color:rgba(212,168,83,.3);
+  background:rgba(212,168,83,.04);
+}
+.picker-item:active:not(:disabled){transform:scale(.98)}
+.picker-item:disabled{opacity:.4;cursor:not-allowed}
+.picker-item-name{font-weight:600;font-size:13.5px;color:#fff}
+.picker-item-meta{font-size:10.5px;color:var(--tx3);margin-top:2px}
+.picker-item-tag{
+  font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:6px;
+  font-family:'Outfit',sans-serif;letter-spacing:.3px;flex-shrink:0;
+}
+.picker-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.picker-label{
+  font-size:11px;color:var(--tx3);font-weight:600;
+  margin-bottom:4px;display:block;
+}
+.picker-empty{
+  text-align:center;padding:30px 16px;color:var(--tx3);font-size:12.5px;
+}
+.picker-close-btn{margin-top:14px}
+
+/* زر إضافة تمرين داخل الجلسة */
+.add-ex-btn{
+  width:100%;background:rgba(212,168,83,.06);
+  border:2px dashed rgba(212,168,83,.28);
+  color:var(--g2);padding:14px;border-radius:14px;
+  font-weight:700;font-size:13.5px;font-family:'Outfit',sans-serif;
+  cursor:pointer;margin-top:6px;transition:.2s;letter-spacing:.3px;
+}
+.add-ex-btn:hover{
+  border-color:rgba(212,168,83,.5);
+  background:rgba(212,168,83,.1);
+}
+.add-ex-btn:active{transform:scale(.98)}
+
+/* بطاقة "تمرين حر" في الرئيسية */
+.free-card{
+  background:linear-gradient(135deg,rgba(176,138,255,.1),rgba(176,138,255,.02));
+  border:1px solid rgba(176,138,255,.22);
+  border-radius:16px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  margin-top:10px;transition:.2s;text-align:right;
+}
+.free-card:hover{border-color:rgba(176,138,255,.4)}
+.free-card:active{transform:scale(.98)}
+.free-card .ico{
+  font-size:20px;width:42px;height:42px;
+  background:rgba(176,138,255,.12);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.free-card .info{flex:1}
+.free-card .ttl{font-weight:700;font-size:13.5px;color:var(--purple)}
+.free-card .sub{font-size:11px;color:var(--tx3);margin-top:2px;line-height:1.5}
+.free-card .arrow{color:var(--purple);font-size:18px;opacity:.6}
+
+/* تاجات للتمرين المخصّص */
+.tag-custom{background:rgba(176,138,255,.12);color:var(--purple)}
+.dc-badge.custom{background:linear-gradient(135deg,rgba(176,138,255,.2),rgba(176,138,255,.05));color:var(--purple)}
+
+/* زر حذف تمرين من الجلسة */
+.ex-remove-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--tx3);font-size:18px;padding:4px 8px;
+  transition:.2s;line-height:1;
+}
+.ex-remove-btn:hover{color:var(--red)}
