@@ -61,6 +61,25 @@
         <span class="arrow">‹</span>
       </button>
 
+      <div class="quick-grid">
+        <button class="quick-card" onclick="Router.go('exercises')">
+          <div class="qc-ico">📚</div>
+          <div class="qc-text">مكتبة التمارين</div>
+        </button>
+        <button class="quick-card" onclick="Router.go('body')">
+          <div class="qc-ico">⚖️</div>
+          <div class="qc-text">وزن الجسم</div>
+        </button>
+        <button class="quick-card" onclick="openPlateCalc()">
+          <div class="qc-ico">🧮</div>
+          <div class="qc-text">حاسبة الأقراص</div>
+        </button>
+        <button class="quick-card" onclick="Router.go('settings')">
+          <div class="qc-ico">⚙️</div>
+          <div class="qc-text">الإعدادات</div>
+        </button>
+      </div>
+
       <div class="section-title">
         <h2>آخر الجلسات</h2><span class="line"></span>
       </div>
@@ -103,6 +122,26 @@
     <div class="content" id="sessionDetailContent"></div>
   </section>
 
+  <!-- ========== BODY WEIGHT VIEW ========== -->
+  <section class="view" id="view-body">
+    <div class="content" id="bodyContent"></div>
+  </section>
+
+  <!-- ========== EXERCISES LIBRARY VIEW ========== -->
+  <section class="view" id="view-exercises">
+    <div class="content" id="exercisesContent"></div>
+  </section>
+
+  <!-- ========== EXERCISE DETAIL VIEW ========== -->
+  <section class="view" id="view-exercise">
+    <div class="content" id="exerciseDetailContent"></div>
+  </section>
+
+  <!-- ========== SETTINGS VIEW ========== -->
+  <section class="view" id="view-settings">
+    <div class="content" id="settingsContent"></div>
+  </section>
+
 </div>
 
 <!-- ========== BOTTOM NAV ========== -->
@@ -130,6 +169,42 @@
       <button class="rest-quick" id="restSub15">-15ث</button>
     </div>
     <button class="rest-skip" id="restSkip">تخطّي ✕</button>
+  </div>
+</div>
+
+<!-- ========== PLATE CALCULATOR MODAL ========== -->
+<div class="modal" id="plateModal">
+  <div class="modal-card plate-card">
+    <div class="modal-title">حاسبة الأقراص</div>
+    <div class="plate-inputs">
+      <div>
+        <label class="picker-label">الوزن المستهدف (كجم)</label>
+        <input type="number" class="picker-input" id="plateTarget" inputmode="decimal" step="2.5" value="60" autocomplete="off">
+      </div>
+      <div>
+        <label class="picker-label">وزن البار (كجم)</label>
+        <select class="picker-input" id="plateBar">
+          <option value="20">20</option>
+          <option value="15">15</option>
+          <option value="10">10</option>
+          <option value="7">7</option>
+          <option value="0">بدون بار (دامبل)</option>
+        </select>
+      </div>
+    </div>
+    <div class="plate-result" id="plateResult"></div>
+    <button class="btn-ghost picker-close-btn" id="plateClose">إغلاق</button>
+  </div>
+</div>
+
+<!-- ========== PR CELEBRATION OVERLAY ========== -->
+<div class="pr-overlay" id="prOverlay">
+  <canvas class="pr-confetti" id="prConfetti"></canvas>
+  <div class="pr-content">
+    <div class="pr-emoji">🏆</div>
+    <div class="pr-title">رقم شخصي جديد</div>
+    <div class="pr-list" id="prList"></div>
+    <button class="btn-primary" id="prClose">رائع</button>
   </div>
 </div>
 

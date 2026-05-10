@@ -150,13 +150,58 @@ const PROGRAM = {
   ]
 };
 
+// بيانات وصفية إضافية للتمارين (عضلة أساسية + معدّات + نوع حركة)
+// id => { primaryMuscle, equipment, isCompound }
+const EXERCISE_META = {
+  pa1:  { primaryMuscle: 'صدر', equipment: 'machine',    isCompound: true  },
+  pa2:  { primaryMuscle: 'أكتاف', equipment: 'machine',  isCompound: true  },
+  pa3:  { primaryMuscle: 'صدر', equipment: 'machine',    isCompound: false },
+  pa4:  { primaryMuscle: 'أكتاف', equipment: 'machine',  isCompound: false },
+  pa5:  { primaryMuscle: 'ترايسبس', equipment: 'machine',isCompound: false },
+  pa6:  { primaryMuscle: 'بطن', equipment: 'machine',    isCompound: false },
+  la1:  { primaryMuscle: 'ظهر', equipment: 'cable',      isCompound: true  },
+  la2:  { primaryMuscle: 'ظهر', equipment: 'cable',      isCompound: true  },
+  la3:  { primaryMuscle: 'ظهر', equipment: 'machine',    isCompound: false },
+  la4:  { primaryMuscle: 'أكتاف خلفية', equipment: 'machine', isCompound: false },
+  la5:  { primaryMuscle: 'بايسبس', equipment: 'machine', isCompound: false },
+  gA1:  { primaryMuscle: 'فخذ', equipment: 'machine',    isCompound: true  },
+  gA2:  { primaryMuscle: 'فخذ خلفي', equipment: 'machine', isCompound: false },
+  gA3:  { primaryMuscle: 'فخذ أمامي', equipment: 'machine', isCompound: false },
+  gA4:  { primaryMuscle: 'ورك', equipment: 'machine',    isCompound: false },
+  gA5:  { primaryMuscle: 'فخذ داخلي', equipment: 'machine', isCompound: false },
+  gA6:  { primaryMuscle: 'أسفل الظهر', equipment: 'machine', isCompound: false },
+  gA7:  { primaryMuscle: 'سمانة', equipment: 'machine',  isCompound: false },
+  gA8:  { primaryMuscle: 'بطن', equipment: 'bodyweight', isCompound: false },
+  pb1:  { primaryMuscle: 'صدر', equipment: 'bodyweight', isCompound: true  },
+  pb2:  { primaryMuscle: 'أكتاف', equipment: 'machine',  isCompound: true  },
+  pb3:  { primaryMuscle: 'صدر', equipment: 'machine',    isCompound: true  },
+  pb4:  { primaryMuscle: 'صدر', equipment: 'machine',    isCompound: false },
+  pb5:  { primaryMuscle: 'أكتاف', equipment: 'machine',  isCompound: false },
+  pb6:  { primaryMuscle: 'ترايسبس', equipment: 'machine',isCompound: false },
+  pb7:  { primaryMuscle: 'خصر', equipment: 'machine',    isCompound: false },
+  lb1:  { primaryMuscle: 'ظهر', equipment: 'bodyweight', isCompound: true  },
+  lb2:  { primaryMuscle: 'ظهر', equipment: 'cable',      isCompound: true  },
+  lb3:  { primaryMuscle: 'ظهر', equipment: 'machine',    isCompound: true  },
+  lb4:  { primaryMuscle: 'أكتاف خلفية', equipment: 'machine', isCompound: false },
+  lb5:  { primaryMuscle: 'بايسبس', equipment: 'machine', isCompound: false },
+  lb6:  { primaryMuscle: 'بطن', equipment: 'machine',    isCompound: false },
+  gB1:  { primaryMuscle: 'فخذ', equipment: 'machine',    isCompound: true  },
+  gB2:  { primaryMuscle: 'فخذ خلفي', equipment: 'machine', isCompound: false },
+  gB3:  { primaryMuscle: 'فخذ أمامي', equipment: 'machine', isCompound: false },
+  gB4:  { primaryMuscle: 'فخذ داخلي', equipment: 'machine', isCompound: false },
+  gB5:  { primaryMuscle: 'ورك', equipment: 'machine',    isCompound: false },
+  gB6:  { primaryMuscle: 'أسفل الظهر', equipment: 'machine', isCompound: false },
+  gB7:  { primaryMuscle: 'سمانة', equipment: 'machine',  isCompound: false },
+  gB8:  { primaryMuscle: 'خصر', equipment: 'machine',    isCompound: false }
+};
+
 // خريطة سريعة للوصول لأي يوم بالـ id
 const DAY_BY_ID = Object.fromEntries(PROGRAM.days.map(d => [d.id, d]));
 
 // خريطة لكل التمارين (لجلب اسم تمرين من id بسرعة)
 const EXERCISE_BY_ID = {};
 PROGRAM.days.forEach(d => d.exercises.forEach(ex => {
-  EXERCISE_BY_ID[ex.id] = { ...ex, dayId: d.id, dayTitle: d.title };
+  EXERCISE_BY_ID[ex.id] = { ...ex, dayId: d.id, dayTitle: d.title, ...(EXERCISE_META[ex.id] || {}) };
 }));
 
 // أيام الأسبوع المرتبة (الأحد = 0 في تقويمنا الأسبوعي)

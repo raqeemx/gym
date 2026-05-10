@@ -35,6 +35,157 @@ function fmtDurationLong(sec){
   return `${h}س ${mm}د`;
 }
 
+// ====== PLATE CALCULATOR ======
+window.openPlateCalc = (initialWeight = null) => {
+  const settings = Store.getSettings();
+  const target = initialWeight ?? 60;
+  $('#plateTarget').value = target;
+  $('#plateBar').value = String(settings.barWeight);
+  computePlates();
+  $('#plateModal').classList.add('active');
+};
+
+function computePlates(){
+  const target = parseFloat($('#plateTarget').value) || 0;
+  const bar = parseFloat($('#plateBar').value) || 0;
+  const result = $('#plateResult');
+  const settings = Store.getSettings();
+
+  if (target <= 0) {
+    result.innerHTML = `<div class="plate-error">أدخل وزناً صحيحاً</div>`;
+    return;
+  }
+  if (target < bar) {
+    result.innerHTML = `<div class="plate-error">الوزن أقل من البار (${bar} كجم)</div>`;
+    return;
+  }
+  const perSide = (target - bar) / 2;
+  if (perSide < 0) {
+    result.innerHTML = `<div class="plate-error">غير ممكن</div>`;
+    return;
+  }
+  // greedy
+  const plates = settings.plateSet || [25, 20, 15, 10, 5, 2.5, 1.25];
+  const breakdown = [];
+  let remaining = perSide;
+  for (const p of plates) {
+    const count = Math.floor(remaining / p);
+    if (count > 0) {
+      breakdown.push({ weight: p, count });
+      remaining = +(remaining - p * count).toFixed(3);
+    }
+  }
+  const usedTotal = breakdown.reduce((a,b) => a + b.weight * b.count, 0);
+  const actual = bar + usedTotal * 2;
+  const off = +(target - actual).toFixed(2);
+
+  // ارسم البار + الأقراص (جانب واحد، مرئي مرتين بالمرآة)
+  const cls = (w) => 'plate-' + String(w).replace('.','-');
+  const sideHTML = breakdown.map(b =>
+    Array.from({length: b.count}).map(() =>
+      `<div class="plate-disc ${cls(b.weight)}">${b.weight}</div>`
+    ).join('')
+  ).join('');
+
+  const summaryText = bar > 0
+    ? `بار ${bar} كجم + ${breakdown.map(b => `${b.count}×${b.weight}`).join(' + ')} لكل جانب`
+    : `${breakdown.map(b => `${b.count}×${b.weight}`).join(' + ')} لكل جانب`;
+
+  result.innerHTML = `
+    <div class="plate-bar-wrap">
+      <div class="plate-side">${sideHTML}</div>
+      ${bar > 0 ? `<div class="plate-bar"></div>` : ''}
+      <div class="plate-side" style="flex-direction:row">${sideHTML}</div>
+    </div>
+    <div class="plate-summary">${actual} كجم${off !== 0 ? ` <span style="color:var(--org)">(فرق ${off > 0 ? '+' : ''}${off})</span>` : ''}</div>
+    <div class="plate-detail">${summaryText}</div>
+  `;
+}
+
+// ====== PR CONFETTI ======
+function fireConfetti(){
+  const canvas = $('#prConfetti');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const colors = ['#D4A853','#EDCA7A','#5AE68A','#5AB4FF','#FF5A5F','#B08AFF','#FFB85A'];
+  const N = 80;
+  const particles = Array.from({length: N}, () => ({
+    x: w/2 + (Math.random()-.5) * 80,
+    y: h*0.4 + (Math.random()-.5) * 40,
+    vx: (Math.random()-.5) * 12,
+    vy: -(Math.random() * 16 + 6),
+    g: 0.4 + Math.random() * 0.2,
+    r: 4 + Math.random() * 5,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * Math.PI,
+    vr: (Math.random()-.5) * 0.3,
+    life: 80 + Math.floor(Math.random() * 40)
+  }));
+  let frame = 0;
+  function tick(){
+    frame++;
+    ctx.clearRect(0, 0, w, h);
+    let alive = false;
+    for (const p of particles) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.vy += p.g;
+      p.x += p.vx; p.y += p.vy;
+      p.rot += p.vr;
+      p.life--;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, p.life / 100);
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 1.6);
+      ctx.restore();
+    }
+    if (alive && frame < 200) requestAnimationFrame(tick);
+    else ctx.clearRect(0, 0, w, h);
+  }
+  tick();
+}
+
+function showPRCelebration(prs){
+  if (!prs || prs.length === 0) return;
+  if (!Store.getSettings().confettiOn) {
+    toast(`🏆 ${prs.length} رقم شخصي جديد!`);
+    return;
+  }
+  const labelByType = { weight: 'وزن جديد', e1rm: 'قوة قصوى مقدّرة', volume: 'حجم جلسة' };
+  const html = prs.map(p => {
+    const detail = p.type === 'weight'
+      ? `${p.context.weight} كجم × ${p.context.reps}`
+      : p.type === 'e1rm'
+        ? `1RM ≈ ${p.value} كجم  (من ${p.context.weight}×${p.context.reps})`
+        : `${p.value.toLocaleString('en-US')} كجم حجم كلي`;
+    const prevText = p.context.prev != null
+      ? `السابق: ${typeof p.context.prev === 'number' ? p.context.prev.toLocaleString('en-US') : p.context.prev} ${p.type === 'volume' ? 'كجم' : 'كجم'}`
+      : '';
+    return `
+      <div class="pr-row">
+        <div class="pr-row-name">${p.exerciseName} <span class="pr-mini-badge">${labelByType[p.type] || 'PR'}</span></div>
+        <div class="pr-row-detail">${detail}</div>
+        ${prevText ? `<div class="pr-row-prev">${prevText}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  $('#prList').innerHTML = html;
+  $('#prOverlay').classList.add('active');
+  vibrate([40, 60, 40, 60, 200]);
+  beep(660, 120);
+  setTimeout(() => beep(880, 120), 130);
+  setTimeout(() => beep(1100, 200), 280);
+  setTimeout(fireConfetti, 100);
+}
+
+window.closePR = () => $('#prOverlay').classList.remove('active');
+
 function abBadgeHTML(exerciseId){
   const ex = EXERCISE_BY_ID[exerciseId];
   if (!ex) return '';
@@ -107,6 +258,10 @@ const Router = {
     }
     if (this.current === 'session-detail') return this.go('history');
     if (this.current === 'day') return this.go('home');
+    if (this.current === 'exercise') return this.go('exercises');
+    if (this.current === 'exercises') return this.go('home');
+    if (this.current === 'body') return this.go('home');
+    if (this.current === 'settings') return this.go('home');
     this.go('home');
   },
   handlers: {}
@@ -405,8 +560,51 @@ function _createAndStartSession(dayId){
     })
   };
   Store.setActiveSession(session);
+  acquireWakeLock();
   Router.go('session');
 }
+
+// ====== WAKE LOCK ======
+let _wakeLock = null;
+async function acquireWakeLock(){
+  if (!('wakeLock' in navigator)) return;
+  try { _wakeLock = await navigator.wakeLock.request('screen'); }
+  catch(e) { /* تجاهل */ }
+}
+function releaseWakeLock(){
+  if (_wakeLock) { try { _wakeLock.release(); } catch(e){} _wakeLock = null; }
+}
+
+// ====== توليد التسخين ======
+window.generateWarmup = (exIdx) => {
+  const s = Store.getActiveSession();
+  if (!s) return;
+  const ex = s.exercises[exIdx];
+  if (!ex) return;
+  // تقدير الوزن العامل من آخر جلسة أو السيت الأول الحالي
+  let working = parseFloat(ex.sets[0]?.weight) || 0;
+  if (working <= 0) {
+    const last = Store.getLastSetsForExercise(ex.exerciseId);
+    if (last) {
+      const doneSet = last.sets.find(x => x.done);
+      working = doneSet ? parseFloat(doneSet.weight) : 0;
+    }
+  }
+  if (working <= 0) {
+    alertModal('لا يمكن التوليد', 'أدخل الوزن العامل في السيت الأول أولاً، أو سجّل جلسة سابقة.');
+    return;
+  }
+  const round = (w) => Math.round(w / 2.5) * 2.5;
+  const warmups = [
+    { weight: round(working * 0.4), reps: 10, isWarmup: true, done: false },
+    { weight: round(working * 0.6), reps: 6,  isWarmup: true, done: false },
+    { weight: round(working * 0.8), reps: 3,  isWarmup: true, done: false }
+  ];
+  ex.sets = [...warmups, ...ex.sets];
+  Store.setActiveSession(s);
+  renderSession();
+  toast('أُضيفت 3 سيتات تسخين 🔥');
+};
 
 function resumeSession(){ Router.go('session'); }
 
@@ -459,6 +657,21 @@ function renderSession(){
       lastHint = `<div class="last-session-hint">🏆 أفضل: <b>${best.weight} كجم × ${best.reps}</b></div>`;
     }
 
+    // اقتراح التقدّم
+    let progHint = '';
+    if (Store.getSettings().autoProgress.enabled) {
+      const sug = Store.suggestProgress(ex.exerciseId, ex.name);
+      if (sug) {
+        const icon = sug.kind === 'up' ? '🟢' : sug.kind === 'down' ? '🔴' : '🟡';
+        progHint = `<div class="prog-dot ${sug.kind}">${icon} ${sug.reason}${sug.kind !== 'hold' ? ` → ${sug.suggestedWeight} كجم` : ''}</div>`;
+      }
+    }
+
+    // زر التسخين (يظهر فقط على أول تمرين)
+    const warmupBtn = exIdx === 0
+      ? `<button class="warmup-btn" onclick="generateWarmup(${exIdx})">🔥 توليد سيتات تسخين</button>`
+      : '';
+
     return `
       <div class="session-ex ${isCurrent ? 'is-current' : ''} ${allDone ? 'is-done' : ''}" id="sex-${exIdx}">
         <div class="se-head">
@@ -467,10 +680,12 @@ function renderSession(){
             <div class="ex-name">${abBadgeHTML(ex.exerciseId)}${ex.name}</div>
             ${programEx.note ? `<div class="ex-note">${programEx.note}</div>` : ''}
             <div class="se-target">الهدف: ${ex.targetSets} × ${ex.targetReps} • راحة ${ex.targetRest}ث</div>
+            ${progHint}
           </div>
           <button class="ex-remove-btn" onclick="removeExerciseFromSession(${exIdx})" aria-label="حذف التمرين" title="حذف التمرين">✕</button>
         </div>
         ${lastHint}
+        ${warmupBtn}
         <table class="sets-table">
           <thead>
             <tr>
@@ -481,20 +696,28 @@ function renderSession(){
             </tr>
           </thead>
           <tbody>
-            ${ex.sets.map((set, setIdx) => `
-              <tr class="set-row ${set.done ? 'done' : ''}" data-ex="${exIdx}" data-set="${setIdx}">
-                <td><div class="set-num">${setIdx+1}</div></td>
-                <td><input class="input-num" type="number" inputmode="decimal" step="0.5" min="0" placeholder="0"
-                  value="${set.weight !== '' ? set.weight : ''}"
-                  onchange="updateSet(${exIdx},${setIdx},'weight',this.value)"
-                  onfocus="this.select()"></td>
+            ${ex.sets.map((set, setIdx) => {
+              const w = parseFloat(set.weight)||0, r = parseInt(set.reps)||0;
+              const e1rm = (set.done && w > 0 && r > 1) ? Math.round(Store.epley(w, r) * 10) / 10 : null;
+              const isWarmup = set.isWarmup;
+              return `
+              <tr class="set-row ${set.done ? 'done' : ''} ${isWarmup ? 'warmup' : ''}" data-ex="${exIdx}" data-set="${setIdx}">
+                <td><div class="set-num">${isWarmup ? '🔥' : setIdx+1}</div></td>
+                <td class="weight-cell">
+                  <input class="input-num" type="number" inputmode="decimal" step="0.5" min="0" placeholder="0"
+                    value="${set.weight !== '' ? set.weight : ''}"
+                    onchange="updateSet(${exIdx},${setIdx},'weight',this.value)"
+                    onfocus="this.select()">
+                  <button class="weight-tap" onclick="openPlateCalc(parseFloat(this.previousElementSibling.value)||0)" title="حاسبة أقراص" aria-label="حاسبة أقراص">🧮</button>
+                </td>
                 <td><input class="input-num" type="number" inputmode="numeric" step="1" min="0" placeholder="0"
                   value="${set.reps !== '' ? set.reps : ''}"
                   onchange="updateSet(${exIdx},${setIdx},'reps',this.value)"
                   onfocus="this.select()"></td>
                 <td><button class="set-check" onclick="toggleSetDone(${exIdx},${setIdx})">${set.done ? '✓' : ''}</button></td>
               </tr>
-            `).join('')}
+              ${e1rm ? `<tr class="e1rm-row"><td></td><td colspan="3"><div class="e1rm-hint">≈ ${e1rm} كجم 1RM (Epley)</div></td></tr>` : ''}
+            `}).join('')}
           </tbody>
         </table>
         <button class="add-set-btn" onclick="addSet(${exIdx})">+ إضافة سيت</button>
@@ -596,12 +819,19 @@ window.finishSession = (silent=false) => {
     s.durationSec = Math.floor((s.finishedAt - s.startedAt)/1000);
     delete s.currentExerciseIdx;
     Store.saveSession(s);
+    // اكتشف الأرقام الشخصية
+    const newPRs = Store.detectAndStorePRs(s);
     Store.clearActiveSession();
     stopSessionTimer();
     stopRest();
+    releaseWakeLock();
     if (!silent) {
-      toast('تم الحفظ ✓');
       Router.go('session-detail', { id: s.id });
+      if (newPRs.length > 0) {
+        setTimeout(() => showPRCelebration(newPRs), 400);
+      } else {
+        toast('تم الحفظ ✓');
+      }
     }
   };
   if (silent) return finalize();
@@ -889,6 +1119,367 @@ function _openCustomPicker(){
     submitLabel: 'ابدأ التمرين',
     title: 'اختر تمارين اليوم'
   });
+}
+
+// ====== رسم خط SVG بسيط ======
+function lineChartSVG(points, opts = {}) {
+  const W = opts.width || 320, H = opts.height || 140;
+  const padL = 36, padR = 12, padT = 12, padB = 24;
+  if (!points || points.length === 0) {
+    return `<div class="empty-state" style="padding:30px"><div class="ico">📈</div><div class="ttl">لا توجد بيانات بعد</div></div>`;
+  }
+  const xs = points.map(p => p.x);
+  const ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const rangeX = maxX - minX || 1;
+  const rangeY = (maxY - minY) || 1;
+  const padY = rangeY * 0.15;
+  const yMin = minY - padY, yMax = maxY + padY;
+  const sx = x => padL + ((x - minX) / rangeX) * (W - padL - padR);
+  const sy = y => padT + (1 - (y - yMin) / (yMax - yMin || 1)) * (H - padT - padB);
+
+  const pathD = points.map((p,i) => `${i === 0 ? 'M' : 'L'} ${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`).join(' ');
+  const areaD = `${pathD} L ${sx(points[points.length-1].x).toFixed(1)} ${H - padB} L ${sx(points[0].x).toFixed(1)} ${H - padB} Z`;
+
+  // محاور بسيطة (5 شرطات أفقية)
+  const grid = [0, 0.25, 0.5, 0.75, 1].map(t => {
+    const y = padT + t * (H - padT - padB);
+    const v = (yMax - t * (yMax - yMin)).toFixed(1);
+    return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+            <text x="${padL - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="rgba(255,255,255,.4)" font-family="JetBrains Mono">${v}</text>`;
+  }).join('');
+
+  const dots = points.map(p => `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3" fill="#D4A853"/>`).join('');
+
+  // تواريخ على المحور السيني (أول، وسط، آخر)
+  const dateLabels = [0, Math.floor(points.length/2), points.length-1].map(i => {
+    const p = points[i];
+    if (!p || !p.label) return '';
+    return `<text x="${sx(p.x).toFixed(1)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.45)" font-family="Rubik">${p.label}</text>`;
+  }).join('');
+
+  return `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#D4A853" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#D4A853" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${areaD}" fill="url(#ga)"/>
+    <path d="${pathD}" fill="none" stroke="#D4A853" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    ${dateLabels}
+  </svg>`;
+}
+
+// ====== BODY WEIGHT VIEW ======
+Router.handlers.body = () => {
+  $('#brandSub').textContent = 'وزن الجسم';
+  renderBody();
+};
+
+function renderBody(){
+  const entries = Store.getBodyEntries();
+  const latest = entries[0];
+  const weight = latest ? latest.weightKg : null;
+  const previous = entries[1];
+
+  let trendHTML = '';
+  if (latest && previous) {
+    const diff = +(latest.weightKg - previous.weightKg).toFixed(2);
+    if (diff !== 0) {
+      const arrow = diff > 0 ? '▲' : '▼';
+      trendHTML = `<div class="body-trend ${diff > 0 ? 'up' : 'down'}">${arrow} ${Math.abs(diff)} كجم منذ ${fmtDate(previous.recordedAt)}</div>`;
+    }
+  }
+
+  // بيانات الرسم — آخر 90 يوم
+  const cutoff = Date.now() - 90 * 86400000;
+  const chartPoints = entries
+    .filter(e => typeof e.weightKg === 'number' && e.recordedAt >= cutoff)
+    .map(e => ({ x: e.recordedAt, y: e.weightKg, label: fmtDate(e.recordedAt) }))
+    .sort((a,b) => a.x - b.x);
+
+  const chartHTML = chartPoints.length >= 2
+    ? lineChartSVG(chartPoints, { width: 360, height: 160 })
+    : `<div class="empty-state" style="padding:24px"><div class="sub">${chartPoints.length === 1 ? 'سجّل وزن آخر لرؤية الرسم' : 'سجّل وزنك لرؤية تقدّمك هنا'}</div></div>`;
+
+  const historyHTML = entries.slice(0, 30).map(e => `
+    <div class="body-row">
+      <div>
+        <div class="d">${fmtDateFull(e.recordedAt)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="w">${e.weightKg} كجم</span>
+        <button class="del" onclick="deleteBodyEntry('${e.id}')" aria-label="حذف">🗑</button>
+      </div>
+    </div>
+  `).join('') || '<div class="picker-empty">لا توجد سجلات</div>';
+
+  $('#bodyContent').innerHTML = `
+    <div class="body-hero fu">
+      ${weight != null
+        ? `<div class="body-current">${weight}<span class="unit">كجم</span></div>`
+        : `<div class="body-current" style="font-size:24px;color:var(--tx2);-webkit-text-fill-color:var(--tx2)">لم تسجّل بعد</div>`}
+      ${trendHTML}
+    </div>
+    <div class="body-form">
+      <div>
+        <label class="picker-label">الوزن الجديد (كجم)</label>
+        <input type="number" id="bodyInput" class="picker-input" step="0.1" min="20" max="300" placeholder="${weight || '70'}" inputmode="decimal" autocomplete="off">
+      </div>
+      <button class="btn-primary" id="bodySaveBtn" style="height:44px">حفظ</button>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">تطوّر الوزن — 90 يوم</div>
+      ${chartHTML}
+    </div>
+    <div class="section-title"><h2>السجل</h2><span class="line"></span></div>
+    <div class="body-history">${historyHTML}</div>
+  `;
+
+  $('#bodySaveBtn').onclick = () => {
+    const v = parseFloat($('#bodyInput').value);
+    if (!v || v < 20 || v > 300) { toast('أدخل وزناً صحيحاً'); return; }
+    Store.addBodyEntry({ weightKg: v });
+    toast('تم الحفظ ✓');
+    renderBody();
+  };
+}
+
+window.deleteBodyEntry = (id) => {
+  confirmModal('حذف السجل؟', 'سيُحذف هذا القياس نهائياً.', () => {
+    Store.deleteBodyEntry(id);
+    renderBody();
+    toast('تم الحذف');
+  }, 'حذف', 'إلغاء');
+};
+
+// ====== EXERCISES LIBRARY VIEW ======
+Router.handlers.exercises = () => {
+  $('#brandSub').textContent = 'مكتبة التمارين';
+  renderExercisesLibrary();
+};
+
+function renderExercisesLibrary(query = ''){
+  const all = Object.values(EXERCISE_BY_ID);
+  const ql = query.trim().toLowerCase();
+  const items = ql ? all.filter(ex => ex.name.toLowerCase().includes(ql) || (ex.primaryMuscle||'').includes(query)) : all;
+
+  // مجموعة حسب العضلة الأساسية
+  const groups = {};
+  items.forEach(ex => {
+    const k = ex.primaryMuscle || 'أخرى';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(ex);
+  });
+
+  const groupsHTML = Object.entries(groups).map(([muscle, exs]) => `
+    <div class="section-title"><h2>${muscle} (${exs.length})</h2><span class="line"></span></div>
+    <div class="lib-list">
+      ${exs.map(ex => {
+        const best = Store.getBestForExercise(ex.id);
+        const sessions = Store.data.sessions.filter(s => s.exercises.some(e => e.exerciseId === ex.id)).length;
+        return `
+          <div class="lib-item" onclick="Router.go('exercise',{id:'${ex.id}'})">
+            <div style="flex:1;min-width:0">
+              <div class="lib-name">${abBadgeHTML(ex.id)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ex.name}</span></div>
+              <div class="lib-meta">${sessions} جلسة • ${ex.equipment || '—'}</div>
+            </div>
+            ${best ? `<div class="lib-best">${best.weight} كجم</div>` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
+
+  $('#exercisesContent').innerHTML = `
+    <div class="lib-search-wrap">
+      <input type="search" class="picker-search" id="libSearch" placeholder="🔍 ابحث عن تمرين..." value="${query}" autocomplete="off">
+    </div>
+    ${groupsHTML || '<div class="picker-empty">لا توجد نتائج</div>'}
+  `;
+
+  $('#libSearch').oninput = (e) => renderExercisesLibrary(e.target.value);
+};
+
+// ====== EXERCISE DETAIL VIEW ======
+Router.handlers.exercise = ({id}) => {
+  const ex = EXERCISE_BY_ID[id];
+  if (!ex) return Router.go('exercises');
+  $('#brandSub').textContent = ex.name;
+
+  const best = Store.getBestForExercise(id);
+  const bestE1 = Store.getBestE1RM(id);
+  const sessions = Store.data.sessions.filter(s => s.exercises.some(e => e.exerciseId === id))
+                    .sort((a,b) => b.startedAt - a.startedAt);
+
+  // بيانات الرسم — e1RM لكل جلسة
+  const progData = Store.getProgressionData(id, 30);
+  const chartPoints = progData.map(p => ({ x: p.date, y: p.e1rm, label: fmtDate(p.date) }));
+  const chartHTML = chartPoints.length >= 2
+    ? lineChartSVG(chartPoints, { width: 360, height: 160 })
+    : `<div class="empty-state" style="padding:24px"><div class="sub">سجّل جلستين على الأقل لرؤية تقدّمك</div></div>`;
+
+  // PRs
+  const prs = Store.getPRsByExercise(id).slice(0, 5);
+  const prsHTML = prs.length ? prs.map(p => {
+    const labelByType = { weight: 'وزن', e1rm: '1RM', volume: 'حجم' };
+    const detail = p.type === 'weight'
+      ? `${p.context.weight} كجم × ${p.context.reps}`
+      : p.type === 'e1rm' ? `≈ ${p.value} كجم` : `${p.value.toLocaleString('en-US')} كجم`;
+    return `
+      <div class="body-row">
+        <div>
+          <div class="lib-name"><span class="pr-mini-badge">${labelByType[p.type]}</span> ${detail}</div>
+          <div class="d" style="font-size:10.5px;color:var(--tx3);margin-top:3px">${fmtDate(p.achievedAt)}</div>
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="picker-empty" style="padding:14px">لا توجد أرقام شخصية بعد</div>';
+
+  $('#exerciseDetailContent').innerHTML = `
+    <div class="dd-hero">
+      <div class="dd-title">${abBadgeHTML(id)}${ex.name}</div>
+      <div class="dd-muscles">${ex.primaryMuscle || ''} • ${ex.equipment || ''}</div>
+      <div class="dd-desc">${ex.note || ''}</div>
+      <div class="dd-meta">
+        ${best ? `<div class="tc-meta-item">🏆 <b>${best.weight} كجم × ${best.reps}</b></div>` : ''}
+        ${bestE1 > 0 ? `<div class="tc-meta-item">💪 <b>${Math.round(bestE1*10)/10} كجم 1RM</b></div>` : ''}
+        <div class="tc-meta-item">📊 <b>${sessions.length}</b> جلسة</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">تطوّر القوة (1RM مقدّر)</div>
+      ${chartHTML}
+    </div>
+    <div class="section-title"><h2>الأرقام الشخصية</h2><span class="line"></span></div>
+    ${prsHTML}
+    <div class="section-title"><h2>الجلسات (${sessions.length})</h2><span class="line"></span></div>
+    ${sessions.slice(0, 10).map(renderHistItem).join('') || '<div class="picker-empty" style="padding:14px">لم تسجّل بعد</div>'}
+  `;
+};
+
+// ====== SETTINGS VIEW ======
+Router.handlers.settings = () => {
+  $('#brandSub').textContent = 'الإعدادات';
+  renderSettings();
+};
+
+function renderSettings(){
+  const s = Store.getSettings();
+  $('#settingsContent').innerHTML = `
+    <div class="set-section">
+      <div class="set-section-title">التمرين</div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl">مدة الراحة الافتراضية</div>
+          <div class="sub">يستخدم لو ما حدد التمرين راحة</div>
+        </div>
+        <div class="ctl"><input type="number" min="15" max="600" step="15" id="setDefRest" value="${s.defaultRest}"> ث</div>
+      </div>
+      <div class="set-row-item">
+        <div><div class="lbl">صوت تنبيه نهاية الراحة</div></div>
+        <div class="ctl"><div class="toggle ${s.soundOn ? 'on' : ''}" data-key="soundOn"></div></div>
+      </div>
+      <div class="set-row-item">
+        <div><div class="lbl">اهتزاز</div></div>
+        <div class="ctl"><div class="toggle ${s.vibrationOn ? 'on' : ''}" data-key="vibrationOn"></div></div>
+      </div>
+      <div class="set-row-item">
+        <div><div class="lbl">احتفال PR (كونفيتي)</div></div>
+        <div class="ctl"><div class="toggle ${s.confettiOn ? 'on' : ''}" data-key="confettiOn"></div></div>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-section-title">حاسبة الأقراص</div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl">وزن البار الافتراضي</div>
+          <div class="sub">يستخدم في حاسبة الأقراص</div>
+        </div>
+        <div class="ctl">
+          <select id="setBar">
+            ${[20,15,10,7].map(v => `<option value="${v}" ${s.barWeight === v ? 'selected' : ''}>${v} كجم</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-section-title">التقدّم التلقائي</div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl">اقتراح زيادة الوزن</div>
+          <div class="sub">يقترح زيادة عند بلوغ هدف التكرار</div>
+        </div>
+        <div class="ctl"><div class="toggle ${s.autoProgress.enabled ? 'on' : ''}" data-key="autoProgressEnabled"></div></div>
+      </div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl">زيادة المركّبة</div>
+          <div class="sub">Chest Press, Leg Press, Row...</div>
+        </div>
+        <div class="ctl"><input type="number" min="0.5" max="10" step="0.5" id="setCompound" value="${s.autoProgress.compoundKg}"> كجم</div>
+      </div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl">زيادة العزل</div>
+          <div class="sub">Curl, Fly, Extension...</div>
+        </div>
+        <div class="ctl"><input type="number" min="0.25" max="5" step="0.25" id="setIsolation" value="${s.autoProgress.isolationKg}"> كجم</div>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <div class="set-section-title">البيانات</div>
+      <div class="set-row-item">
+        <div><div class="lbl">تصدير نسخة احتياطية</div></div>
+        <div class="ctl"><button class="btn-ghost" onclick="exportData()" style="padding:8px 14px;font-size:12px">📤 تصدير</button></div>
+      </div>
+      <div class="set-row-item">
+        <div><div class="lbl">استيراد نسخة احتياطية</div></div>
+        <div class="ctl"><button class="btn-ghost" onclick="importData()" style="padding:8px 14px;font-size:12px">📥 استيراد</button></div>
+      </div>
+      <div class="set-row-item">
+        <div>
+          <div class="lbl" style="color:var(--red)">حذف كل البيانات</div>
+          <div class="sub">لا يمكن التراجع</div>
+        </div>
+        <div class="ctl"><button class="btn-ghost" onclick="resetData()" style="padding:8px 14px;font-size:12px;color:var(--red);border-color:rgba(255,90,95,.2)">🗑️</button></div>
+      </div>
+    </div>
+
+    <div class="set-section" style="text-align:center;color:var(--tx3);font-size:11px;padding:18px">
+      BULK MODE v1.4 • صُنع لمتابعة رحلة التضخيم
+    </div>
+  `;
+
+  // مفاتيح التبديل
+  $$('.toggle[data-key]').forEach(t => {
+    t.onclick = () => {
+      const key = t.dataset.key;
+      if (key === 'autoProgressEnabled') {
+        Store.updateSettings({ autoProgress: { ...Store.getSettings().autoProgress, enabled: !Store.getSettings().autoProgress.enabled } });
+      } else {
+        Store.updateSettings({ [key]: !Store.getSettings()[key] });
+      }
+      renderSettings();
+    };
+  });
+
+  // الحقول الرقمية
+  $('#setDefRest').onchange = (e) => Store.updateSettings({ defaultRest: parseInt(e.target.value) || 90 });
+  $('#setBar').onchange = (e) => Store.updateSettings({ barWeight: parseInt(e.target.value) || 20 });
+  $('#setCompound').onchange = (e) => {
+    Store.updateSettings({ autoProgress: { ...Store.getSettings().autoProgress, compoundKg: parseFloat(e.target.value) || 2.5 } });
+  };
+  $('#setIsolation').onchange = (e) => {
+    Store.updateSettings({ autoProgress: { ...Store.getSettings().autoProgress, isolationKg: parseFloat(e.target.value) || 1.25 } });
+  };
 }
 
 // ====== REST TIMER ======
@@ -1188,10 +1779,7 @@ window.deleteSession = (id) => {
 function bindGlobalEvents(){
   $('#backBtn').addEventListener('click', () => Router.back());
   $('#brandBtn').addEventListener('click', () => Router.go('home'));
-  $('#menuBtn').addEventListener('click', () => {
-    Router.go('history');
-    setTimeout(() => switchTab('stats'), 50);
-  });
+  $('#menuBtn').addEventListener('click', () => Router.go('settings'));
 
   $$('.bn-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1227,6 +1815,20 @@ function bindGlobalEvents(){
     if (e.target === $('#pickerModal')) closePicker();
   });
 
+  // PLATE CALCULATOR
+  $('#plateModal').addEventListener('click', (e) => {
+    if (e.target === $('#plateModal')) $('#plateModal').classList.remove('active');
+  });
+  $('#plateClose').addEventListener('click', () => $('#plateModal').classList.remove('active'));
+  $('#plateTarget').addEventListener('input', computePlates);
+  $('#plateBar').addEventListener('change', computePlates);
+
+  // PR overlay
+  $('#prClose').addEventListener('click', closePR);
+  $('#prOverlay').addEventListener('click', (e) => {
+    if (e.target === $('#prOverlay')) closePR();
+  });
+
   // منع إغلاق الصفحة بالخطأ أثناء التمرين
   window.addEventListener('beforeunload', (e) => {
     if (Store.getActiveSession()){
@@ -1235,13 +1837,15 @@ function bindGlobalEvents(){
     }
   });
 
-  // Wake lock أثناء الجلسة (كي لا تنطفئ الشاشة)
-  let wakeLock = null;
+  // Wake lock — إعادة الطلب عند رجوع الصفحة للواجهة
   document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && Store.getActiveSession() && 'wakeLock' in navigator){
-      try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+    if (document.visibilityState === 'visible' && Store.getActiveSession()){
+      acquireWakeLock();
     }
   });
+
+  // اضمن Wake Lock مفعّل لو كانت هناك جلسة جارية عند فتح التطبيق
+  if (Store.getActiveSession()) acquireWakeLock();
 }
 
 function switchTab(name){
