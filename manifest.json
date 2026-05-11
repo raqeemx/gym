@@ -1,0 +1,28 @@
+{
+  "name": "BULK MODE — برنامج التضخيم",
+  "short_name": "BULK MODE",
+  "description": "برنامج تضخيم 12 أسبوع مع نظام تتبع شامل",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050608",
+  "theme_color": "#D4A853",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

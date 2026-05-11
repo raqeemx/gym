@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BULK MODE V4 — برنامج التضخيم</title>
+
+<!-- PWA Configuration -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#D4A853">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BULK MODE">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--g1:#D4A853;--g2:#EDCA7A;--g3:#B08A3A;--g4:rgba(212,168,83,.14);--g5:rgba(212,168,83,.06);--bg:#050608;--s1:#0B0D11;--s2:#10131A;--s3:#161A24;--s4:#1D222E;--tx:#DEE0E6;--tx2:#8890A0;--tx3:#4E5568;--red:#FF5A5F;--blue:#5AB4FF;--grn:#5AE68A;--org:#FFB85A;--purple:#B08AFF;--r1:16px;--r2:20px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'Rubik',sans-serif;line-height:1.85;overflow-x:hidden;-webkit-font-smoothing:antialiased;letter-spacing:.01em}
+::selection{background:var(--g1);color:#000}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--g3),var(--g1));border-radius:10px}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes glow{0%,100%{box-shadow:0 0 24px rgba(212,168,83,.12)}50%{box-shadow:0 0 48px rgba(212,168,83,.25)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes borderGlow{0%,100%{border-color:rgba(212,168,83,.08)}50%{border-color:rgba(212,168,83,.25)}}
+.fu{animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both}.fu1{animation-delay:.12s}.fu2{animation-delay:.24s}.fu3{animation-delay:.36s}
+
+/* HERO */
+.hero{position:relative;padding:60px 24px 48px;text-align:center;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse 500px 350px at 50% 30%,rgba(212,168,83,.1),transparent 70%),
+  radial-gradient(ellipse 300px 300px at 20% 80%,rgba(90,180,255,.04),transparent),
+  radial-gradient(ellipse 300px 300px at 80% 80%,rgba(90,230,138,.03),transparent)}
+.hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,rgba(212,168,83,.25) 50%,transparent 95%)}
+.hl{display:inline-flex;align-items:center;gap:8px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);color:var(--g2);font-size:10px;letter-spacing:5px;padding:7px 22px;border-radius:30px;margin-bottom:22px;font-weight:600;text-transform:uppercase;font-family:'Outfit',sans-serif;backdrop-filter:blur(8px)}
+.hl .dot{width:7px;height:7px;border-radius:50%;background:var(--g1);animation:pulse 2s infinite;box-shadow:0 0 8px var(--g1)}
+h1{font-family:'Outfit',sans-serif;font-size:clamp(30px,7.5vw,56px);font-weight:800;color:#fff;line-height:1.1;margin-bottom:10px;letter-spacing:-1px}
+h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 40%,#fff 50%,var(--g2) 60%,var(--g1) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite}
+.hsub{color:var(--tx2);font-size:13.5px;max-width:460px;margin:0 auto 30px;font-weight:300;line-height:1.7}
+
+/* STATS */
+.sbar{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;max-width:540px;margin:0 auto}
+.sp{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:30px;padding:9px 18px;font-size:12px;backdrop-filter:blur(12px);transition:.3s}
+.sp:hover{border-color:rgba(212,168,83,.2);transform:translateY(-2px)}
+.sp .n{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--g2);font-size:15px}
+.sp .l{color:var(--tx2);font-size:11px}
+
+/* NAV — SIMPLE */
+.nav{position:sticky;top:0;z-index:100;background:rgba(5,6,8,.92);backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;padding:0 12px;gap:0}
+.nav-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;color:var(--g2);cursor:pointer;white-space:nowrap;padding:14px 8px 14px 0;letter-spacing:.5px;flex-shrink:0;transition:.3s}
+.nav-brand:hover{color:#fff}
+.ni{display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;flex:1;gap:1px;padding:0 4px}.ni::-webkit-scrollbar{display:none}
+.nb{flex-shrink:0;position:relative;padding:14px 14px;background:none;border:none;color:var(--tx3);cursor:pointer;font-family:'Rubik',sans-serif;font-size:11.5px;font-weight:600;transition:.25s;white-space:nowrap;border-radius:8px}
+.nb.a{color:var(--g2)}
+.nb.a::after{content:'';position:absolute;bottom:4px;left:25%;right:25%;height:2px;background:var(--g1);border-radius:2px}
+.nb:hover{color:var(--tx);background:rgba(255,255,255,.03)}
+
+/* SECTIONS */
+.sec{display:none;padding:28px 18px;max-width:840px;margin:0 auto;animation:fadeUp .35s cubic-bezier(.16,1,.3,1)}
+.sec.a{display:block}
+
+/* FOOTER */
+.footer{text-align:center;padding:48px 20px 100px;border-top:1px solid rgba(255,255,255,.04);margin-top:32px;background:linear-gradient(180deg,transparent,rgba(212,168,83,.02))}
+.footer-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:22px;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.footer-text{font-size:12px;color:var(--tx3);line-height:1.8;max-width:400px;margin:0 auto}
+.footer-stats{display:flex;justify-content:center;gap:16px;margin-top:20px;flex-wrap:wrap}
+.footer-stat{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.02)}
+.footer-stat b{color:var(--g2)}
+
+/* BACK TO TOP */
+.btt{position:fixed;bottom:90px;left:20px;width:44px;height:44px;border-radius:50%;background:rgba(11,13,17,.9);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-size:16px;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:198;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.btt:hover{border-color:rgba(212,168,83,.3);color:var(--g2);transform:translateY(-3px)}
+.btt.show{display:flex}
+
+/* SCROLL PROGRESS */
+.progress-bar{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g1),var(--g2));z-index:9998;transition:width .1s;width:0;transform-origin:right}
+
+/* CARDS */
+.card{position:relative;background:linear-gradient(145deg,var(--s1),var(--s2));border:1px solid rgba(255,255,255,.04);border-radius:var(--r2);padding:24px;margin-bottom:18px;overflow:hidden;transition:all .35s cubic-bezier(.16,1,.3,1)}
+.card:hover{border-color:rgba(255,255,255,.1);transform:translateY(-2px);box-shadow:0 16px 48px rgba(0,0,0,.3)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 10%,rgba(255,255,255,.08) 50%,transparent 90%)}
+.card::after{content:'';position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(212,168,83,.04),transparent 70%);pointer-events:none}
+.ch{display:flex;align-items:center;gap:15px;margin-bottom:18px}
+.ci{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;background:linear-gradient(145deg,rgba(212,168,83,.12),rgba(212,168,83,.04));border:1px solid rgba(212,168,83,.12);box-shadow:0 4px 16px rgba(212,168,83,.06)}
+.ct{font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.cs{font-size:11.5px;color:var(--tx2);margin-top:3px}
+
+/* DAY CARDS */
+.dy{background:linear-gradient(145deg,var(--s1),var(--s2));border:1px solid rgba(255,255,255,.04);border-radius:var(--r2);margin-bottom:12px;overflow:hidden;transition:all .35s cubic-bezier(.16,1,.3,1)}
+.dy:hover{border-color:rgba(255,255,255,.1);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.dy.open{animation:borderGlow 3s infinite}
+.dh{display:flex;align-items:center;padding:18px 22px;cursor:pointer;gap:15px;transition:.25s;-webkit-tap-highlight-color:transparent}
+.dh:active{transform:scale(.995)}
+.db{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;flex-shrink:0;transition:.3s}
+.db.push{background:linear-gradient(145deg,rgba(255,90,95,.14),rgba(255,90,95,.04));color:var(--red);border:1px solid rgba(255,90,95,.15);box-shadow:0 4px 12px rgba(255,90,95,.06)}
+.db.pull{background:linear-gradient(145deg,rgba(90,180,255,.14),rgba(90,180,255,.04));color:var(--blue);border:1px solid rgba(90,180,255,.15);box-shadow:0 4px 12px rgba(90,180,255,.06)}
+.db.legs{background:linear-gradient(145deg,rgba(90,230,138,.14),rgba(90,230,138,.04));color:var(--grn);border:1px solid rgba(90,230,138,.15);box-shadow:0 4px 12px rgba(90,230,138,.06)}
+.db.rest{background:linear-gradient(145deg,var(--g4),var(--g5));color:var(--g2);border:1px solid rgba(212,168,83,.12);box-shadow:0 4px 12px rgba(212,168,83,.06)}
+.di{flex:1;min-width:0}.dn{font-weight:700;font-size:14.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.df{font-size:11.5px;color:var(--tx2);margin-top:2px}
+.dt{font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:1.5px;text-transform:uppercase}
+.tp{background:rgba(255,90,95,.06);color:var(--red);border:1px solid rgba(255,90,95,.12)}
+.tpl{background:rgba(90,180,255,.06);color:var(--blue);border:1px solid rgba(90,180,255,.12)}
+.tl{background:rgba(90,230,138,.06);color:var(--grn);border:1px solid rgba(90,230,138,.12)}
+.da{color:var(--tx3);font-size:13px;transition:.4s cubic-bezier(.16,1,.3,1);margin-right:4px}
+.dy.open .da{transform:rotate(180deg);color:var(--g2)}
+.dby{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.16,1,.3,1)}
+.dy.open .dby{max-height:3000px}
+.dbi{padding:18px 22px 22px;border-top:1px solid rgba(255,255,255,.04)}
+
+/* EXERCISE TABLE */
+.et{width:100%;border-collapse:collapse}
+.et th{text-align:right;font-family:'Outfit',sans-serif;font-size:10px;color:var(--tx3);font-weight:700;padding:10px 8px;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.05)}
+.et td{padding:14px 8px;border-bottom:1px solid rgba(255,255,255,.02);vertical-align:middle}
+.et tr:last-child td{border-bottom:none}
+.et tbody tr{transition:.2s}.et tbody tr:hover{background:rgba(212,168,83,.03)}
+.en{font-weight:700;font-size:13.5px;color:#fff;font-family:'Rubik',sans-serif}
+.em{font-size:11px;color:var(--g1);margin-top:3px;font-weight:400;opacity:.85}
+.sb{display:inline-block;background:linear-gradient(135deg,var(--g4),var(--g5));color:var(--g2);border-radius:10px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;border:1px solid rgba(212,168,83,.1);white-space:nowrap;transition:.2s}
+.et tbody tr:hover .sb{border-color:rgba(212,168,83,.25);box-shadow:0 2px 8px rgba(212,168,83,.08)}
+.rv{color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* TIPS */
+.tip{display:flex;gap:13px;padding:15px 18px;border-radius:var(--r1);margin-bottom:9px;align-items:flex-start;transition:.2s}
+.tip:hover{transform:translateX(-3px)}
+.t0{background:rgba(212,168,83,.04);border:1px solid rgba(212,168,83,.08)}
+.tb{background:rgba(90,180,255,.04);border:1px solid rgba(90,180,255,.08)}
+.tr{background:rgba(255,90,95,.04);border:1px solid rgba(255,90,95,.08)}
+.tg{background:rgba(90,230,138,.04);border:1px solid rgba(90,230,138,.08)}
+.tpu{background:rgba(176,138,255,.04);border:1px solid rgba(176,138,255,.08)}
+.ti{font-size:16px;flex-shrink:0;margin-top:1px;width:22px;text-align:center}
+.tt{font-size:13px;color:var(--tx2);line-height:1.8}.tt strong{color:var(--g2);font-weight:600}.tt b{color:#fff;font-weight:600}
+
+/* WEEK GRID */
+.wg{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:18px 0}
+.wc{text-align:center;padding:14px 4px;border-radius:14px;border:1px solid rgba(255,255,255,.04);background:var(--s2);transition:all .3s cubic-bezier(.16,1,.3,1)}
+.wc:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.1);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.wc .wd{font-family:'Outfit',sans-serif;font-size:9px;color:var(--tx3);margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}.wc .wt{font-family:'Outfit',sans-serif;font-weight:800;font-size:10.5px}
+.wc.cp{background:rgba(255,90,95,.02);border-color:rgba(255,90,95,.08)}.cp .wt{color:var(--red)}
+.wc.cpl{background:rgba(90,180,255,.02);border-color:rgba(90,180,255,.08)}.cpl .wt{color:var(--blue)}
+.wc.cl{background:rgba(90,230,138,.02);border-color:rgba(90,230,138,.08)}.cl .wt{color:var(--grn)}
+.wc.cr{background:var(--g5);border-color:rgba(212,168,83,.06)}.cr .wt{color:var(--g1)}
+
+/* MACROS */
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.mc{text-align:center;padding:20px 8px;border-radius:var(--r1);background:linear-gradient(145deg,var(--s2),var(--s3));border:1px solid rgba(255,255,255,.04);transition:all .3s cubic-bezier(.16,1,.3,1)}
+.mc:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.25);border-color:rgba(255,255,255,.1)}
+.mn{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;display:block;margin-bottom:4px}
+.ml{font-size:10px;color:var(--tx3);font-family:'Outfit',sans-serif;letter-spacing:.3px}
+.mcc .mn{background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.mcp .mn{color:var(--red)}.mcb .mn{color:var(--org)}.mcf .mn{color:var(--blue)}
+
+/* MEALS */
+.meal{position:relative;background:linear-gradient(145deg,var(--s2),rgba(22,26,36,.8));border:1px solid rgba(255,255,255,.04);border-radius:var(--r1);padding:20px;margin-bottom:12px;overflow:hidden;transition:all .3s cubic-bezier(.16,1,.3,1)}
+.meal:hover{border-color:rgba(255,255,255,.1);transform:translateX(-4px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.meal::before{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;border-radius:0 3px 3px 0;background:var(--g1);opacity:0;transition:.3s}
+.meal:hover::before{opacity:1}
+.mt{font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;margin-bottom:5px;text-transform:uppercase}
+.mna{font-weight:800;color:#fff;font-size:15px;margin-bottom:7px;font-family:'Rubik',sans-serif}
+.md{font-size:13px;color:var(--tx2);line-height:1.85}
+.mm{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.mi{font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);transition:.2s}
+.meal:hover .mi{border-color:rgba(255,255,255,.08)}
+.mic{color:var(--g2)}.mip{color:var(--red)}.mik{color:var(--org)}.mif{color:var(--blue)}
+
+/* PHASE */
+.ph{display:inline-flex;align-items:center;gap:7px;padding:6px 16px;border-radius:24px;font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:700;margin-bottom:12px;letter-spacing:.3px}
+.p1{background:rgba(255,90,95,.06);color:var(--red);border:1px solid rgba(255,90,95,.12)}
+.p2{background:rgba(255,184,90,.06);color:var(--org);border:1px solid rgba(255,184,90,.12)}
+.p3{background:rgba(90,230,138,.06);color:var(--grn);border:1px solid rgba(90,230,138,.12)}
+
+/* PROGRESS TABLE */
+.pt{width:100%;border-collapse:collapse}
+.pt th{text-align:right;font-family:'Outfit',sans-serif;font-size:10px;color:var(--tx3);padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.05);letter-spacing:.5px}
+.pt td{padding:11px 10px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.02);font-family:'JetBrains Mono',monospace}
+.pt .h{color:var(--g2);font-weight:700}.pt .u{color:var(--grn)}
+
+/* EQUIPMENT GRID */
+.eg{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px}
+.ei{padding:12px 14px;background:linear-gradient(145deg,var(--s2),var(--s3));border:1px solid rgba(255,255,255,.04);border-radius:12px;font-size:12px;color:var(--tx);transition:all .3s cubic-bezier(.16,1,.3,1);text-align:center}
+.ei:hover{border-color:rgba(212,168,83,.2);background:var(--s3);transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
+.ei .ec{font-family:'Outfit',sans-serif;font-size:9px;color:var(--tx3);display:block;margin-top:3px;letter-spacing:.3px}
+.ei.new{border-color:rgba(90,230,138,.18);background:linear-gradient(145deg,rgba(90,230,138,.03),var(--s2))}
+.ei.new::after{content:'جديد';font-size:8px;color:var(--grn);font-weight:700;margin-right:5px}
+
+/* STEP-BY-STEP — V3 */
+.phase-bar{display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(212,168,83,.1),transparent);border-right:3px solid var(--g1);padding:10px 14px;margin:14px 0 8px;border-radius:0 10px 10px 0}
+.phase-bar .pl{font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;letter-spacing:2px;color:var(--g1);background:rgba(212,168,83,.12);padding:3px 8px;border-radius:6px}
+.phase-bar .pn{font-family:'Rubik',sans-serif;font-weight:700;font-size:13.5px;color:#fff}
+.phase-bar .pmeta{font-size:11px;color:var(--tx2);margin-right:auto;font-family:'JetBrains Mono',monospace}
+
+.step{display:flex;align-items:stretch;gap:0;margin:5px 0;border-radius:10px;overflow:hidden;transition:.2s}
+.step:hover{transform:translateX(-2px)}
+.step-num{display:flex;align-items:center;justify-content:center;width:38px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--g2);background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.12);border-left:none;flex-shrink:0}
+.step-body{flex:1;padding:9px 14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);border-right:none;min-width:0}
+.step-name{font-weight:700;font-size:13.5px;color:#fff;line-height:1.4}
+.step-info{font-size:11.5px;color:var(--g1);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+.step.rest .step-num{background:rgba(90,180,255,.06);border-color:rgba(90,180,255,.1);color:var(--blue);font-size:14px}
+.step.rest .step-body{background:rgba(90,180,255,.025);border-color:rgba(90,180,255,.05)}
+.step.rest .step-name{color:var(--blue);font-weight:500;font-size:12.5px}
+.step.rest .step-info{color:var(--tx3)}
+
+.step.warmup .step-num{background:rgba(255,184,90,.08);border-color:rgba(255,184,90,.15);color:var(--org)}
+.step.warmup .step-body{background:rgba(255,184,90,.025);border-color:rgba(255,184,90,.05)}
+
+.step.solo-set .step-num{background:rgba(176,138,255,.08);border-color:rgba(176,138,255,.15);color:var(--purple)}
+
+.step.done .step-num{background:rgba(90,230,138,.08);border-color:rgba(90,230,138,.15);color:var(--grn)}
+.step.done .step-body{background:rgba(90,230,138,.025);border-color:rgba(90,230,138,.05)}
+.step.done .step-name{color:var(--grn)}
+
+.pair-banner{background:linear-gradient(90deg,rgba(212,168,83,.06),rgba(212,168,83,.02));border:1px dashed rgba(212,168,83,.2);border-radius:10px;padding:10px 14px;margin:6px 0;font-size:12px;color:var(--g2);display:flex;align-items:center;gap:10px}
+.pair-banner b{color:#fff;font-weight:600}
+.pair-banner .pb-icon{font-size:14px}
+
+.plan-b{background:rgba(90,180,255,.04);border:1px solid rgba(90,180,255,.1);border-right:3px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 12px;margin:6px 0 10px;font-size:11.5px;color:var(--tx2);display:flex;align-items:flex-start;gap:8px}
+.plan-b b{color:var(--blue);font-weight:600}
+.plan-b .pb-tag{font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;color:var(--blue);background:rgba(90,180,255,.1);padding:2px 6px;border-radius:4px;letter-spacing:1px;flex-shrink:0;margin-top:1px}
+
+.zone-tag{display:inline-block;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;color:var(--grn);background:rgba(90,230,138,.08);border:1px solid rgba(90,230,138,.15);padding:2px 8px;border-radius:6px;letter-spacing:.5px;margin-right:8px}
+
+/* ============ TRACKING SYSTEM ============ */
+.track-input{display:flex;gap:8px;align-items:center;margin-top:8px;padding:8px;background:rgba(212,168,83,.04);border:1px dashed rgba(212,168,83,.18);border-radius:8px;flex-wrap:wrap}
+.track-input label{font-size:10px;color:var(--tx3);font-family:'Outfit',sans-serif;letter-spacing:1px;font-weight:600;text-transform:uppercase}
+.track-input input{background:rgba(0,0,0,.4);border:1px solid rgba(212,168,83,.15);color:#fff;padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;width:55px;text-align:center;outline:none;transition:.2s}
+.track-input input:focus{border-color:var(--g1);background:rgba(212,168,83,.06)}
+.track-input input::-webkit-outer-spin-button,.track-input input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.track-input input[type=number]{-moz-appearance:textfield}
+.track-input .save-btn{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border:none;padding:6px 14px;border-radius:6px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:.2s;margin-right:auto}
+.track-input .save-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,168,83,.3)}
+.track-input .save-btn.saved{background:linear-gradient(135deg,var(--grn),#3da868);color:#000}
+.track-input .last{font-size:10px;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+.track-input .last b{color:var(--g2)}
+
+.step.completed .step-body{background:rgba(90,230,138,.06);border-color:rgba(90,230,138,.15)}
+.step.completed .step-name{color:var(--grn)}
+.step.completed .step-num{background:rgba(90,230,138,.12);color:var(--grn);border-color:rgba(90,230,138,.2)}
+
+/* Floating action button */
+.fab{position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g3));border:none;color:#000;font-size:24px;cursor:pointer;box-shadow:0 8px 24px rgba(212,168,83,.4);z-index:1000;display:flex;align-items:center;justify-content:center;transition:.3s}
+.fab:hover{transform:scale(1.08);box-shadow:0 12px 32px rgba(212,168,83,.5)}
+.fab-menu{position:fixed;bottom:88px;left:24px;display:flex;flex-direction:column;gap:8px;z-index:999;opacity:0;pointer-events:none;transition:.3s;transform:translateY(20px)}
+.fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.fab-menu button{background:var(--s2);color:var(--tx);border:1px solid rgba(212,168,83,.2);padding:10px 16px;border-radius:10px;font-family:'Rubik',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:right;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.fab-menu button:hover{background:var(--s3);border-color:var(--g1)}
+
+/* Stats panel */
+.stats-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}
+.stats-modal.open{display:flex}
+.stats-content{background:var(--s1);border:1px solid rgba(212,168,83,.2);border-radius:18px;padding:24px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;direction:rtl}
+.stats-content h2{font-family:'Outfit',sans-serif;font-size:16px;letter-spacing:2px;color:var(--g1);margin-bottom:16px;border-bottom:1px solid rgba(212,168,83,.1);padding-bottom:10px}
+.stats-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.04);font-size:13px}
+.stats-row b{color:var(--g2);font-family:'JetBrains Mono',monospace}
+.stats-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.stats-actions button{flex:1;min-width:120px;padding:10px;background:var(--s3);color:var(--tx);border:1px solid rgba(212,168,83,.2);border-radius:8px;font-family:'Rubik';font-size:12px;font-weight:600;cursor:pointer}
+.stats-actions button.danger{border-color:rgba(255,90,95,.3);color:var(--red)}
+.stats-actions button:hover{background:var(--s4)}
+.close-modal{position:absolute;top:12px;left:12px;background:transparent;border:none;color:var(--tx2);font-size:24px;cursor:pointer}
+
+/* Workout history */
+.history-day{margin-bottom:14px;padding:12px;background:rgba(212,168,83,.03);border:1px solid rgba(212,168,83,.1);border-radius:10px}
+.history-day .h-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g1);margin-bottom:6px}
+.history-day .h-ex{font-size:12px;color:var(--tx2);padding:3px 0;display:flex;justify-content:space-between}
+.history-day .h-ex b{color:#fff;font-weight:500}
+.history-day .h-ex span{color:var(--g2);font-family:'JetBrains Mono',monospace;font-size:11px}
+
+/* Toast notification */
+.toast{position:fixed;bottom:100px;right:50%;transform:translate(50%,20px);background:var(--s2);border:1px solid var(--grn);color:var(--grn);padding:12px 20px;border-radius:10px;font-family:'Rubik';font-size:13px;font-weight:600;z-index:10001;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:translate(50%,0)}
+
+.day-summary{display:flex;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:12px;margin-bottom:14px}
+.ds-item{flex:1;min-width:90px;text-align:center}
+.ds-num{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--g2);display:block}
+.ds-lbl{font-size:10px;color:var(--tx3);font-family:'Outfit',sans-serif;letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+
+
+.pair{position:relative;background:linear-gradient(145deg,rgba(212,168,83,.04),rgba(212,168,83,.01));border:1px solid rgba(212,168,83,.18);border-radius:14px;padding:14px;margin:10px 0;overflow:hidden}
+.pair::before{content:'PAIR';position:absolute;top:-9px;right:14px;background:var(--bg);padding:0 8px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;color:var(--g2);letter-spacing:2px}
+.pair-rounds{display:inline-block;background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:3px 10px;border-radius:8px;margin-top:8px}
+.pair-rest{display:inline-block;color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:11px;margin-right:8px;margin-top:8px}
+.aps-note{font-size:11px;color:var(--g2);background:rgba(212,168,83,.06);padding:8px 12px;border-radius:8px;margin-top:8px;border-right:2px solid var(--g1)}
+.single{position:relative;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:14px;margin:10px 0}
+.single::before{content:'SOLO';position:absolute;top:-9px;right:14px;background:var(--bg);padding:0 8px;font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;color:var(--tx3);letter-spacing:2px}
+.ex-line{display:flex;align-items:flex-start;gap:10px;padding:8px 4px}
+.ex-line:not(:last-child){border-bottom:1px dashed rgba(255,255,255,.04)}
+.ex-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--g2);background:rgba(212,168,83,.1);padding:4px 8px;border-radius:6px;flex-shrink:0;min-width:34px;text-align:center}
+.ex-tag.solo{color:var(--tx3);background:rgba(255,255,255,.04)}
+.ex-body{flex:1;min-width:0}
+.ex-name{font-weight:700;font-size:13.5px;color:#fff;line-height:1.4}
+.ex-meta{font-size:11px;color:var(--g1);margin-top:3px;opacity:.9}
+.ex-sets{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx2);margin-top:4px}
+.ex-sets b{color:var(--g2)}
+
+.tf{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:200;display:none}
+.tf.show{display:flex}
+.tfl{display:flex;align-items:center;gap:14px;background:rgba(11,13,17,.95);backdrop-filter:blur(24px);border:1px solid rgba(212,168,83,.2);border-radius:44px;padding:12px 14px 12px 24px;box-shadow:0 16px 48px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03);animation:glow 3s infinite}
+.td{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:var(--g2);min-width:60px;text-align:center}
+.tla{font-family:'Outfit',sans-serif;font-size:11px;color:var(--tx2)}
+.tbs{display:flex;gap:7px}
+.tbn{width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s cubic-bezier(.16,1,.3,1)}
+.tbn:active{transform:scale(.88)}
+.tbs1{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;box-shadow:0 4px 12px rgba(212,168,83,.25)}.tbs2{background:rgba(255,90,95,.1);color:var(--red);border:1px solid rgba(255,90,95,.2)}
+.tps{display:flex;gap:5px;margin-top:10px;justify-content:center}
+.tpr{background:var(--s3);border:1px solid var(--s4);color:var(--tx2);border-radius:20px;padding:5px 14px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:.25s}
+.tpr:hover,.tpr.a{background:var(--g4);color:var(--g2);border-color:rgba(212,168,83,.25)}
+.ttrig{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:199;background:rgba(11,13,17,.92);backdrop-filter:blur(20px);border:1px solid rgba(212,168,83,.15);border-radius:34px;padding:12px 24px;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:'Outfit',sans-serif;font-size:12.5px;color:var(--g2);font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.4);transition:all .3s cubic-bezier(.16,1,.3,1);animation:float 4s ease-in-out infinite}
+.ttrig:hover{border-color:rgba(212,168,83,.35);transform:translateX(-50%) translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.5)}
+.ttrig.hid{display:none}
+
+@media(max-width:768px){
+  .nav-brand{font-size:12px;padding:12px 6px 12px 0}
+  .nb{padding:12px 10px;font-size:10.5px}
+}
+@media(max-width:500px){
+  .mg{grid-template-columns:repeat(2,1fr)}
+  .wg{gap:4px}.wc{padding:10px 3px}
+  .sbar{gap:4px}.sp{padding:7px 12px;font-size:11px}
+  .mm{gap:5px}
+  h1{letter-spacing:-.5px}
+  .card{padding:18px}
+  .dh{padding:14px 16px}
+  .dbi{padding:12px 16px 16px}
+  .footer{padding:32px 16px 100px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hl fu"><span class="dot"></span>BULK V4 · PEAK-HOUR OPTIMIZED · 12 WEEKS</div>
+  <h1 class="fu fu1">برنامج <em>التضخيم</em> النهائي</h1>
+  <p class="hsub fu fu2">إصدار <strong style="color:var(--g2)">محسّن لذروة الجيم (٦-٩م)</strong><br>أزواج بنفس المنطقة · ٦٠ ث راحة · Plan B لكل تمرين</p>
+  <div class="sbar fu fu3">
+    <div class="sp"><span class="n">6</span><span class="l">أيام تمرين</span></div>
+    <div class="sp"><span class="n">52-57</span><span class="l">دقيقة/جلسة</span></div>
+    <div class="sp"><span class="n">60s</span><span class="l">راحة موحّدة</span></div>
+    <div class="sp"><span class="n">175g</span><span class="l">بروتين</span></div>
+  </div>
+</div>
+
+<nav class="nav">
+  <div class="nav-brand" onclick="scrollTop()">💪 BULK</div>
+  <div class="ni">
+    <button class="nb a" data-t="0">نظرة عامة</button>
+    <button class="nb" data-t="6">أول مرة</button>
+    <button class="nb" data-t="1">التمارين</button>
+    <button class="nb" data-t="2">الأوزان</button>
+    <button class="nb" data-t="3">الأكل</button>
+    <button class="nb" data-t="4">نصائح</button>
+    <button class="nb" data-t="5">دليل شامل</button>
+  </div>
+</nav>
+
+<!-- ===== TAB 0: نظرة عامة ===== -->
+<div class="sec a" id="t0">
+
+  <div class="card fu fu1">
+    <div class="ch"><div class="ci">⚡</div><div><div class="ct">النظام الجديد V4 — كيف يشتغل؟</div><div class="cs">Antagonist Paired Sets · محسّن لذروة الجيم</div></div></div>
+
+    <div class="tip tg"><div class="ti">🎯</div><div class="tt"><strong>الفكرة الأساسية:</strong> بدل ما تستريح ساكت بين سيتات الظهر، تستغل وقت الراحة بتمرين كتف (عضلة مختلفة). الظهر يرتاح فعلياً ١٦٠ ث (~٢:٤٠ دقيقة) وأنت تشتغل = تنهي تمرينك في ٥٥ دقيقة بدل ٧٥.</div></div>
+
+    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>التحدي الحقيقي — ذروة الجيم:</strong> أنت تتمرن بين ٦-٩م والجيم مزدحم. <b>أكبر مشكلة في APS:</b> تحتاج جهازين فاضيين بنفس اللحظة. الحل في V4:<br><br>✅ <b>كل الأزواج مصممة بأجهزة متجاورة أو نفس الجهاز</b><br>✅ <b>كل زوج له Plan B</b> لو أحد الجهازين مشغول<br>✅ <b>استراتيجية المنشفة:</b> ضع منشفتك على الجهاز الثاني = حجز ضمني محترم</div></div>
+
+    <div class="tip tb"><div class="ti">📊</div><div class="tt"><strong>المعادلة الزمنية لـ V4:</strong><br>• راحة بين تمارين الزوج: <b>٦٠ ثانية موحّدة</b><br>• راحة فعلية للعضلة المستهدفة: <b>٦٠+٤٠+٦٠ = ١٦٠ ث (~٢:٤٠ دقيقة)</b><br>• راحة المركّبات SOLO (Chest Press, Leg Press, Shoulder Press): <b>٩٠-١٢٠ ث</b> غير قابلة للتقصير<br><br><b>المدة الإجمالية: ٥٢-٥٧ دقيقة لكل جلسة.</b></div></div>
+
+    <div class="tip t0"><div class="ti">🔬</div><div class="tt"><strong>هل ١٦٠ ث راحة كافية؟</strong> نعم، علمياً مؤكد. دراسات Schoenfeld 2016 و Grgic 2018 أثبتت إن راحة ٢-٣ دقائق تعطي نفس نمو العضل مثل ٥ دقائق، طالما الـ proximity to failure متماثل. الأهم هو RPE 7-8 في آخر تكرار، مش طول الراحة.</div></div>
+
+    <div class="tip t0"><div class="ti">📋</div><div class="tt"><strong>قراءة البرنامج:</strong><br>• <span style="color:var(--purple)">رقم بنفسجي</span> = سيت SOLO (تمرين منفرد براحة كاملة)<br>• <span style="color:var(--g2)">رقم ذهبي</span> = سيت داخل زوج APS<br>• <span style="color:var(--blue)">⏱ أزرق</span> = استراحة محسوبة بالثانية<br>• <span style="color:var(--blue)">📋 Plan B</span> = البديل لو الجهاز مشغول<br>• <span style="color:var(--grn)">🟢 ZONE</span> = منطقة الأجهزة في الجيم<br><br><b>كل اللي عليك:</b> اتبع الترتيب من ١ لآخر رقم. لا تفكر، لا تخطّط — بس نفّذ.</div></div>
+  </div>
+
+  <div class="card fu">
+    <div class="ch"><div class="ci">👤</div><div><div class="ct">بياناتك</div></div></div>
+    <div class="tip t0"><div class="ti">📋</div><div class="tt">العمر: <b>30 سنة</b> · الطول: <b>174 سم</b> · الوزن: <b>73 كجم</b><br>المستوى: <b>مبتدئ — أول مرة في الجيم</b><br>الهدف: <b>زيادة عضلات مع أقل دهون ممكنة</b><br>وقت التمرين: <b>بعد العشاء حوالي 9:30 مساءً</b><br>إصابات: <b>لا يوجد</b></div></div>
+  </div>
+
+  <div class="card fu fu2">
+    <div class="ch"><div class="ci">⚙️</div><div><div class="ct">كيف مقسّم الأسبوع؟ (تقسيم جديد)</div><div class="cs">Upper/Lower/Arms مع تكرار كل عضلة مرتين بالأسبوع</div></div></div>
+    <div class="tip t0"><div class="ti">💡</div><div class="tt"><strong>الفكرة الجديدة:</strong> بدل PUSH/PULL/LEGS، قسّمنا:<br>🟣 <strong>UPPER (الجذع العلوي)</strong> = صدر ↔ ظهر + أكتاف أمامية ↔ أكتاف خلفية<br>🟢 <strong>LOWER (الأرجل)</strong> = كوادز ↔ هامسترنغز + سمانة + بطن<br>🟠 <strong>ARMS</strong> = بايسبس ↔ ترايسبس + خصر<br><br>هذا التقسيم يخلّي كل عضلة مع عضلتها المتضادة في نفس اليوم = أزواج APS طبيعية = تمرين أسرع.</div></div>
+    <div class="wg">
+      <div class="wc cp"><div class="wd">الأحد</div><div class="wt">UPPER A</div></div>
+      <div class="wc cl"><div class="wd">الاثنين</div><div class="wt">LOWER A</div></div>
+      <div class="wc cpl"><div class="wd">الثلاثاء</div><div class="wt">ARMS A</div></div>
+      <div class="wc cr"><div class="wd">الأربعاء</div><div class="wt">راحة</div></div>
+      <div class="wc cp"><div class="wd">الخميس</div><div class="wt">UPPER B</div></div>
+      <div class="wc cl"><div class="wd">الجمعة</div><div class="wt">LOWER B</div></div>
+      <div class="wc cpl"><div class="wd">السبت</div><div class="wt">ARMS B</div></div>
+    </div>
+    <div class="tip tg" style="margin-top:8px"><div class="ti">✅</div><div class="tt"><strong>تكرار التحفيز:</strong><br>• الصدر/الظهر/الأكتاف: ٢×/أسبوع (Upper A + Upper B)<br>• الأرجل: ٢×/أسبوع (Lower A + Lower B)<br>• البايسبس/الترايسبس: <b>٤×/أسبوع</b> فعلياً — مرتين عمل مباشر (Arms A+B) + مرتين عمل غير مباشر (Upper A+B)</div></div>
+  </div>
+
+  <div class="card fu fu3">
+    <div class="ch"><div class="ci">📍</div><div><div class="ct">استراتيجية ذروة الجيم (٦-٩م)</div><div class="cs">القيد الأكبر — جهازين فاضيين بنفس اللحظة</div></div></div>
+
+    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>تحدي الذروة:</strong> في وقتك (٦-٩م) كل الأجهزة مشغولة. فكرة APS تفترض جهازين فاضيين متجاورين — وهذا صعب في الذروة. الحل ثلاث استراتيجيات:</div></div>
+
+    <div class="tip tg"><div class="ti">1️⃣</div><div class="tt"><strong>أزواج Zone-Based:</strong> كل الأزواج في V4 مصممة بأجهزة <b>متجاورة جداً</b> أو نفس الجهاز:<br>• Chin Up + Dip = نفس الجهاز (Kneeling Easy)<br>• Bicep Curl + Tricep Pushdown = نفس الكابل (Pulley)<br>• Abductor + Adductor = نفس الجهاز (تغيير الوسائد)<br>• Leg Extension + Prone Leg Curl = جهازين متجاورين</div></div>
+
+    <div class="tip tg"><div class="ti">2️⃣</div><div class="tt"><strong>قاعدة المنشفة:</strong> قبل بدء الزوج، ضع منشفتك أو زجاجة الماء على الجهاز الثاني. هذا حجز ضمني محترم في كل الجيمات. المنشفة الموجودة = "أنا أستخدم هذا الجهاز".</div></div>
+
+    <div class="tip tg"><div class="ti">3️⃣</div><div class="tt"><strong>Plan B لكل زوج:</strong> لو الجهاز الثاني مشغول رغم الاستراتيجيتين أعلاه، كل زوج في V4 له بديل واضح مكتوب. مثلاً:<br>• <b>Lat Machine ↔ Shoulder Press</b><br>• <b>Plan B:</b> Vertical Traction ↔ Delts Machine</div></div>
+
+    <div class="tip tb"><div class="ti">💡</div><div class="tt"><strong>قاعدة ذهبية:</strong> لو حسيت إنك تضيع وقت تنتظر الجهازين، <b>اقلب الزوج إلى Straight Sets</b> مؤقتاً (سوِّ كل التمرين الأول، ثم كل التمرين الثاني). أفضل من إضاعة ٥ دقائق انتظار.</div></div>
+  </div>
+
+  <div class="card fu fu3">
+    <div class="ch"><div class="ci">🔢</div><div><div class="ct">حساب الراحة الفعلية في V4</div></div></div>
+    <div class="tip tb"><div class="ti">⏱️</div><div class="tt"><strong>زوج Lat Machine ↔ Shoulder Press:</strong><br>• ✅ سيت Lat Machine (٤٠ ث)<br>• ⏸️ راحة ٦٠ ث (٢٠ ث للانتقال + ٤٠ ث جلوس)<br>• ✅ سيت Shoulder Press (٤٠ ث)<br>• ⏸️ راحة ٦٠ ث<br>• ✅ سيت Lat Machine (مرة ثانية)<br><br><b>الـ Lat ارتاح فعلياً: ٦٠+٤٠+٦٠ = ١٦٠ ث ≈ ٢:٤٠ دقيقة ✓</b><br>راحة كافية علمياً لإعادة بناء فوسفوكرياتين العضلة بالكامل (٩٠٪+).</div></div>
+  </div>
+
+  <div class="card fu">
+    <div class="ch"><div class="ci">🏋️</div><div><div class="ct">الأجهزة المتوفرة في الجيم</div><div class="cs">24 جهاز Technogym</div></div></div>
+    <div class="eg">
+      <div class="ei">Chest Press<span class="ec">صدر</span></div>
+      <div class="ei">Pectoral Fly<span class="ec">صدر</span></div>
+      <div class="ei">Shoulder Press<span class="ec">أكتاف</span></div>
+      <div class="ei">Delts Machine<span class="ec">أكتاف جانبية</span></div>
+      <div class="ei">Arm Extension<span class="ec">خلف الذراع</span></div>
+      <div class="ei">Arm Curl<span class="ec">مقدمة الذراع</span></div>
+      <div class="ei">Lat Machine<span class="ec">ظهر عريض</span></div>
+      <div class="ei">Vertical Traction<span class="ec">ظهر</span></div>
+      <div class="ei">Low Row<span class="ec">وسط الظهر</span></div>
+      <div class="ei">Pulley<span class="ec">كابل متعدد</span></div>
+      <div class="ei">Upper Back<span class="ec">أعلى الظهر</span></div>
+      <div class="ei">Reverse Fly<span class="ec">خلف الكتف</span></div>
+      <div class="ei">Leg Press<span class="ec">فخذ أمامي وخلفي</span></div>
+      <div class="ei">Leg Extension<span class="ec">فخذ أمامي</span></div>
+      <div class="ei">Prone Leg Curl<span class="ec">فخذ خلفي</span></div>
+      <div class="ei">Abductor<span class="ec">فتح الأرجل</span></div>
+      <div class="ei">Adductor<span class="ec">ضم الأرجل</span></div>
+      <div class="ei">Lower Back<span class="ec">أسفل الظهر</span></div>
+      <div class="ei">Rotary Torso<span class="ec">خصر</span></div>
+      <div class="ei">Abdominal Crunch<span class="ec">بطن</span></div>
+      <div class="ei">Chin Up / Dip / Leg Raise<span class="ec">تمارين بوزن الجسم</span></div>
+      <div class="ei">Kneeling Easy Chin Dip<span class="ec">عقلة وغمس بمساعدة</span></div>
+      <div class="ei">Crossover Cables<span class="ec">كابل كروس — صدر</span></div>
+      <div class="ei">Skillrow<span class="ec">تجديف للإحماء</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB 1: التمارين ===== -->
+<div class="sec" id="t1">
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><div class="ci">📐</div><div><div class="ct">منطق ترتيب التمارين الجديد</div></div></div>
+    <div class="tip t0"><div class="ti">1️⃣</div><div class="tt"><strong>المركّبة الثقيلة أولاً — SOLO</strong> راحة كاملة لضمان أعلى أداء على أهم تمرين</div></div>
+    <div class="tip t0"><div class="ti">2️⃣</div><div class="tt"><strong>الأزواج (PAIRS) من التمرين الثاني</strong> — عضلتان متضادتان بالتناوب</div></div>
+    <div class="tip t0"><div class="ti">3️⃣</div><div class="tt"><strong>العزل والعضلات الصغيرة في النهاية</strong> — مع آخر زوج Drop Set في الشهر الثاني</div></div>
+    <div class="tip t0"><div class="ti">4️⃣</div><div class="tt"><strong>البطن والخصر آخر شيء دائماً</strong> — كثيراً ما تكون SOLO لأنها صغيرة</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><div class="ci">⚖️</div><div><div class="ct">أوزانك المبدئية — الأسبوع الأول</div><div class="cs">نفس الأوزان السابقة — ما تغيّرت</div></div></div>
+
+    <div class="tip tr" style="margin-bottom:14px"><div class="ti">🔴</div><div class="tt"><strong>الجذع العلوي</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Chest Press:</b> <strong>10 كجم</strong> · <b>Lat Machine:</b> <strong>15 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Shoulder Press:</b> <strong>10 كجم</strong> · <b>Low Row:</b> <strong>15 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Pectoral Fly:</b> <strong>10 كجم</strong> · <b>Reverse Fly:</b> <strong>5 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Delts Machine:</b> <strong>5 كجم</strong> · <b>Upper Back:</b> <strong>10 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Vertical Traction:</b> <strong>15 كجم</strong> · <b>Pulley:</b> <strong>10 كجم</strong></div></div>
+
+    <div class="tip tg" style="margin-top:14px;margin-bottom:14px"><div class="ti">🟢</div><div class="tt"><strong>الأرجل والسمانة والبطن</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Leg Press:</b> <strong>50 كجم</strong> · <b>Prone Leg Curl:</b> <strong>10 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Leg Extension:</b> <strong>15 كجم</strong> · <b>Abductor/Adductor:</b> <strong>15 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Lower Back:</b> <strong>15 كجم</strong> · <b>Calf Raise:</b> <strong>50 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Abdominal Crunch:</b> <strong>15 كجم</strong> · <b>Rotary Torso:</b> <strong>10 كجم</strong> · <b>Hanging Leg Raise:</b> بدون وزن</div></div>
+
+    <div class="tip tpu" style="margin-top:14px;margin-bottom:14px"><div class="ti">🟣</div><div class="tt"><strong>الذراعين</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Arm Extension:</b> <strong>20 كجم</strong> · <b>Arm Curl:</b> <strong>10 كجم</strong></div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><b>Dips/Chin Ups (بمساعدة):</b> أثقل مساعدة ممكنة</div></div>
+
+    <div class="tip tr" style="margin-top:14px"><div class="ti">⚠️</div><div class="tt"><strong>تذكير:</strong> هذي أوزان الأسبوعين الأول والثاني فقط. آخر ٢-٣ تكرارات لازم تكون صعبة. لو سهل = زد ٢.٥ كجم. لو ثقيل جداً = خفّف.</div></div>
+  </div>
+
+  <div class="tip t0" style="margin-bottom:16px"><div class="ti">🚣</div><div class="tt"><strong>قبل كل تمرين:</strong> 5 دقائق تجديف على Skillrow + مجموعة تسخين بنص الوزن على أول جهاز.</div></div>
+
+  <!-- يوم الأحد: UPPER A -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db push">أحد</div>
+      <div class="di"><div class="dn">UPPER A — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٢ سيت · ~٥٥ دقيقة · أزواج بنفس المنطقة</div></div>
+      <span class="dt tp">UPPER</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">22</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~55</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق · سرعة مريحة</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Chest Press — مجموعة تسخين</div><div class="step-info">١٢ تكرار بنصف وزن العمل</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Chest Press — راحة كاملة</span><span class="pmeta">4 sets</span></div>
+      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Chest Press — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">اشرب ماء · تنفّس بعمق</div></div></div>
+      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Chest Press — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Chest Press — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Chest Press — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار · بعدها انتقل للزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Lat Machine ↔ Shoulder Press</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة السحب/الدفع · راحة <b>٦٠ ثانية</b> · العضلة المستهدفة ترتاح ١٦٠ ث فعلياً</div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Shoulder Press مشغول</b> → استبدله بـ <b>Delts Machine بوزن أثقل</b> (نفس الفائدة، ضغط أكتاف بطريقة مختلفة)</div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Lat Machine — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لـ Shoulder Press</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">ارجع لـ Lat Machine</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Low Row ↔ Pectoral Fly</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة العزل · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Pectoral Fly مشغول</b> → استبدله بـ <b>Crossover Cables</b> (تفتيح صدر بالكابل، تمدد أعمق)</div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Low Row — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Pectoral Fly — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Low Row — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Pectoral Fly — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Low Row — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Pectoral Fly — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Reverse Fly ↔ Delts Machine</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الأكتاف · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Reverse Fly مشغول</b> → استخدم <b>Pulley بوضع السحب الخلفي</b> (الكابلات للأعلى، اسحب للخارج)</div></div>
+
+      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Delts Machine — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">26</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من UPPER A</strong> · ٢٦ خطوة · ~٥٥ دقيقة · إذا واجهت ازدحاماً، استخدم Plan B بدون تردد.</div></div>
+    </div></div>
+  </div>
+
+  <!-- يوم الاثنين: LOWER A -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db legs">اثن</div>
+      <div class="di"><div class="dn">LOWER A — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٣ سيت · ~٥٧ دقيقة · يوم الأرجل المثالي للأزواج</div></div>
+      <span class="dt tl">LOWER</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">23</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">2</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~57</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق · سرعة مريحة</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Leg Press — مجموعة تسخين</div><div class="step-info">١٥ تكرار بنصف وزن العمل</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Leg Press — راحة طويلة</span><span class="pmeta">4 sets</span></div>
+      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Leg Press — سيت ١</div><div class="step-info">٨-١٠ تكرار · ٥٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">الأرجل تحتاج راحة طويلة</div></div></div>
+      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Leg Press — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Leg Press — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Leg Press — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار · انتقل للزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Leg Extension ↔ Prone Leg Curl</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الأرجل · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Prone Leg Curl مشغول</b> → استخدم <b>Leg Press بقدم منخفضة</b> (يركز على الفخذ الخلفي)</div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Leg Extension — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٥ كجم · فخذ أمامي</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لجهاز Prone Leg Curl</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم · فخذ خلفي</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">ارجع لـ Leg Extension</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Abductor ↔ Adductor</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>نفس الجهاز — تغيير وسائد فقط · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز يخدم الزوجين — احتمال المشكلة صفر</div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Abductor — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٥ كجم · فتح الأرجل</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">غيّر وضع الوسائد</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Adductor — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٥ كجم · ضم الأرجل</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Abductor — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Adductor — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Abductor — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Adductor — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">سمانة + بطن — مع تنفس عميق</span><span class="pmeta">4+3 sets</span></div>
+
+      <div class="step solo-set"><div class="step-num">21</div><div class="step-body"><div class="step-name">Calf Raise على Leg Press — سيت ١</div><div class="step-info">١٥-٢٠ تكرار · ٥٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">22</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٢</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">23</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٣</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">24</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٤ (الأخير)</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
+
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تنقل لمحطة Chin Up</div><div class="step-info">—</div></div></div>
+
+      <div class="step solo-set"><div class="step-num">25</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ١</div><div class="step-info">١٠-١٥ تكرار · بطن سفلي</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">26</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٢</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">27</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من LOWER A</strong> · ٢٧ خطوة · ~٦٥ دقيقة · يوم الأرجل أطول من غيره بسبب راحة Leg Press.</div></div>
+    </div></div>
+  </div>
+
+  <!-- يوم الثلاثاء: ARMS A -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db pull">ثلا</div>
+      <div class="di"><div class="dn">ARMS A — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٠ سيت · ~٤٥ دقيقة · أسرع يوم</div></div>
+      <span class="dt tpl">ARMS</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">20</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~45</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Arm Extension — تسخين</div><div class="step-info">١٢ تكرار بنصف الوزن</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Arm Extension ↔ Arm Curl</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الذراعين · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Arm Curl مشغول</b> → استخدم <b>Pulley مع البار القصير من الأسفل</b> (Bicep Curl بالكابل)</div></div>
+
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-name">Arm Extension — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ٢٠ كجم · ترايسبس</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لـ Arm Curl</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-name">Arm Curl — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم · بايسبس</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Dips ↔ Chin Ups — نفس الجهاز!</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>Kneeling Easy Chin Dip · فقط غيّر القبضة · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز يخدم الزوجين — احتمال المشكلة صفر</div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Dips (Kneeling) — سيت ١</div><div class="step-info">٨-١٢ تكرار · أثقل مساعدة ممكنة</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">من قبضة Dips لقبضة Chin Up</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Chin Ups (Kneeling) — سيت ١</div><div class="step-info">٨-١٢ تكرار · بايسبس مركّب</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Dips — سيت ٢</div><div class="step-info">٨-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٢</div><div class="step-info">٨-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Dips — سيت ٣ (الأخير)</div><div class="step-info">٨-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٣ (الأخير)</div><div class="step-info">٨-١٢ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Abdominal Crunch ↔ Rotary Torso</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة البطن · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الجهازان مشغولان → سوِّ <b>Plank على الأرض ٦٠ ث + Russian Twist بوزن</b></div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ١</div><div class="step-info">١٥-٢٠ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ١</div><div class="step-info">١٢ تكرار لكل جانب · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٢</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٢</div><div class="step-info">١٢ تكرار/جانب</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٣ (الأخير)</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">22</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار/جانب · ✓ انتهيت! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من ARMS A</strong> · ٢٢ خطوة · ~٤٥ دقيقة · أقصر يوم في الأسبوع.</div></div>
+    </div></div>
+  </div>
+
+  <!-- راحة -->
+  <div class="dy">
+    <div class="dh" style="cursor:default">
+      <div class="db rest">أرب</div>
+      <div class="di"><div class="dn">يوم راحة — مو يوم كسل!</div><div class="df">جسمك يبني العضل اليوم مو في الجيم</div></div>
+    </div>
+  </div>
+  <div class="tip t0" style="margin-bottom:16px"><div class="ti">🧘</div><div class="tt"><strong>تفاصيل يوم الراحة:</strong><br>• تمشية خفيفة 20-30 دقيقة<br>• تمدد 10-15 دقيقة للعضلات المتعبة<br>• <b>كل وجباتك كاملة</b> — العضل يُبنى يوم الراحة فلا تقلل أكلك<br>• نام مبكر — حاول 8 ساعات</div></div>
+
+  <!-- يوم الخميس: UPPER B -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db push">خمي</div>
+      <div class="di"><div class="dn">UPPER B — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٢ سيت · ~٦٠ دقيقة · نبدأ بالأكتاف الثقيلة</div></div>
+      <span class="dt tp">UPPER</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">22</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~60</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Shoulder Press — تسخين</div><div class="step-info">١٢ تكرار بنصف الوزن</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Shoulder Press — وزن أثقل من Upper A</span><span class="pmeta">4 sets</span></div>
+      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Shoulder Press ثقيل — سيت ١</div><div class="step-info">٦-٨ تكرار · زد ٢.٥ كجم على وزن Upper A</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">وزن ثقيل = راحة طويلة</div></div></div>
+      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٢</div><div class="step-info">٦-٨ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٣</div><div class="step-info">٦-٨ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٤ (الأخير)</div><div class="step-info">٦-٨ تكرار · انتقل للزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Vertical Traction ↔ Chest Press بطيء</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة السحب/الدفع · في Chest Press انزل ببطء ٣ ثوان · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Vertical Traction مشغول</b> → استخدم <b>Lat Machine</b> (سحب عمودي عريض، نفس الفائدة)</div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ١</div><div class="step-info">١٠-١٢ تكرار · انزل ٣ ث ارفع ١ ث</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Pulley (سحب) ↔ Crossover Cables (صدر)</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الكابلات · تنقل سريع جداً · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Crossover مشغول</b> → استخدم <b>Pectoral Fly</b> بدلاً منه</div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Pulley — سحب أفقي — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تنقل</div><div class="step-info">روح لـ Crossover Cables</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ٥ كجم/جانب</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Pulley — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Pulley — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Reverse Fly ↔ Delts Machine</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الأكتاف · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الزوج مشغول → <b>Upper Back ↔ Pulley بوضع جانبي</b></div></div>
+
+      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Delts Machine — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">26</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من UPPER B</strong> · ٢٦ خطوة · ~٦٠ دقيقة</div></div>
+    </div></div>
+  </div>
+
+  <!-- يوم الجمعة: LOWER B -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db legs">جمع</div>
+      <div class="di"><div class="dn">LOWER B — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٤ سيت · ~٦٠ دقيقة · وزن أخف وتكرار أعلى</div></div>
+      <span class="dt tl">LOWER</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">24</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">7</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~60</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Leg Press — تسخين</div><div class="step-info">١٥ تكرار بنصف الوزن</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Leg Press خفيف عالي التكرار</span><span class="pmeta">4 sets</span></div>
+      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Leg Press خفيف — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٧٠٪ من وزن Lower A</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Leg Press — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Leg Press — سيت ٣</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Leg Press — سيت ٤ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Prone Leg Curl ↔ Leg Extension (بطيء)</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الأرجل · انزل ببطء عد ٣ ثوان · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الجهاز مشغول → <b>Leg Press بقدم منخفضة (هامسترنغز) ↔ Leg Press بقدم عالية (كوادز)</b></div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Prone Leg Curl بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٠ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Leg Extension بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٣</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٣</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٤ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٤ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Adductor ↔ Abductor</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>نفس الجهاز — تغيير وسائد فقط · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز — احتمال المشكلة صفر</div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Adductor — سيت ١</div><div class="step-info">١٥ تكرار · ضم الأرجل</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Abductor — سيت ١</div><div class="step-info">١٥ تكرار · فتح الأرجل</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Adductor — سيت ٢</div><div class="step-info">١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Abductor — سيت ٢</div><div class="step-info">١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Adductor — سيت ٣ (الأخير)</div><div class="step-info">١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Abductor — سيت ٣ (الأخير)</div><div class="step-info">١٥ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Calf Raise — تكرار عالي</span><span class="pmeta">4 sets</span></div>
+
+      <div class="step solo-set"><div class="step-num">21</div><div class="step-body"><div class="step-name">Calf Raise — سيت ١</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٣٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">22</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٢</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٣٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">23</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٣</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٣٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step solo-set"><div class="step-num">24</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٤</div><div class="step-info">٢٠ تكرار</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Abdominal Crunch ↔ Lower Back</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>Core APS — بطن ↔ أسفل الظهر · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الجهازان مشغولان → <b>Plank ٦٠ ث ↔ Superman على الأرض ١٥ ث ثبات</b></div></div>
+
+      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ١</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">26</div><div class="step-body"><div class="step-name">Lower Back — سيت ١</div><div class="step-info">١٥ تكرار · ١٥ كجم</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">27</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٢</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">28</div><div class="step-body"><div class="step-name">Lower Back — سيت ٢</div><div class="step-info">١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">29</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٣ (الأخير)</div><div class="step-info">٢٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">30</div><div class="step-body"><div class="step-name">Lower Back — سيت ٣ (الأخير)</div><div class="step-info">١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من LOWER B</strong> · ٣٠ خطوة · ~٦٠ دقيقة</div></div>
+    </div></div>
+  </div>
+
+  <!-- يوم السبت: ARMS B -->
+  <div class="dy" onclick="tg(this)">
+    <div class="dh">
+      <div class="db pull">سبت</div>
+      <div class="di"><div class="dn">ARMS B — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٢ سيت · ~٥٠ دقيقة · ابدأ بالمركّب الذراعي</div></div>
+      <span class="dt tpl">ARMS</span><span class="da">▾</span>
+    </div>
+    <div class="dby"><div class="dbi">
+
+      <div class="day-summary">
+        <div class="ds-item"><span class="ds-num">22</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">8</span><div class="ds-lbl">تمارين</div></div>
+        <div class="ds-item"><span class="ds-num">4</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">~50</span><div class="ds-lbl">دقيقة</div></div>
+      </div>
+
+      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
+      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
+      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">تسخين Kneeling Easy Chin Dip</div><div class="step-info">٥ تكرار Chin Up + ٥ تكرار Dip بمساعدة قصوى</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Chin Ups ↔ Dips (نفس الجهاز)</span><span class="pmeta">4 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>Kneeling Easy Chin Dip · فقط غيّر القبضة · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز يخدم الزوجين — احتمال المشكلة صفر</div></div>
+
+      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-name">Chin Ups — سيت ١</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">من Chin Up لـ Dip</div></div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-name">Dips — سيت ١</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٢</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-name">Dips — سيت ٢</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٣</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Dips — سيت ٣</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٤ (الأخير)</div><div class="step-info">٦-١٠ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Dips — سيت ٤ (الأخير)</div><div class="step-info">٦-١٠ تكرار · انتهى الزوج A</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Arm Curl ↔ Arm Extension (بطيء)</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🐌</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الذراعين · انزل ببطء عد ٣ ثوان · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو أحدهما مشغول → استخدم <b>Pulley</b> (نفس الفائدة بالكابل)</div></div>
+
+      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Arm Curl بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Arm Extension بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · انتهى الزوج B</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Pulley Curl ↔ Pulley Pushdown (نفس الكابل)</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>جهاز Pulley · غيّر ارتفاع الكابل فقط · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز — احتمال المشكلة صفر · لو Pulley مشغول → استخدم <b>Arm Curl ↔ Arm Extension</b> مرة ثانية</div></div>
+
+      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Pulley — Bicep Curl — سيت ١</div><div class="step-info">١٢ تكرار · كابل سفلي · بار قصير</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">انقل الكابل للأعلى</div></div></div>
+      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Pulley — Tricep Pushdown — سيت ١</div><div class="step-info">١٢ تكرار · كابل علوي · مقبض</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Pulley Curl — سيت ٢</div><div class="step-info">١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Pulley Pushdown — سيت ٢</div><div class="step-info">١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Pulley Curl — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Pulley Pushdown — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار · انتهى الزوج C</div></div></div>
+
+      <div class="phase-bar"><span class="pl">PAIR D</span><span class="pn">Hanging Leg Raise ↔ Rotary Torso</span><span class="pmeta">3 جولات</span></div>
+      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة البطن · راحة <b>٦٠ ثانية</b></div></div>
+      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو Hanging Leg Raise مشغول → <b>Abdominal Crunch بدلاً منه</b></div></div>
+
+      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ١</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ١</div><div class="step-info">١٢/جانب</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٢</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step"><div class="step-num">26</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٢</div><div class="step-info">١٢/جانب</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+
+      <div class="step"><div class="step-num">27</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
+      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
+      <div class="step done"><div class="step-num">28</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٣ (الأخير)</div><div class="step-info">١٢/جانب · ✓ انتهيت الأسبوع! 🎉</div></div></div>
+
+      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من ARMS B = انتهيت الأسبوع كاملاً!</strong> · ٢٨ خطوة · ~٥٠ دقيقة · يوم الأحد القادم تبدأ UPPER A بأوزان أعلى (لو أكملت كل التكرارات بسهولة).</div></div>
+    </div></div>
+  </div>
+
+</div>
+
+<!-- ===== TAB 2: زيادة الأوزان ===== -->
+<div class="sec" id="t2">
+
+  <div class="card">
+    <div class="ch"><div class="ci">⚡</div><div><div class="ct">قاعدة خاصة بنظام V4</div></div></div>
+    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>الأسبوع الأول كامل بدون أزواج:</strong> سوِّ كل التمارين كـ <b>SOLO</b> مع راحة كاملة. الهدف تعلّم الحركة بدون ضغط الانتقال السريع.</div></div>
+    <div class="tip tg"><div class="ti">✅</div><div class="tt"><strong>التدرّج لتطبيق V4 كامل:</strong><br>• <b>أسبوع ١:</b> كل التمارين SOLO — تعلّم الحركة<br>• <b>أسبوع ٢:</b> ضف زوج واحد فقط (آخر زوج في كل يوم)<br>• <b>أسبوع ٣:</b> ضف الزوج الثاني<br>• <b>أسبوع ٤:</b> طبّق V4 كامل + أسبوع خفيف ٦٠٪</div></div>
+    <div class="tip tb"><div class="ti">💡</div><div class="tt"><strong>الأوزان في الزوج:</strong> توقّع إن أوزانك على <b>التمرين الثاني في الزوج</b> أقل ٥-١٠٪ من نفس التمرين لو كان SOLO. هذا طبيعي ولا يعني إنك ضعفت — الحجم الإجمالي للعمل يبقى ممتاز.</div></div>
+    <div class="tip t0"><div class="ti">📊</div><div class="tt"><strong>لماذا الراحة ٦٠ ث بالضبط؟</strong><br>• <b>أقل من ٤٥ ث:</b> العضلة لا تستعيد فوسفوكرياتين بشكل كافٍ → ضعف أداء<br>• <b>٦٠ ث:</b> توازن مثالي — استعادة ٨٥-٩٠٪ + استغلال وقت الراحة<br>• <b>أكثر من ٩٠ ث:</b> لا فائدة إضافية لنمو العضل، فقط يطيل الجلسة</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📈</div><div><div class="ct">القاعدة الذهبية لزيادة الوزن</div></div></div>
+    <div class="tip t0"><div class="ti">⚡</div><div class="tt"><strong>متى تزيد الوزن؟</strong> إذا أكملت العدد المطلوب في <b>كل المجموعات</b> بسهولة → زد <strong>2.5 كجم</strong> الجلسة الجاية.<br><br><strong>ما أكملت؟</strong> → كرر نفس الوزن لين تكمل. لا تستعجل.</div></div>
+    <div class="tip t0"><div class="ti">🏋️</div><div class="tt"><strong>العقلة والغمس:</strong> ابدأ على جهاز Kneeling Easy Chin Dip بأثقل مساعدة. كل أسبوع قلّل المساعدة درجة. متى ما قدرت تسوي <b>3 × 10</b> بدون مساعدة على المحطة العادية، ابدأ تضيف وزن بحزام.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ph p1">الشهر الأول — التكيّف على V4 (أسبوع 1-4)</div>
+    <div class="tip t0"><div class="ti">🎯</div><div class="tt">تطبيق تدرّجي للأزواج كما موضّح أعلاه. ركّز على تعلّم الحركة في الأسبوع ١، وأضف زوجاً جديداً كل أسبوع.</div></div>
+  </div>
+    <div class="tip t0"><div class="ti">📌</div><div class="tt"><strong>العقلة/الغمس:</strong> استخدم جهاز Kneeling Easy Chin Dip — ابدأ بأثقل مساعدة وقلّلها كل أسبوع.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ph p2">الشهر الثاني — الزيادة (أسبوع 5-8)</div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><strong>كل أسبوع:</strong> زد 2.5 كجم على التمارين الكبيرة (Chest Press, Leg Press, Shoulder Press, Lat Machine). وزد 1.25 كجم على تمارين العزل الصغيرة.</div></div>
+    <div class="tip tr"><div class="ti">🔥</div><div class="tt"><strong>شيء جديد — Drop Set:</strong> آخر تمرين عزل في كل يوم → سوِّ آخر مجموعة، ثم خفّف الوزن 30% واستمر لين ما تقدر ترفع. هذا يحرق العضلة بالكامل.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ph p3">الشهر الثالث — الذروة (أسبوع 9-12)</div>
+    <div class="tip t0"><div class="ti">🎯</div><div class="tt"><strong>يوم A = أوزان ثقيلة</strong> (6-8 تكرارات).<br><strong>يوم B = تكرارات كثيرة</strong> (12-15 تكرار). هذا التنويع يحقق أقصى نمو.</div></div>
+    <div class="tip tr"><div class="ti">🔥</div><div class="tt"><strong>شيء جديد — Rest-Pause:</strong> آخر مجموعة: استمر لين ما تقدر → استرح 15 ثانية → أكمل 3-5 مرات زيادة.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📊</div><div><div class="ct">مثال: كيف يزيد وزنك على Chest Press</div><div class="cs">بناءً على وزنك الفعلي 10 كجم</div></div></div>
+    <table class="pt">
+      <tr><th>الأسبوع</th><th>الوزن</th><th>المجموعات</th><th>المجموع</th><th>الزيادة</th></tr>
+      <tr><td>1</td><td>10 كجم</td><td>4×10</td><td class="h">400 كجم</td><td>—</td></tr>
+      <tr><td>4</td><td>15 كجم</td><td>4×10</td><td class="h">600 كجم</td><td class="u">+50%</td></tr>
+      <tr><td>8</td><td>20 كجم</td><td>4×8</td><td class="h">640 كجم</td><td class="u">+60%</td></tr>
+      <tr><td>12</td><td>22.5 كجم</td><td>4×8</td><td class="h">720 كجم</td><td class="u">+80%</td></tr>
+    </table>
+    <div class="tip tg" style="margin-top:10px"><div class="ti">📌</div><div class="tt">من 10 كجم إلى 22.5 كجم = <b>أكثر من الضعف!</b> هذا طبيعي جداً للمبتدئ. أغلب الزيادة أول 3 أشهر ليست عضلات بس — جزء كبير منها هو <b>تعلّم جهازك العصبي</b> كيف يستخدم العضلات اللي عنده بشكل أفضل.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🔄</div><div><div class="ct">أسبوع الراحة (كل شهر)</div></div></div>
+    <div class="tip tb"><div class="ti">💡</div><div class="tt"><strong>كل 4 أسابيع:</strong> 3 أسابيع تمرين عادي + <b>أسبوع خفيف</b>.<br>في الأسبوع الخفيف (أسبوع 4، 8، 12): نفس التمارين ونفس العدد لكن بـ <strong>60% من الوزن</strong>.<br><br>لا تتخطاه! جسمك يبني العضل أثناء الراحة مو أثناء التمرين.</div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 3: الأكل ===== -->
+<div class="sec" id="t3">
+
+  <div class="card">
+    <div class="ch"><div class="ci">🔢</div><div><div class="ct">كم تحتاج تاكل باليوم؟</div></div></div>
+    <div class="mg">
+      <div class="mc mcc"><span class="mn">2,815</span><span class="ml">سعرة باليوم</span></div>
+      <div class="mc mcp"><span class="mn">175g</span><span class="ml">بروتين</span></div>
+      <div class="mc mcb"><span class="mn">362g</span><span class="ml">كارب (نشويات)</span></div>
+      <div class="mc mcf"><span class="mn">74g</span><span class="ml">دهون</span></div>
+    </div>
+    <div class="tip t0"><div class="ti">📐</div><div class="tt"><strong>كيف حسبناها؟</strong><br>• بروتين: 2.4 × 73 كجم (وزنك) = <b>175 جرام</b> — هذا الحد الأدنى لبناء العضل<br>• السعرات: جسمك يحتاج ~2,400 سعرة يومياً + 400 زيادة للتضخيم = <b>~2,815</b><br>• الباقي يتوزع بين كارب ودهون</div></div>
+    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>البروتين غير قابل للتفاوض.</strong> لازم 175 جرام كل يوم. بدونه مستحيل تبني عضل حتى لو تمارينك ممتازة.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🍽️</div><div><div class="ct">6 وجبات باليوم</div><div class="cs">مُصممة عشان تتمرن بعد العشاء</div></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--org)">الفطور · 8:00 صباحاً</div><div class="mna">🥚 فطور بروتين</div><div class="md">3 بيضات (مسلوقة أو مقلية) + شريحتين خبز أسمر + كوب شوفان بالحليب + نص موزة</div><div class="mm"><span class="mi mic">536 سعرة</span><span class="mi mip">بروتين: 30g</span><span class="mi mik">كارب: 68g</span><span class="mi mif">دهون: 16g</span></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--org)">الغداء · 1:00 ظهراً</div><div class="mna">🍗 الوجبة الأهم — الكتلة</div><div class="md">صدر دجاج مشوي 200 جرام + كوب ونص أرز مطبوخ + سلطة كبيرة + ملعقة زيت زيتون</div><div class="mm"><span class="mi mic">713 سعرة</span><span class="mi mip">بروتين: 50g</span><span class="mi mik">كارب: 90g</span><span class="mi mif">دهون: 17g</span></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--org)">سناك · 4:00 العصر</div><div class="mna">🥜 وجبة خفيفة</div><div class="md">موزة + حفنة مكسرات (25 جرام لوز أو كاجو) + علبة زبادي يوناني + 3 تمرات</div><div class="mm"><span class="mi mic">440 سعرة</span><span class="mi mip">بروتين: 16g</span><span class="mi mik">كارب: 58g</span><span class="mi mif">دهون: 16g</span></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--red)">⚡ قبل التمرين بساعة · حوالي 8:00 مساءً</div><div class="mna">وجبة الطاقة — لا تفوّتها!</div><div class="md">كوب ونص أرز أو معكرونة مطبوخة + بيضتين مسلوقة + خضار خفيف + ملعقة عسل</div><div class="mm"><span class="mi mic">505 سعرة</span><span class="mi mip">بروتين: 22g</span><span class="mi mik">كارب: 84g</span><span class="mi mif">دهون: 9g</span></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--grn)">🌙 بعد التمرين مباشرة · حوالي 10:30 مساءً</div><div class="mna">وجبة البناء — أهم وجبة بعد الغداء!</div><div class="md">صدر دجاج 150 جرام (أو لحم 130 جرام) + بطاطس مسلوقة كبيرة أو كوب أرز + شريحة خبز + خضار</div><div class="mm"><span class="mi mic">470 سعرة</span><span class="mi mip">بروتين: 40g</span><span class="mi mik">كارب: 55g</span><span class="mi mif">دهون: 10g</span></div></div>
+
+    <div class="meal"><div class="mt" style="color:var(--blue)">قبل النوم · 12:00</div><div class="mna">🥛 بروتين بطيء</div><div class="md">كوب زبادي يوناني كامل الدسم (200 جرام) — يغذّي العضل وأنت نايم لأنه يُهضم ببطء</div><div class="mm"><span class="mi mic">150 سعرة</span><span class="mi mip">بروتين: 17g</span><span class="mi mik">كارب: 7g</span><span class="mi mif">دهون: 6g</span></div></div>
+
+    <div class="tip tg" style="margin-top:8px"><div class="ti">💧</div><div class="tt"><strong>الماء:</strong> 3-4 لتر باليوم كحد أدنى. لا تنتظر لين تعطش.</div></div>
+    <div class="tip t0"><div class="ti">✅</div><div class="tt"><strong>التحقق:</strong> مجموع الوجبات = بروتين 175g + كارب 362g + دهون 74g = <b>2,814 سعرة</b>. كل شيء مطابق.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🛒</div><div><div class="ct">قائمة المشتريات الأسبوعية</div><div class="cs">اطبعها أو صوّرها وروح السوبرماركت</div></div></div>
+    <div class="tip t0"><div class="ti">🥩</div><div class="tt"><strong>بروتين:</strong><br>• صدور دجاج: 2.5 كجم<br>• بيض: 2 كرتون (60 بيضة)<br>• لحم بقري قليل الدهن: 500 جرام<br>• تونة علب: 4 علب<br>• زبادي يوناني: 14 علبة (200g)</div></div>
+    <div class="tip t0"><div class="ti">🍚</div><div class="tt"><strong>نشويات:</strong><br>• أرز أبيض أو بسمتي: 3 كجم<br>• شوفان: 1 كجم<br>• خبز أسمر: 3 ربطات<br>• معكرونة: 1 كجم<br>• بطاطس: 2 كجم</div></div>
+    <div class="tip t0"><div class="ti">🥗</div><div class="tt"><strong>خضار وفواكه:</strong><br>• موز: 2 كجم<br>• تمر: 500 جرام<br>• خس + طماط + خيار: للسلطات اليومية<br>• خضار مشكلة (بروكلي، فلفل، جزر)</div></div>
+    <div class="tip t0"><div class="ti">🫒</div><div class="tt"><strong>دهون ومتنوعات:</strong><br>• زيت زيتون: 1 زجاجة<br>• مكسرات (لوز أو كاجو): 200 جرام<br>• عسل: 1 عبوة صغيرة<br>• حليب: 2 لتر</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📦</div><div><div class="ct">نصائح تحضير الوجبات</div><div class="cs">وفّر وقتك خلال الأسبوع</div></div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>اطبخ يوم الجمعة أو السبت:</strong> اشوي 2 كجم صدور دجاج + اطبخ قدر أرز كبير. قسّمهم في علب وحطهم بالثلاجة. يكفون 3-4 أيام.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>اسلق البيض مقدماً:</strong> اسلق 15-20 بيضة مرة وحدة وحطها بالثلاجة. تكفيك 4-5 أيام.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>حضّر السلطة بالعلب:</strong> قطّع الخضار وحطها في علب جاهزة. بس أضف الزيت وقت الأكل.</div></div>
+    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>علبة السناك:</strong> جهّز أكياس صغيرة فيها 25g مكسرات + 3 تمرات. خذ وحدة معك كل يوم.</div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 4: نصائح ===== -->
+<div class="sec" id="t4">
+
+  <div class="card">
+    <div class="ch"><div class="ci">🛡️</div><div><div class="ct">عشان ما تتأذى</div></div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>سخّن قبل كل تمرين:</strong> 5 دقائق تجديف + مجموعة بنص الوزن على أول جهاز.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>الأسلوب أهم من الوزن:</strong> لو جسمك بدأ يتأرجح أو شكل الحركة تغيّر = الوزن ثقيل. خفّف ولا تكابر.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>زيادة تدريجية:</strong> لا تزيد أكثر من 5 كجم بالأسبوع على الأجهزة الكبيرة، و 2.5 كجم على الصغيرة.</div></div>
+    <div class="tip tr"><div class="ti">4</div><div class="tt"><strong>فرّق بين ألم العضل وألم المفصل:</strong><br>• ألم العضل بعد التمرين = طبيعي ومفيد (يعني العضلة اشتغلت)<br>• ألم حاد في المفصل أو وخز = <b>توقف فوراً</b> وراجع الأسلوب</div></div>
+    <div class="tip t0"><div class="ti">5</div><div class="tt"><strong>الغمس والعقلة:</strong> لا تنزل زيادة عن اللازم. في الغمس لا تنزل أعمق من ما الكوع يصير 90 درجة. في العقلة لا تفرد يدك 100% عشان تحمي كتفك.</div></div>
+    <div class="tip t0"><div class="ti">6</div><div class="tt"><strong>تمدد بعد التمرين:</strong> 5-10 دقائق تمدد للعضلات اللي تمرنتها. يسرّع التعافي.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🏆</div><div><div class="ct">عشان تحصل أفضل نتيجة</div></div></div>
+    <div class="tip tpu"><div class="ti">😴</div><div class="tt"><strong>نام 7-8 ساعات:</strong> العضل يُبنى وأنت نايم مو وأنت تتمرن. بدون نوم كافي النتائج بتكون ضعيفة مهما تمرنت.</div></div>
+    <div class="tip t0"><div class="ti">📓</div><div class="tt"><strong>سجّل أوزانك:</strong> كل جلسة دوّن الوزن والعدد في ملاحظات جوالك. هذا يخليك تعرف تزيد متى ولا تضيع.</div></div>
+    <div class="tip t0"><div class="ti">📸</div><div class="tt"><strong>صوّر نفسك:</strong> كل أسبوعين بنفس الإضاءة ونفس الزاوية. الميزان ما يكفي — ممكن وزنك يزيد لكن شكلك أحسن لأن العضل أثقل من الدهون.</div></div>
+    <div class="tip t0"><div class="ti">⏰</div><div class="tt"><strong>الاستمرارية أهم من الكمال:</strong> التزام 80% على 12 أسبوع أفضل بكثير من 100% لأسبوعين وبعدين تفتر.</div></div>
+    <div class="tip tg"><div class="ti">🎯</div><div class="tt"><strong>شو تتوقع؟</strong> مع التزام كامل بالأكل والتمرين: <strong>3-5 كجم عضلات صافية</strong> في 3 أشهر. هذا فرق كبير بالمرآة!</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">💊</div><div><div class="ct">مكملات (اختيارية — مو ضرورية)</div></div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>كرياتين:</strong> 5 جرام باليوم مع ماء. أكثر مكمل أثبت فعاليته علمياً. يزيد القوة وحجم العضل. رخيص وآمن.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>بروتين بودرة (واي بروتين):</strong> سكوب واحد بعد التمرين <b>بس إذا ما قدرت توصل 175 جرام بروتين من الأكل العادي</b>. الأكل الحقيقي أفضل دايماً.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>فيتامين D:</strong> 2000-4000 وحدة باليوم. مهم جداً في الرياض — أغلب الناس عندهم نقص.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📐</div><div><div class="ct">كيف تسوي التمرين صح</div></div></div>
+    <div class="tip t0"><div class="ti">🫁</div><div class="tt"><strong>التنفس:</strong> طلّع نفسك (زفير) وأنت ترفع الوزن. خذ نفسك (شهيق) وأنت تنزل. لا تحبس نفسك أبداً.</div></div>
+    <div class="tip t0"><div class="ti">🎚️</div><div class="tt"><strong>البطء مهم:</strong> ارفع بعد 2 ثانية وانزل بعد 2-3 ثواني على الأقل. لا ترمي الوزن — تحكّم فيه.</div></div>
+    <div class="tip t0"><div class="ti">↔️</div><div class="tt"><strong>الحركة كاملة:</strong> انزل لآخر نقطة وارفع لآخر نقطة. لا تسوي نص حركة — الحركة الكاملة تبني عضل أكثر.</div></div>
+    <div class="tip t0"><div class="ti">⚖️</div><div class="tt"><strong>كيف تختار الوزن:</strong> الوزن الصح هو اللي تقدر تكمل فيه العدد المطلوب بصعوبة. لو كملته بسهولة = زد. لو ما كملته = خفّف.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🚨</div><div><div class="ct">علامات الإرهاق الزائد — توقف لو حسيت فيها</div></div></div>
+    <div class="tip tr"><div class="ti">1</div><div class="tt"><strong>أوزانك بدأت تنزل</strong> بدل ما تزيد لمدة أسبوعين متتالين.</div></div>
+    <div class="tip tr"><div class="ti">2</div><div class="tt"><strong>تعب مستمر</strong> حتى بعد نوم كافي — ما تقدر تكمل يومك عادي.</div></div>
+    <div class="tip tr"><div class="ti">3</div><div class="tt"><strong>ألم مفاصل مزمن</strong> ما يروح حتى مع الراحة.</div></div>
+    <div class="tip tr"><div class="ti">4</div><div class="tt"><strong>نومك صار سيء</strong> أو ما تقدر تنام رغم التعب.</div></div>
+    <div class="tip tr"><div class="ti">5</div><div class="tt"><strong>مزاجك سيء</strong> بشكل غير طبيعي أو ما عندك دافع تتمرن نهائياً.</div></div>
+    <div class="tip tg"><div class="ti">✅</div><div class="tt"><strong>الحل:</strong> خذ أسبوع راحة كامل (أو أسبوع خفيف 50% وزن). ارجع بعدها تدريجياً. هذا طبيعي ويحصل لكل الرياضيين.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📅</div><div><div class="ct">فاتك يوم تمرين؟ لا تقلق</div></div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>فاتك يوم واحد:</strong> أكمل البرنامج عادي من اليوم اللي بعده. لا تحاول تعوّض — بس أكمل الترتيب.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>فاتك يومين:</strong> ارجع من حيث وقفت. مثلاً لو وقفت عند سحب A، ابدأ بسحب A.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>فاتك أسبوع كامل:</strong> ارجع بـ 80% من آخر أوزانك لجلسة واحدة، بعدين ارجع عادي.</div></div>
+    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>لا تسوي يومين تمرين ورا بعض لنفس العضلة</strong> عشان تعوّض — هذا يسبب إصابة مو نمو.</div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 5: دليل شامل ===== -->
+<div class="sec" id="t5">
+
+  <div class="card">
+    <div class="ch"><div class="ci">🔄</div><div><div class="ct">بدائل — لو الجهاز مشغول (مهم في نظام APS)</div><div class="cs">في APS تحتاج جهازين فاضيين — احفظ هالبدائل</div></div></div>
+    <div class="tip tr" style="margin-bottom:10px"><div class="ti">⚡</div><div class="tt"><strong>قاعدة APS الذكية:</strong> لو واحد من زوج مشغول، استبدله بحركة <b>وزن جسم</b> على الأرض بدل ما تكسر الزوج:<br>• Push-up (إذا الصدر مشغول)<br>• Plank ١ دقيقة (إذا البطن مشغول)<br>• Bodyweight squat (إذا الأرجل مشغولة)</div></div>
+    <div class="tip t0"><div class="ti">🟣</div><div class="tt"><strong>Chest Press مشغول؟</strong> → Crossover Cables أو Pectoral Fly بوزن أثقل.</div></div>
+    <div class="tip t0"><div class="ti">🟣</div><div class="tt"><strong>Lat Machine مشغول؟</strong> → Vertical Traction أو Pulley (الكابل العلوي).</div></div>
+    <div class="tip t0"><div class="ti">🟣</div><div class="tt"><strong>Shoulder Press مشغول؟</strong> → Delts Machine بوزن أثقل + Arm Extension.</div></div>
+    <div class="tip t0"><div class="ti">🟣</div><div class="tt"><strong>Low Row مشغول؟</strong> → Pulley بوضع السحب الأفقي.</div></div>
+    <div class="tip t0"><div class="ti">🟢</div><div class="tt"><strong>Leg Press مشغول؟</strong> → ابدأ بالزوج Leg Extension ↔ Prone Leg Curl واستنّى لين يفضى.</div></div>
+    <div class="tip t0"><div class="ti">🟢</div><div class="tt"><strong>Leg Extension/Curl مشغول؟</strong> → Leg Press بوضع القدم متغيّر (قدم عالية = أمامي، قدم منخفضة = خلفي أكثر).</div></div>
+    <div class="tip t0"><div class="ti">🟠</div><div class="tt"><strong>Arm Curl مشغول؟</strong> → Pulley مع البار القصير من الأسفل.</div></div>
+    <div class="tip t0"><div class="ti">🟠</div><div class="tt"><strong>Arm Extension مشغول؟</strong> → Pulley مع المقبض من الأعلى (Tricep Pushdown).</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📋</div><div><div class="ct">تشيك لست أسبوعي — صوّرها وتابع</div><div class="cs">كل أسبوع تأكد من هالأشياء</div></div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt">تمرنت <b>6 أيام</b> هالأسبوع (أو 5 على الأقل)</div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt">أكلت <b>175g بروتين يومياً</b> (أو قريب منها)</div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt">شربت <b>3+ لتر ماء</b> كل يوم</div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt">نمت <b>7+ ساعات</b> أغلب الأيام</div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt"><b>زدت الوزن</b> على تمرين واحد على الأقل هالأسبوع</div></div>
+    <div class="tip t0"><div class="ti">☐</div><div class="tt"><b>سجّلت أوزاني</b> في كل جلسة</div></div>
+    <div class="tip tg"><div class="ti">🏆</div><div class="tt">لو حققت 5 من 6 = أسبوع ممتاز. لو 4 = جيد. أقل من 4 = راجع التزامك.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🔁</div><div><div class="ct">بدائل الوجبات — لو مليت من نفس الأكل</div></div></div>
+    <div class="tip t0"><div class="ti">🥩</div><div class="tt"><strong>بدل صدر الدجاج:</strong> سمك مشوي (تونا، سلمون) · لحم بقري قليل الدهن · ديك رومي · روبيان. المهم نفس الكمية تقريباً.</div></div>
+    <div class="tip t0"><div class="ti">🍚</div><div class="tt"><strong>بدل الأرز:</strong> معكرونة · بطاطس مسلوقة · خبز أسمر · برغل · كينوا. كلها نشويات وتؤدي نفس الغرض.</div></div>
+    <div class="tip t0"><div class="ti">🥚</div><div class="tt"><strong>بدل البيض:</strong> جبن قريش · حمص · فول · عدس. بس تأكد البروتين يطلع نفس الكمية.</div></div>
+    <div class="tip t0"><div class="ti">🥜</div><div class="tt"><strong>بدل المكسرات:</strong> زبدة فول سوداني (ملعقة كبيرة) · بذور دوار الشمس · بذور شيا.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">⏰</div><div><div class="ct">جدول يومك المثالي</div><div class="cs">مصمم للتمرين بعد العشاء</div></div></div>
+    <div class="tip t0"><div class="ti">☀️</div><div class="tt"><b>8:00 ص</b> — فطور بروتين</div></div>
+    <div class="tip t0"><div class="ti">🏢</div><div class="tt"><b>1:00 ظ</b> — غداء (الوجبة الأكبر)</div></div>
+    <div class="tip t0"><div class="ti">🥜</div><div class="tt"><b>4:00 ع</b> — سناك خفيف</div></div>
+    <div class="tip t0"><div class="ti">⚡</div><div class="tt"><b>8:00 م</b> — وجبة الطاقة (قبل التمرين بساعة)</div></div>
+    <div class="tip tr"><div class="ti">🏋️</div><div class="tt"><b>9:15-9:30 م</b> — التمرين (55-65 دقيقة)</div></div>
+    <div class="tip tg"><div class="ti">🌙</div><div class="tt"><b>10:30 م</b> — وجبة البناء (بعد التمرين مباشرة)</div></div>
+    <div class="tip tb"><div class="ti">🥛</div><div class="tt"><b>12:00 ص</b> — زبادي يوناني + نوم</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">💊</div><div><div class="ct">توقيت المكملات (لو تستخدمها)</div></div></div>
+    <div class="tip t0"><div class="ti">⏰</div><div class="tt"><strong>كرياتين 5g:</strong> أي وقت باليوم — مع الماء أو مع وجبة. الثبات اليومي أهم من التوقيت.</div></div>
+    <div class="tip t0"><div class="ti">⏰</div><div class="tt"><strong>واي بروتين:</strong> خلال 30 دقيقة بعد التمرين — أو مع وجبة البناء.</div></div>
+    <div class="tip t0"><div class="ti">⏰</div><div class="tt"><strong>فيتامين D:</strong> مع الغداء (لأنه يُمتص أفضل مع الدهون).</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">⚖️</div><div><div class="ct">كيف تعدّل الخطة حسب نتائجك</div><div class="cs">راقب وزنك كل أسبوع وعدّل</div></div></div>
+    <div class="tip t0"><div class="ti">📏</div><div class="tt"><strong>القاعدة:</strong> وزّن نفسك كل يوم <b>جمعة الصبح</b> قبل الفطور وبعد الحمام. سجّل الرقم. لا توزن نفسك كل يوم — الوزن يتغير طبيعي يوم بيوم.</div></div>
+    <div class="tip tg"><div class="ti">✅</div><div class="tt"><strong>الوضع المثالي:</strong> وزنك يزيد <b>0.25 - 0.5 كجم بالأسبوع</b> (أي 1-2 كجم بالشهر). هذا يعني تكسب عضل مع أقل دهون. <b>→ لا تغيّر شيء، استمر.</b></div></div>
+    <div class="tip tr"><div class="ti">🔻</div><div class="tt"><strong>وزنك ما زاد بعد أسبوعين؟</strong><br>• أول شيء: تأكد إنك فعلاً تاكل كل الوجبات الست — أغلب الناس يفوّتون وجبة أو اثنتين<br>• لو متأكد: <b>زد 200 سعرة</b> — أسهل طريقة: أضف نص كوب أرز على الغداء + ملعقة زبدة فول سوداني على السناك<br>• انتظر أسبوعين وشوف النتيجة</div></div>
+    <div class="tip tr"><div class="ti">🔺</div><div class="tt"><strong>وزنك يزيد أكثر من 0.7 كجم بالأسبوع؟</strong><br>هذا يعني جزء كبير دهون مو عضل.<br>• <b>قلّل 150 سعرة</b> — أسهل طريقة: قلّل الأرز في وجبة الطاقة (قبل التمرين) من كوب ونص إلى كوب<br>• الهدف: إبطاء الزيادة مو إيقافها</div></div>
+    <div class="tip tb"><div class="ti">🪞</div><div class="tt"><strong>وزنك ثابت لكن شكلك يتحسن؟</strong><br>هذا ممتاز! يعني جسمك يبني عضل ويحرق دهن بنفس الوقت (خصوصاً الشهر الأول). <b>→ لا تغيّر شيء.</b></div></div>
+    <div class="tip t0"><div class="ti">🍽️</div><div class="tt"><strong>ملاحظة مهمة:</strong> عدّل الأكل بس — <b>لا تعدّل التمارين</b>. التمارين ثابتة. الأكل هو اللي يتحكم بالوزن.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📏</div><div><div class="ct">قياسات الجسم الشهرية</div><div class="cs">قِس مرة كل شهر — نفس اليوم ونفس الوقت</div></div></div>
+    <div class="tip t0"><div class="ti">💪</div><div class="tt"><strong>محيط الذراع (البايسبس):</strong> شد عضلة الذراع وقِس أعرض نقطة بالمتر. <b>الزيادة المتوقعة: 1-2 سم في 3 أشهر.</b></div></div>
+    <div class="tip t0"><div class="ti">🫁</div><div class="tt"><strong>محيط الصدر:</strong> حط المتر على أعرض نقطة في الصدر (مستوى الحلمة) وأنت واقف عادي. <b>الزيادة المتوقعة: 2-4 سم.</b></div></div>
+    <div class="tip t0"><div class="ti">📐</div><div class="tt"><strong>محيط الكتف:</strong> قِس من أعرض نقطة في الأكتاف (المتر يلف حول الكتفين والصدر). <b>الزيادة المتوقعة: 2-3 سم.</b></div></div>
+    <div class="tip t0"><div class="ti">🦵</div><div class="tt"><strong>محيط الفخذ:</strong> قِس أعرض نقطة في الفخذ وأنت واقف. <b>الزيادة المتوقعة: 1.5-3 سم.</b></div></div>
+    <div class="tip t0"><div class="ti">⚠️</div><div class="tt"><strong>محيط الخصر (البطن):</strong> قِس على مستوى السرّة. <b>هذا الرقم المفروض ما يزيد كثير</b> — لو زاد أكثر من 2 سم يعني فيه دهون زيادة، قلّل سعراتك 150.</div></div>
+    <div class="tip tg"><div class="ti">📊</div><div class="tt"><strong>كيف تعرف النتيجة ممتازة؟</strong><br>• الذراع والصدر والكتف <b>يزيدون</b> ✅<br>• الخصر <b>ثابت أو زاد بسيط جداً</b> ✅<br>• لو الكل زاد بنفس النسبة = فيه دهون كثير → قلّل أكل شوي</div></div>
+    <div class="tip t0"><div class="ti">📋</div><div class="tt"><strong>سجّل قياساتك هنا:</strong><br><br>بداية البرنامج:<br>• الذراع: ___ سم | الصدر: ___ سم | الكتف: ___ سم | الفخذ: ___ سم | الخصر: ___ سم | الوزن: ___ كجم<br><br>نهاية الشهر الأول:<br>• الذراع: ___ سم | الصدر: ___ سم | الكتف: ___ سم | الفخذ: ___ سم | الخصر: ___ سم | الوزن: ___ كجم<br><br>نهاية الشهر الثاني:<br>• الذراع: ___ سم | الصدر: ___ سم | الكتف: ___ سم | الفخذ: ___ سم | الخصر: ___ سم | الوزن: ___ كجم<br><br>نهاية الشهر الثالث:<br>• الذراع: ___ سم | الصدر: ___ سم | الكتف: ___ سم | الفخذ: ___ سم | الخصر: ___ سم | الوزن: ___ كجم</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🔮</div><div><div class="ct">وش تسوي بعد الـ 12 أسبوع؟</div><div class="cs">3 خيارات حسب نتيجتك</div></div></div>
+    <div class="tip tg"><div class="ti">1</div><div class="tt"><strong>الخيار الأول: كرر البرنامج بأوزان أعلى (الأفضل لأغلب الناس)</strong><br><br>لو شكلك عاجبك وما جمعت دهون كثير:<br>• ارجع من الأسبوع 1 لكن <b>بآخر أوزان وصلت لها</b><br>• غيّر ترتيب بعض التمارين عشان جسمك ما يتعوّد (مثلاً في PUSH B ابدأ بـ Chest Press بدل Dips)<br>• زد السعرات 100 لو وزنك وقف<br>• <b>هذا أفضل خيار لو لا تزال ترفع أوزان جديدة كل أسبوع</b></div></div>
+    <div class="tip tb"><div class="ti">2</div><div class="tt"><strong>الخيار الثاني: مرحلة تنشيف قصيرة (4-6 أسابيع)</strong><br><br>لو حس إنك جمعت دهون حول البطن أو الخصر زاد أكثر من 3 سم:<br>• <b>نفس التمارين بالضبط</b> — لا تغيّر شيء في الجيم<br>• قلّل السعرات إلى <b>2,200-2,400</b> (خفّض الكارب بالذات — قلّل الأرز في كل وجبة)<br>• البروتين يبقى <b>175g</b> أو أكثر — هذا يحمي العضل أثناء التنشيف<br>• بعد 4-6 أسابيع ارجع للتضخيم<br>• <b>توقّع إن أوزانك تنزل شوي — طبيعي ولا يعني خسرت عضل</b></div></div>
+    <div class="tip tpu"><div class="ti">3</div><div class="tt"><strong>الخيار الثالث: انتقل لبرنامج متوسط-متقدم</strong><br><br>لو أوزانك وقفت ما تزيد لمدة 3-4 أسابيع رغم الأكل الكافي:<br>• هذا يعني جسمك تعوّد على البرنامج<br>• تحتاج تغيّر عدد الأيام أو نوع التقسيم (مثلاً Upper/Lower 4 أيام)<br>• أو تضيف تمارين أوزان حرة (دمبلز وبار) مع الأجهزة<br>• <b>هذا الوقت المناسب تفكر في مدرب شخصي لو تقدر</b></div></div>
+    <div class="tip t0"><div class="ti">📌</div><div class="tt"><strong>القاعدة العامة:</strong> استمر على التضخيم ما دامت أوزانك تزيد وشكلك يتحسن ومحيط خصرك ما زاد كثير. <b>لا تغيّر شيء يشتغل.</b></div></div>
+  </div>
+</div>
+
+<!-- ===== TAB 6: أول مرة بالجيم ===== -->
+<div class="sec" id="t6">
+
+  <div class="card">
+    <div class="ch"><div class="ci">🏠</div><div><div class="ct">أول يوم — لا تستعجل</div><div class="cs">اقرأ هذا كله قبل ما تروح الجيم</div></div></div>
+    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>أول يوم مو يوم تمرين حقيقي.</strong> أول يوم هدفه إنك تتعرف على الأجهزة وتجرب كل واحد بأخف وزن ممكن. لا تحاول ترفع ثقيل نهائياً.</div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>روح وقت هادي</strong> — تجنّب أوقات الذروة (5-8 مساءً). روح 9:30 أو 10 مساءً أول أسبوع عشان الأجهزة فاضية وما تحس بضغط.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>البس ملابس رياضية مريحة</strong> + حذاء رياضي ثابت (مو جزمة مشي). خذ معك زجاجة ماء كبيرة + منشفة صغيرة.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>افتح هذا البرنامج على جوالك</strong> وخلّيه معك. كل جهاز عليه ملصق يشرح الحركة — طابقه مع الشرح هنا.</div></div>
+    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>لا تخجل تسأل.</strong> أي شخص في الجيم أو المدرب الموجود — اسأله يوريك كيف تضبط الجهاز. الكل كان مبتدئ يوم من الأيام.</div></div>
+    <div class="tip tg"><div class="ti">5</div><div class="tt"><strong>خطة أول أسبوعين:</strong> نفس التمارين الموجودة في البرنامج لكن <b>بأخف وزن ممكن</b> (حتى لو حسيت إنه سهل جداً). الهدف: تعلّم الحركة مو رفع ثقيل. من الأسبوع الثالث ابدأ تزيد تدريجياً.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">⚙️</div><div><div class="ct">كيف تضبط أي جهاز Technogym</div><div class="cs">4 خطوات تنطبق على كل الأجهزة</div></div></div>
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>ضبط المقعد:</strong> اجلس على الجهاز. ابحث عن الذراع الأصفر تحت المقعد أو خلفه — اسحبه وعدّل الارتفاع. المقبض اللي تمسكه لازم يكون <b>بمستوى صدرك</b> في تمارين الصدر، أو <b>فوق كتفك</b> في تمارين السحب.</div></div>
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>اختيار الوزن:</strong> شوف عمود الأوزان على جانب الجهاز — فيه Pin أصفر. اسحبه وحطه في الوزن اللي تبيه. <b>أول مرة: ابدأ بـ 5-10 كجم</b> على كل جهاز عشان تجرب الحركة.</div></div>
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>جرّب الحركة فاضي:</strong> قبل ما ترفع، سوِّ الحركة بدون وزن (أو أخف وزن). تأكد إن جسمك مرتاح والحركة سلسة. لو حسيت بشيء غريب = المقعد يحتاج تعديل.</div></div>
+    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>القفل الأصفر:</strong> بعض الأجهزة فيها ذراع أمان أصفر — تأكد إنه مفتوح قبل ما تبدأ (اسأل لو ما عرفت).</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📖</div><div><div class="ct">شرح كل جهاز — كيف تستخدمه خطوة بخطوة</div></div></div>
+
+    <div class="tip tr" style="margin-bottom:14px"><div class="ti">🔴</div><div class="tt"><strong>— أجهزة الدفع (صدر + أكتاف + ترايسبس) —</strong></div></div>
+
+    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>Chest Press — ضغط صدر</strong><br>• اجلس وظهرك ملصوق بالمسند بالكامل<br>• امسك المقابض — لازم تكون بمستوى صدرك (عدّل المقعد لو مو بالمستوى)<br>• ادفع للأمام لين ذراعك تمتد (لكن لا تقفل الكوع 100%)<br>• ارجع ببطء — <b>هذا الجزء الأهم، لا ترمي الوزن</b><br>• <b>أول وزن تجربه: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>Pectoral Fly — تفتيح صدر</strong><br>• اجلس وظهرك ملصوق. امسك الذراعين اللي على الجوانب<br>• جيب الذراعين لقدام لين يلتقون أمام صدرك — حس بالضغط على الصدر<br>• ارجع ببطء لين تحس تمدد في صدرك (لكن لا تفتح أكثر من اللازم أول مرة)<br>• <b>أول وزن: 5-10 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>Shoulder Press — ضغط أكتاف</strong><br>• اجلس. المقابض لازم تكون بمستوى أذنك تقريباً<br>• ادفع لفوق لين ذراعك تمتد (لا تقفل الكوع)<br>• انزل ببطء لين المقبض يرجع بمستوى أذنك<br>• <b>أول وزن: 5-10 كجم</b> — الكتف عضلة صغيرة فابدأ خفيف</div></div>
+
+    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>Delts Machine — كتف جانبي</strong><br>• اجلس والوسائد على ذراعك من الخارج (فوق الكوع)<br>• ارفع ذراعك للجانب لين يوصل مستوى الكتف<br>• انزل ببطء — <b>لا ترفع أعلى من الكتف</b><br>• <b>أول وزن: 5 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">5</div><div class="tt"><strong>Arm Extension — ترايسبس</strong><br>• اجلس والكوع على الوسادة. امسك المقبض<br>• افرد ذراعك بالكامل لتحت<br>• ارجع ببطء — <b>الكوع ثابت ما يتحرك</b>، بس الساعد يتحرك<br>• <b>أول وزن: 5-10 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">6</div><div class="tt"><strong>Dips على Kneeling Easy Chin Dip (غمس بمساعدة)</strong><br>• اركب الجهاز واركع على الوسادة السفلية — هذي تشيل جزء من وزنك<br>• امسك المقابض الجانبية وافرد ذراعك لفوق<br>• انزل ببطء لين الكوع يوصل 90 درجة — <b>لا تنزل أعمق</b><br>• ادفع نفسك لفوق<br>• <b>ابدأ بأثقل مساعدة (أخف حِمل عليك)</b> وكل أسبوع قلّل المساعدة شوي<br>• <b>متى ما قدرت تسويها بدون مساعدة = انتقل لمحطة Chin Up/Dip العادية</b></div></div>
+
+    <div class="tip tb" style="margin-top:14px;margin-bottom:14px"><div class="ti">🔵</div><div class="tt"><strong>— أجهزة السحب (ظهر + بايسبس) —</strong></div></div>
+
+    <div class="tip t0"><div class="ti">7</div><div class="tt"><strong>Lat Machine — سحب عمودي</strong><br>• اجلس وثبّت فخذك تحت الوسادة عشان ما ترتفع<br>• امسك البار العريض من فوق بقبضة أعرض من كتفك<br>• اسحب البار لصدرك — <b>تخيّل إنك تحط كوعك في جيبك</b><br>• ارجع ببطء — لا تترك الوزن يرجع بسرعة<br>• <b>أول وزن: 15-20 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">8</div><div class="tt"><strong>Low Row — سحب أفقي</strong><br>• اجلس وصدرك ملصوق بالوسادة الأمامية<br>• امسك المقابض واسحب لصدرك — حاول تجمع لوحين ظهرك مع بعض<br>• ارجع ببطء<br>• <b>أول وزن: 15-20 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">9</div><div class="tt"><strong>Vertical Traction — سحب عمودي (بديل)</strong><br>• مثل Lat Machine لكن بمقابض مستقلة. اسحب لتحت لين المقبض بمستوى كتفك<br>• <b>أول وزن: 15-20 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">10</div><div class="tt"><strong>Pulley — كابل متعدد</strong><br>• جهاز الكابل — يُستخدم بأوضاع كثيرة<br>• <b>للسحب الأفقي:</b> اجلس على المقعد، امسك المقبض واسحبه لبطنك<br>• <b>للبايسبس:</b> قف أمام الكابل السفلي، امسك البار القصير واثنِ ذراعك لفوق<br>• <b>أول وزن: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">11</div><div class="tt"><strong>Upper Back — أعلى الظهر</strong><br>• اجلس وصدرك على الوسادة. امسك المقابض<br>• اسحب للخلف — ركّز على <b>جمع لوحين الظهر</b> مع بعض<br>• <b>أول وزن: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">12</div><div class="tt"><strong>Reverse Fly — خلف الكتف</strong><br>• اجلس ووجهك مقابل الجهاز (عكس Pectoral Fly). صدرك على الوسادة<br>• ادفع الذراعين للخلف — تخيّل إنك تفتح صدرك<br>• <b>أول وزن: 5 كجم</b> — عضلة صغيرة جداً</div></div>
+
+    <div class="tip t0"><div class="ti">13</div><div class="tt"><strong>Arm Curl — بايسبس</strong><br>• اجلس والكوع على الوسادة. امسك المقبض من تحت<br>• اثنِ ذراعك لفوق — <b>الكوع ثابت تماماً</b><br>• انزل ببطء — لا تفرد ذراعك 100% في الأسفل عشان تحمي المفصل<br>• <b>أول وزن: 5-10 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">14</div><div class="tt"><strong>Chin Ups على Kneeling Easy Chin Dip (عقلة بمساعدة)</strong><br>• اركب الجهاز واركع على الوسادة السفلية<br>• امسك البار العلوي بقبضة معكوسة (كفّك نحوك) بعرض الكتف<br>• اسحب نفسك لفوق لين ذقنك يعدّي البار<br>• انزل ببطء وبتحكم<br>• <b>ابدأ بأثقل مساعدة</b> وكل أسبوع قلّلها تدريجياً<br>• <b>الهدف:</b> خلال 4-8 أسابيع تقدر تسوي العقلة بدون مساعدة على المحطة العادية</div></div>
+
+    <div class="tip tg" style="margin-top:14px;margin-bottom:14px"><div class="ti">🟢</div><div class="tt"><strong>— أجهزة الأرجل والبطن —</strong></div></div>
+
+    <div class="tip t0"><div class="ti">15</div><div class="tt"><strong>Leg Press — ضغط أرجل</strong><br>• اجلس وحط قدمك على المنصة بعرض الكتف<br>• ادفع المنصة لين رجلك تمتد (لا تقفل الركبة 100%)<br>• ارجع ببطء لين الركبة توصل 90 درجة — <b>لا تنزل أعمق من كذا</b><br>• <b>أول وزن: 40-50 كجم</b> — الأرجل أقوى عضلات الجسم<br>• <b>للسمانة:</b> نفس الجهاز، بس حط مقدمة قدمك بس على حافة المنصة وادفع بأصابع قدمك فقط</div></div>
+
+    <div class="tip t0"><div class="ti">16</div><div class="tt"><strong>Leg Extension — فخذ أمامي</strong><br>• اجلس والوسادة على قدمك فوق الكاحل<br>• افرد رجلك لقدام لين تمتد<br>• ارجع ببطء — <b>هذا الجزء اللي يبني العضلة</b><br>• <b>أول وزن: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">17</div><div class="tt"><strong>Prone Leg Curl — فخذ خلفي</strong><br>• استلقِ على بطنك (وجهك لتحت). الوسادة على كاحلك من الخلف<br>• اثنِ رجلك وارفع الوزن لمؤخرتك<br>• انزل ببطء<br>• <b>أول وزن: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">18</div><div class="tt"><strong>Abductor — فتح الأرجل</strong><br>• اجلس والوسائد على ركبتك من الخارج<br>• افتح رجلك للخارج ضد المقاومة<br>• ارجع ببطء<br>• <b>أول وزن: 15-20 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">19</div><div class="tt"><strong>Adductor — ضم الأرجل</strong><br>• عكس اللي قبله — الوسائد على ركبتك من الداخل<br>• ضم رجلك للداخل<br>• <b>أول وزن: 15-20 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">20</div><div class="tt"><strong>Lower Back — أسفل الظهر</strong><br>• اجلس والوسادة على ظهرك. ثبّت قدمك<br>• ادفع للخلف لين جسمك يصير مستقيم — <b>لا تحني ظهرك أكثر من اللازم</b><br>• ارجع ببطء<br>• <b>أول وزن: 10-15 كجم</b> — خفّف على ظهرك أول فترة</div></div>
+
+    <div class="tip t0"><div class="ti">21</div><div class="tt"><strong>Rotary Torso — خصر</strong><br>• اجلس وثبّت رجلك. امسك المقابض<br>• لف جسمك العلوي يمين — ارجع للوسط — لف يسار<br>• حركة بطيئة ومتحكمة — <b>لا تلف بسرعة أبداً</b><br>• <b>أول وزن: 10 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">22</div><div class="tt"><strong>Abdominal Crunch — بطن</strong><br>• اجلس وامسك المقابض فوق. ثبّت قدمك<br>• انحنِ لقدام — حس بعضلة البطن تنضغط<br>• ارجع ببطء — <b>لا ترجع بالكامل، خل التوتر على البطن</b><br>• <b>أول وزن: 10-15 كجم</b></div></div>
+
+    <div class="tip t0"><div class="ti">23</div><div class="tt"><strong>Hanging Leg Raise — بطن سفلي</strong><br>• قف على محطة Chin Up/Dip. اسند ظهرك على المسند والكوع على الوسادات<br>• ارفع ركبك لصدرك ببطء<br>• انزل ببطء — <b>لا تأرجح جسمك</b><br>• <b>بدون وزن — بس وزن جسمك</b></div></div>
+
+    <div class="tip t0"><div class="ti">24</div><div class="tt"><strong>Skillrow — تجديف (إحماء)</strong><br>• اجلس وثبّت قدمك في المكان المخصص<br>• امسك المقبض — ادفع برجلك أولاً، بعدين اسحب بيدك لبطنك<br>• ارجع ببطء — رجلك ترجع أولاً ثم يدك<br>• <b>5 دقائق بسرعة مريحة</b> = إحماء مثالي</div></div>
+
+    <div class="tip t0"><div class="ti">25</div><div class="tt"><strong>Crossover Cables — كابل كروس (بديل لـ Pectoral Fly)</strong><br>• قف بين العمودين. اضبط الكابل على ارتفاع الكتف<br>• امسك المقبضين وخطوة وحدة للأمام<br>• جيب يديك لقدام لين يلتقون أمام صدرك — حس بالضغط على الصدر<br>• ارجع ببطء وافتح صدرك<br>• <b>ميزته عن Pectoral Fly:</b> حرية حركة أكبر وتمدد أعمق للصدر<br>• <b>أول وزن: 5 كجم لكل جانب</b></div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">📅</div><div><div class="ct">خطة أول أسبوعين</div><div class="cs">الأسبوع 1 و 2 مختلفين عن الباقي</div></div></div>
+    <div class="tip tg"><div class="ti">📌</div><div class="tt"><strong>الأسبوع الأول:</strong><br>• نفس التمارين المكتوبة في البرنامج بالضبط<br>• <b>كل الأوزان: أخف وزن ممكن</b><br>• <b>ركّز 100% على الأسلوب:</b> الحركة صحيحة؟ تحس بالعضلة المستهدفة؟ التنفس صح؟<br>• طبيعي تحس بألم عضلي بعد أول يومين — هذا اسمه DOMS وطبيعي 100% ويروح خلال 3-4 أيام<br>• <b>لا توقف بسبب الألم العضلي</b> — سخّن زين والألم يخف أثناء التمرين</div></div>
+    <div class="tip tg"><div class="ti">📌</div><div class="tt"><strong>الأسبوع الثاني:</strong><br>• نفس التمارين<br>• <b>ابدأ تزيد الوزن تدريجياً</b> — كل تمرين زد 2.5-5 كجم عن الأسبوع الأول<br>• لازم تحس إن آخر 2-3 تكرارات صعبة شوي — لو سهل كله = الوزن خفيف<br>• من الأسبوع الثالث يبدأ البرنامج الفعلي (الشهر الأول — التعلّم)</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🧠</div><div><div class="ct">أخطاء شائعة أول مرة — تجنّبها</div></div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>تحاول ترفع ثقيل من أول يوم.</strong> هذا أسرع طريقة للإصابة. ابدأ خفيف — كبرياؤك ما يبني عضل، الأسلوب الصح يبني عضل.</div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>تقارن نفسك بالناس حولك.</strong> اللي يرفعون ثقيل عندهم سنوات خبرة. أنت بعد 3 أشهر بتكون أحسن من 90% من اللي يروحون الجيم بدون برنامج.</div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>تغيّر البرنامج لأنك شفت فيديو.</strong> كل يوتيوبر يقول شيء مختلف. <b>التزم ببرنامج واحد 12 أسبوع</b> — هذا اللي يجيب نتيجة.</div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>تفوّت الأكل.</strong> كثير مبتدئين يتمرنون زين لكن ما ياكلون كفاية. بدون 175g بروتين يومياً = مضيعة وقت.</div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>ما تسخّن.</strong> 5 دقائق Skillrow + مجموعة تسخين = تفرق بين تمرين ممتاز وإصابة.</div></div>
+    <div class="tip tr"><div class="ti">❌</div><div class="tt"><strong>تنسى تمسح الجهاز.</strong> بعد ما تخلص من أي جهاز — امسحه بالمنشفة أو المناديل الموجودة. احترام لك وللي بعدك.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><div class="ci">🎒</div><div><div class="ct">شنطة الجيم — وش تحتاج</div></div></div>
+    <div class="tip t0"><div class="ti">✅</div><div class="tt"><strong>الأساسيات:</strong><br>• زجاجة ماء كبيرة (1 لتر على الأقل)<br>• منشفة صغيرة<br>• ملابس رياضية مريحة<br>• حذاء رياضي ثابت (مو مرن زيادة)<br>• سماعات (اختياري — الموسيقا تساعد على التركيز)<br>• جوالك (عشان تتابع البرنامج + تسجّل أوزانك)</div></div>
+    <div class="tip t0"><div class="ti">🚫</div><div class="tt"><strong>لا تحتاج تشتري الحين:</strong> حزام ظهر، قفازات، أحذية رفع أثقال، أي مكمل غالي. كل هذي تجي لاحقاً لو احتجتها.</div></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-brand">BULK MODE</div>
+  <div class="footer-text">برنامج التضخيم النهائي — 12 أسبوع<br>مصمم خصيصاً لأجهزتك المتوفرة</div>
+  <div class="footer-stats">
+    <div class="footer-stat"><b>7</b> أقسام</div>
+    <div class="footer-stat"><b>40</b> تمرين</div>
+    <div class="footer-stat"><b>6</b> وجبات</div>
+    <div class="footer-stat"><b>24</b> جهاز</div>
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- BACK TO TOP -->
+<button class="btt" id="bttBtn" onclick="scrollTop()">↑</button>
+
+<!-- مؤقت الراحة -->
+<div class="ttrig" id="tTrig" onclick="showT()">⏱️ مؤقت الراحة</div>
+<div class="tf" id="tF">
+  <div>
+    <div class="tfl">
+      <div><div class="td" id="tD">90</div><div class="tla">ثانية</div></div>
+      <div class="tbs">
+        <button class="tbn tbs1" id="tS" onclick="startT()">▶</button>
+        <button class="tbn tbs2" onclick="resetT()">■</button>
+      </div>
+    </div>
+    <div class="tps">
+      <button class="tpr" onclick="setT(30)">30</button>
+      <button class="tpr" onclick="setT(45)">45</button>
+      <button class="tpr" onclick="setT(60)">60</button>
+      <button class="tpr a" onclick="setT(90)">90</button>
+      <button class="tpr" onclick="setT(120)">120</button>
+    </div>
+  </div>
+</div>
+<div style="height:80px"></div>
+
+<!-- Tracking Floating Action Button -->
+<button class="fab" id="fabBtn" title="القائمة" aria-label="قائمة التتبع">📊</button>
+<div class="fab-menu" id="fabMenu">
+  <button onclick="openStats()">📈 إحصائياتي</button>
+  <button onclick="exportData()">💾 تصدير البيانات</button>
+  <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+<!-- Stats Modal -->
+<div class="stats-modal" id="statsModal">
+  <div class="stats-content" style="position:relative">
+    <button class="close-modal" onclick="closeStats()">✕</button>
+    <h2>📊 إحصائياتي</h2>
+    <div id="statsBody"></div>
+    <h2 style="margin-top:20px">📜 آخر ١٠ تمارين سجّلت</h2>
+    <div id="historyBody"></div>
+    <div class="stats-actions">
+      <button onclick="exportData()">💾 تصدير نسخة احتياطية</button>
+      <button class="danger" onclick="clearAllData()">🗑 مسح كل البيانات</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ TAB NAVIGATION ============
+document.querySelectorAll('.nb[data-t]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.nb').forEach(x=>x.classList.remove('a'));
+    document.querySelectorAll('.sec').forEach(x=>x.classList.remove('a'));
+    b.classList.add('a');
+    const sec=document.getElementById('t'+b.dataset.t);
+    if(sec) sec.classList.add('a');
+    window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+  });
+});
+
+// ============ DAY TOGGLE ============
+function tg(e){e.classList.toggle('open')}
+
+// ============ SCROLL PROGRESS + BACK TO TOP ============
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  document.getElementById('progressBar').style.width=pct+'%';
+  const btt=document.getElementById('bttBtn');
+  if(h.scrollTop>600){btt.classList.add('show')}else{btt.classList.remove('show')}
+},{passive:true});
+
+function scrollTop(){window.scrollTo({top:0,behavior:'smooth'})}
+
+// ============ REST TIMER ============
+let tI=null,tS2=90,tR=false,tDf=90;
+const tDel=document.getElementById('tD'),tFl=document.getElementById('tF'),tTr=document.getElementById('tTrig'),tSb=document.getElementById('tS');
+function showT(){tFl.classList.add('show');tTr.classList.add('hid')}
+function setT(s){tDf=s;tS2=s;tR=false;clearInterval(tI);tDel.textContent=s;tSb.textContent='▶';document.querySelectorAll('.tpr').forEach(p=>{p.classList.toggle('a',parseInt(p.textContent)===s)})}
+function startT(){if(tR){clearInterval(tI);tR=false;tSb.textContent='▶';return}tR=true;tSb.textContent='⏸';tI=setInterval(()=>{tS2--;tDel.textContent=tS2;if(tS2<=0){clearInterval(tI);tR=false;tDel.textContent='✓';tSb.textContent='▶';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}setTimeout(()=>{tS2=tDf;tDel.textContent=tDf},2000)}},1000)}
+function resetT(){clearInterval(tI);tR=false;tS2=tDf;tDel.textContent=tDf;tSb.textContent='▶';tFl.classList.remove('show');tTr.classList.remove('hid')}
+
+// ============ TRACKING SYSTEM ============
+const STORAGE_KEY='bulkmode_tracker_v1';
+
+function getData(){
+  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{logs:[],lastWeights:{}}}
+  catch(e){return {logs:[],lastWeights:{}}}
+}
+
+function saveData(data){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+
+function showToast(msg,color='var(--grn)'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=color;
+  t.style.color=color;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// Extract exercise name from step
+function getExerciseName(stepEl){
+  const nameEl=stepEl.querySelector('.step-name');
+  if(!nameEl) return null;
+  let name=nameEl.textContent.trim();
+  // Strip "— سيت ١" etc
+  name=name.replace(/\s*—\s*سيت.*$/,'').replace(/\s*-\s*سيت.*$/,'').replace(/\s*\(.*?\)\s*$/,'').trim();
+  return name;
+}
+
+// Determine day from step's parent
+function getDayLabel(stepEl){
+  const dy=stepEl.closest('.dy');
+  if(!dy) return 'يوم غير محدد';
+  const dn=dy.querySelector('.dn');
+  return dn?dn.textContent.split('—')[0].trim():'يوم';
+}
+
+// Inject tracking inputs into each exercise step (not rest/warmup)
+function injectTrackingInputs(){
+  const steps=document.querySelectorAll('.step:not(.rest):not(.warmup):not(.done)');
+  steps.forEach((step,idx)=>{
+    const exName=getExerciseName(step);
+    if(!exName) return;
+    if(step.querySelector('.track-input')) return;
+    
+    const inputDiv=document.createElement('div');
+    inputDiv.className='track-input';
+    
+    const exKey=exName.replace(/\s+/g,'_');
+    const data=getData();
+    const lastEntry=data.lastWeights[exKey];
+    const lastText=lastEntry?`آخر مرة: <b>${lastEntry.weight}كجم × ${lastEntry.reps}</b>`:'سجّل أول مرة';
+    
+    inputDiv.innerHTML=`
+      <label>كجم</label>
+      <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${lastEntry?lastEntry.weight:''}">
+      <label>تكرار</label>
+      <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${lastEntry?lastEntry.reps:''}">
+      <span class="last">${lastText}</span>
+      <button class="save-btn" onclick="saveSet(this)">حفظ</button>
+    `;
+    step.querySelector('.step-body').appendChild(inputDiv);
+  });
+}
+
+function saveSet(btn){
+  const trackDiv=btn.closest('.track-input');
+  const step=btn.closest('.step');
+  const weightInput=trackDiv.querySelector('.weight-input');
+  const repsInput=trackDiv.querySelector('.reps-input');
+  const weight=parseFloat(weightInput.value);
+  const reps=parseInt(repsInput.value);
+  const exKey=weightInput.dataset.ex;
+  const exName=weightInput.dataset.name;
+  
+  if(isNaN(weight)||isNaN(reps)||reps<=0){
+    showToast('⚠️ أدخل وزن وتكرارات صحيحة','var(--red)');
+    return;
+  }
+  
+  const data=getData();
+  data.logs.push({
+    date:new Date().toISOString(),
+    day:getDayLabel(step),
+    exercise:exName,
+    weight:weight,
+    reps:reps
+  });
+  data.lastWeights[exKey]={weight,reps,date:new Date().toISOString()};
+  // Keep only last 1000 logs to prevent storage bloat
+  if(data.logs.length>1000) data.logs=data.logs.slice(-1000);
+  saveData(data);
+  
+  // Visual feedback
+  btn.textContent='✓ حُفظ';
+  btn.classList.add('saved');
+  step.classList.add('completed');
+  trackDiv.querySelector('.last').innerHTML=`آخر مرة: <b>${weight}كجم × ${reps}</b>`;
+  showToast(`✓ ${exName}: ${weight}كجم × ${reps}`);
+  
+  setTimeout(()=>{
+    btn.textContent='حفظ';
+    btn.classList.remove('saved');
+  },2000);
+}
+
+// ============ STATS MODAL ============
+function openStats(){
+  const data=getData();
+  const sb=document.getElementById('statsBody');
+  const hb=document.getElementById('historyBody');
+  
+  const total=data.logs.length;
+  const uniqueExercises=new Set(data.logs.map(l=>l.exercise)).size;
+  const totalVolume=data.logs.reduce((s,l)=>s+(l.weight*l.reps),0).toFixed(0);
+  const sessions=new Set(data.logs.map(l=>l.date.split('T')[0])).size;
+  
+  sb.innerHTML=`
+    <div class="stats-row"><span>إجمالي السيتات المسجّلة</span><b>${total}</b></div>
+    <div class="stats-row"><span>عدد التمارين المختلفة</span><b>${uniqueExercises}</b></div>
+    <div class="stats-row"><span>إجمالي الحجم (كجم × تكرار)</span><b>${totalVolume.toLocaleString('ar-SA')}</b></div>
+    <div class="stats-row"><span>عدد أيام التمرين</span><b>${sessions}</b></div>
+  `;
+  
+  // Group last logs by date
+  const lastLogs=data.logs.slice(-50).reverse();
+  const byDate={};
+  lastLogs.forEach(l=>{
+    const d=l.date.split('T')[0];
+    if(!byDate[d]) byDate[d]={day:l.day,exercises:{}};
+    if(!byDate[d].exercises[l.exercise]) byDate[d].exercises[l.exercise]=[];
+    byDate[d].exercises[l.exercise].push(`${l.weight}×${l.reps}`);
+  });
+  
+  const dates=Object.keys(byDate).slice(0,10);
+  if(dates.length===0){
+    hb.innerHTML='<div style="text-align:center;color:var(--tx3);padding:20px">لم تُسجّل أي تمارين بعد</div>';
+  }else{
+    hb.innerHTML=dates.map(d=>{
+      const day=byDate[d];
+      const exHtml=Object.entries(day.exercises).map(([ex,sets])=>
+        `<div class="h-ex"><b>${ex}</b><span>${sets.join(' · ')}</span></div>`
+      ).join('');
+      return `<div class="history-day">
+        <div class="h-date">${d} · ${day.day}</div>
+        ${exHtml}
+      </div>`;
+    }).join('');
+  }
+  
+  document.getElementById('statsModal').classList.add('open');
+}
+
+function closeStats(){
+  document.getElementById('statsModal').classList.remove('open');
+}
+
+// ============ EXPORT / IMPORT ============
+function exportData(){
+  const data=getData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`bulkmode_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 تم تصدير النسخة الاحتياطية');
+}
+
+function importData(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!imported.logs||!imported.lastWeights) throw new Error('بنية ملف غير صحيحة');
+      if(confirm(`استيراد ${imported.logs.length} سجل؟ سيُستبدل ما هو موجود.`)){
+        saveData(imported);
+        showToast('✓ تم استيراد البيانات بنجاح');
+        setTimeout(()=>location.reload(),1000);
+      }
+    }catch(e){
+      showToast('⚠️ ملف غير صالح: '+e.message,'var(--red)');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function clearAllData(){
+  if(!confirm('⚠️ هل أنت متأكد من مسح كل بيانات التتبع؟ لا يمكن التراجع.')) return;
+  if(!confirm('🚨 تأكيد نهائي — كل البيانات ستُمسح. متأكد؟')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  showToast('🗑 تم مسح كل البيانات','var(--red)');
+  setTimeout(()=>location.reload(),1000);
+}
+
+// ============ FAB MENU ============
+document.getElementById('fabBtn').addEventListener('click',()=>{
+  document.getElementById('fabMenu').classList.toggle('open');
+});
+
+// Close FAB menu when clicking outside
+document.addEventListener('click',(e)=>{
+  if(!e.target.closest('#fabBtn')&&!e.target.closest('#fabMenu')){
+    document.getElementById('fabMenu').classList.remove('open');
+  }
+});
+
+// Close modal when clicking outside
+document.getElementById('statsModal').addEventListener('click',(e)=>{
+  if(e.target.id==='statsModal') closeStats();
+});
+
+// ============ INITIALIZE ============
+window.addEventListener('DOMContentLoaded',()=>{
+  injectTrackingInputs();
+});
+
+// ============ SERVICE WORKER REGISTRATION (PWA) ============
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg=>console.log('SW registered:',reg.scope))
+      .catch(err=>console.log('SW registration failed:',err));
+  });
+}
+</script>
+</body>
+</html>
