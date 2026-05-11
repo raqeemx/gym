@@ -1,5 +1,6 @@
-// BULK MODE Service Worker — Offline-first
-const CACHE_NAME = 'bulkmode-v1';
+// BULK MODE Service Worker — Offline-first (V5)
+const CACHE_NAME = 'bulkmode-v5';
+const CHART_JS = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +10,7 @@ const ASSETS = [
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 ];
 
-// Install: precache all assets
+// Install: precache all app-shell assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -29,24 +30,26 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: cache-first strategy for app shell, network-first for fonts
+// Fetch strategy:
+// - origin assets: cache-first with background update
+// - Chart.js (jsdelivr): stale-while-revalidate (works offline after first load)
+// - fonts: stale-while-revalidate
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  
-  // Cache-first for everything in our origin
+
+  // App-shell (same origin)
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((response) => {
-          // Cache successful responses
-          if (response.ok && event.request.method === 'GET') {
+          if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         }).catch(() => {
-          // Offline fallback: return cached index.html for navigation requests
           if (event.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
@@ -55,15 +58,33 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-  
-  // Network-first for fonts (with cache fallback)
+
+  // Chart.js (jsdelivr) — stale-while-revalidate
+  if (url.hostname.includes('cdn.jsdelivr.net')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response && response.ok) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // Google Fonts — stale-while-revalidate
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
-      fetch(event.request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
-      }).catch(() => caches.match(event.request))
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response && response.ok) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
     );
   }
 });

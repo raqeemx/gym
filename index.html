@@ -331,6 +331,105 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
   .dbi{padding:12px 16px 16px}
   .footer{padding:32px 16px 100px}
 }
+
+/* ============ V5 LEVEL 1: SESSION + PR + CHARTS ============ */
+/* Session control inside day */
+.session-ctrl{display:flex;gap:10px;align-items:center;margin-bottom:14px;padding:12px;background:linear-gradient(135deg,rgba(212,168,83,.08),rgba(212,168,83,.02));border:1px solid rgba(212,168,83,.18);border-radius:12px}
+.session-start-btn{flex:1;background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border:none;padding:11px 16px;border-radius:9px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;transition:.2s;text-transform:uppercase}
+.session-start-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,168,83,.3)}
+.session-start-btn:active{transform:scale(.97)}
+.session-start-btn.active{background:linear-gradient(135deg,#FF5A5F,#C04347);color:#fff;animation:pulse 2s infinite}
+.session-ctrl-hint{font-size:10.5px;color:var(--tx3);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+
+/* Active session top bar */
+.sess-bar{position:fixed;top:0;left:0;right:0;z-index:101;background:linear-gradient(180deg,rgba(11,13,17,.98),rgba(11,13,17,.92));-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-bottom:1px solid rgba(212,168,83,.3);padding:9px 14px;display:none;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.sess-bar.show{display:flex;animation:slideDown .35s cubic-bezier(.16,1,.3,1)}
+body.sess-active{padding-top:50px}
+body.sess-active .nav{top:50px}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.sess-bar .sb-icon{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FF5A5F,#C04347);display:flex;align-items:center;justify-content:center;font-size:13px;animation:pulse 2s infinite;flex-shrink:0;box-shadow:0 4px 12px rgba(255,90,95,.3)}
+.sess-bar .sb-info{flex:1;min-width:0}
+.sess-bar .sb-day{font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess-bar .sb-meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--tx2);margin-top:2px}
+.sess-bar .sb-meta b{color:var(--g2)}
+.sess-bar .sb-end{background:rgba(255,90,95,.15);color:var(--red);border:1px solid rgba(255,90,95,.3);border-radius:8px;padding:8px 14px;font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1px;cursor:pointer;flex-shrink:0;transition:.2s;text-transform:uppercase}
+.sess-bar .sb-end:hover{background:rgba(255,90,95,.25)}
+
+/* PR celebration overlay */
+.pr-flash{position:fixed;inset:0;z-index:10002;background:radial-gradient(circle,rgba(212,168,83,.4),rgba(0,0,0,.92));display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .35s}
+.pr-flash.show{opacity:1;pointer-events:all}
+.pr-flash-inner{background:linear-gradient(145deg,var(--s1),var(--s2));border:2px solid var(--g1);border-radius:24px;padding:32px 26px;text-align:center;max-width:340px;width:90%;box-shadow:0 0 80px rgba(212,168,83,.5);animation:prPop .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes prPop{0%{transform:scale(.5) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.pr-flash-icon{font-size:64px;margin-bottom:8px;animation:float 2s ease-in-out infinite;display:inline-block}
+.pr-flash-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;letter-spacing:.5px}
+.pr-flash-ex{font-size:14px;color:#fff;font-weight:600;margin-bottom:14px}
+.pr-flash-prs{display:flex;flex-direction:column;gap:6px}
+.pr-flash-item{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tx2);background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.15);padding:7px 12px;border-radius:8px}
+.pr-flash-item b{color:var(--g2)}
+
+/* PR indicators on completed steps */
+.step.has-pr{position:relative}
+.step.has-pr::before{content:'🏆';position:absolute;top:-6px;right:-2px;font-size:16px;z-index:2;animation:float 2s infinite;filter:drop-shadow(0 2px 4px rgba(212,168,83,.4))}
+.pr-badge-inline{display:inline-block;background:linear-gradient(135deg,var(--g1),var(--g2));color:#000;font-family:'Outfit',sans-serif;font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;letter-spacing:.5px;margin-right:5px}
+
+/* Session summary modal */
+.summary-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10001;display:none;align-items:center;justify-content:center;padding:20px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.summary-modal.open{display:flex;animation:fadeUp .35s both}
+.summary-content{background:linear-gradient(145deg,var(--s1),var(--s2));border:1px solid rgba(212,168,83,.25);border-radius:22px;padding:28px 24px;max-width:420px;width:100%;text-align:center;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.summary-content h2{font-family:'Outfit',sans-serif;font-size:18px;letter-spacing:2px;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;font-weight:800}
+.summary-day{font-family:'Outfit',sans-serif;font-size:12px;color:var(--tx2);margin-bottom:20px;letter-spacing:2px;text-transform:uppercase}
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.summary-stat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:18px 12px;transition:.3s}
+.summary-stat.gold{background:linear-gradient(145deg,rgba(212,168,83,.1),rgba(212,168,83,.02));border-color:rgba(212,168,83,.3);animation:glow 2.5s infinite}
+.summary-stat .ss-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--g2);display:block;margin-bottom:4px}
+.summary-stat .ss-lbl{font-size:11px;color:var(--tx3);font-family:'Outfit',sans-serif;letter-spacing:1px;text-transform:uppercase}
+.summary-prs{margin-bottom:16px;max-height:120px;overflow-y:auto}
+.summary-pr-item{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g2);background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);padding:6px 10px;border-radius:8px;margin-bottom:5px;text-align:right}
+.summary-close{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border:none;padding:12px 28px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;text-transform:uppercase;width:100%}
+.summary-close:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,168,83,.3)}
+
+/* Rest timer enhancements */
+.tpr.skip{background:rgba(255,90,95,.1)!important;color:var(--red)!important;border-color:rgba(255,90,95,.2)!important}
+.tpr.add{background:rgba(90,180,255,.1)!important;color:var(--blue)!important;border-color:rgba(90,180,255,.2)!important}
+.ttrig.active{background:linear-gradient(135deg,rgba(212,168,83,.25),rgba(212,168,83,.06));border-color:var(--g1);color:#fff}
+.tf .td.warn{color:var(--red);animation:pulse 1s infinite}
+
+/* Progress sub-tabs */
+.prog-tabs{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.prog-tabs::-webkit-scrollbar{display:none}
+.prog-tab{flex-shrink:0;background:var(--s2);color:var(--tx2);border:1px solid rgba(255,255,255,.04);border-radius:10px;padding:9px 16px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.2s;white-space:nowrap}
+.prog-tab.a{background:linear-gradient(135deg,var(--g4),var(--g5));color:var(--g2);border-color:rgba(212,168,83,.25)}
+.prog-tab:hover{color:#fff}
+.prog-pane{display:none}
+.prog-pane.a{display:block;animation:fadeUp .35s both}
+
+/* Chart wrap */
+.chart-wrap{background:linear-gradient(145deg,var(--s1),var(--s2));border:1px solid rgba(255,255,255,.04);border-radius:16px;padding:16px;margin-bottom:14px;position:relative}
+.chart-wrap h3{font-family:'Outfit',sans-serif;font-size:13px;color:var(--g2);font-weight:700;margin-bottom:10px;letter-spacing:.5px}
+.chart-wrap select{background:var(--s3);color:var(--tx);border:1px solid rgba(212,168,83,.15);border-radius:8px;padding:8px 12px;font-family:'Rubik',sans-serif;font-size:12px;margin-bottom:12px;width:100%;outline:none}
+.chart-wrap select:focus{border-color:var(--g1)}
+.chart-wrap canvas{max-height:280px}
+
+/* PR list */
+.pr-list{display:flex;flex-direction:column;gap:8px}
+.pr-item{display:flex;align-items:center;gap:12px;background:linear-gradient(145deg,rgba(212,168,83,.04),rgba(212,168,83,.01));border:1px solid rgba(212,168,83,.12);border-radius:12px;padding:12px 14px;transition:.2s}
+.pr-item:hover{border-color:rgba(212,168,83,.25);transform:translateX(-2px)}
+.pr-item .pr-icon{font-size:20px;flex-shrink:0}
+.pr-item .pr-body{flex:1;min-width:0}
+.pr-item .pr-name{font-weight:700;font-size:13px;color:#fff;line-height:1.3}
+.pr-item .pr-types{font-size:11px;color:var(--tx2);margin-top:4px;font-family:'JetBrains Mono',monospace;display:flex;flex-wrap:wrap;gap:6px}
+.pr-item .pr-types span{background:rgba(212,168,83,.08);color:var(--g2);padding:2px 8px;border-radius:6px;border:1px solid rgba(212,168,83,.15)}
+.pr-item .pr-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx3);flex-shrink:0}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--tx3)}
+.empty-state .es-icon{font-size:42px;margin-bottom:10px;opacity:.5}
+.empty-state .es-text{font-size:13px;line-height:1.6}
+.empty-state .es-text b{color:var(--g2)}
+
+/* Charts loading */
+.chart-loading{text-align:center;padding:60px 20px;color:var(--tx3);font-size:12px}
+.chart-loading::before{content:'⏳';display:block;font-size:30px;margin-bottom:8px;animation:pulse 1.5s infinite}
 </style>
 </head>
 <body>
@@ -351,6 +450,7 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
   <div class="nav-brand" onclick="scrollTop()">💪 BULK</div>
   <div class="ni">
     <button class="nb a" data-t="0">نظرة عامة</button>
+    <button class="nb" data-t="7">📈 تقدمي</button>
     <button class="nb" data-t="6">أول مرة</button>
     <button class="nb" data-t="1">التمارين</button>
     <button class="nb" data-t="2">الأوزان</button>
@@ -1405,6 +1505,43 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
 
 </div>
 
+<!-- ===== TAB 7: تقدمي (PROGRESS / PRs / CHARTS) ===== -->
+<div class="sec" id="t7">
+  <div class="card">
+    <div class="ch"><div class="ci">📈</div><div><div class="ct">تقدمي</div><div class="cs">أرقام قياسية · رسوم بيانية · سجل الجلسات</div></div></div>
+    <div class="prog-tabs">
+      <button class="prog-tab a" data-pt="prs">🏆 الأرقام القياسية</button>
+      <button class="prog-tab" data-pt="charts">📊 الرسوم البيانية</button>
+      <button class="prog-tab" data-pt="history">📜 سجل الجلسات</button>
+    </div>
+
+    <div class="prog-pane a" id="ppPrs">
+      <div id="prsBody"><div class="chart-loading">جاري التحميل...</div></div>
+    </div>
+
+    <div class="prog-pane" id="ppCharts">
+      <div class="chart-wrap">
+        <h3>📊 تقدّم تمرين عبر الزمن</h3>
+        <select id="chartExSel"><option value="">-- اختر تمرين --</option></select>
+        <canvas id="chartEx"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <h3>📅 الحجم الأسبوعي الإجمالي</h3>
+        <canvas id="chartVol"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <h3>⚖️ وزن الجسم</h3>
+        <canvas id="chartBW"></canvas>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--tx3)">سجّل وزنك من ⚙️ الإعدادات (سيتم إضافتها قريباً)</div>
+      </div>
+    </div>
+
+    <div class="prog-pane" id="ppHistory">
+      <div id="historyBody2"><div class="chart-loading">جاري التحميل...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <div class="footer">
   <div class="footer-brand">BULK MODE</div>
@@ -1423,6 +1560,16 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
 <!-- BACK TO TOP -->
 <button class="btt" id="bttBtn" onclick="scrollTop()">↑</button>
 
+<!-- Active Session Bar -->
+<div class="sess-bar" id="sessBar">
+  <div class="sb-icon">⏺</div>
+  <div class="sb-info">
+    <div class="sb-day" id="sessDayType">UPPER A</div>
+    <div class="sb-meta">⏱ <b id="sessElapsed">0:00</b> · 💪 <b id="sessSetsCount">0</b> سيت · 🏆 <b id="sessPrCount">0</b> PR</div>
+  </div>
+  <button class="sb-end" onclick="endSession()">إنهاء</button>
+</div>
+
 <!-- مؤقت الراحة -->
 <div class="ttrig" id="tTrig" onclick="showT()">⏱️ مؤقت الراحة</div>
 <div class="tf" id="tF">
@@ -1435,11 +1582,12 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
       </div>
     </div>
     <div class="tps">
-      <button class="tpr" onclick="setT(30)">30</button>
       <button class="tpr" onclick="setT(45)">45</button>
       <button class="tpr" onclick="setT(60)">60</button>
       <button class="tpr a" onclick="setT(90)">90</button>
       <button class="tpr" onclick="setT(120)">120</button>
+      <button class="tpr add" onclick="extendT(30)">+30</button>
+      <button class="tpr skip" onclick="skipT()">تخطي</button>
     </div>
   </div>
 </div>
@@ -1469,10 +1617,25 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
   </div>
 </div>
 
+<!-- Session Summary Modal -->
+<div class="summary-modal" id="summaryModal">
+  <div class="summary-content">
+    <h2>✓ تمت الجلسة</h2>
+    <div class="summary-day" id="summaryDay">—</div>
+    <div id="summaryBody"></div>
+    <button class="summary-close" onclick="closeSummary()">ممتاز 🔥</button>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
+/* ============ BULK MODE V5 — LEVEL 1 ============
+ * IndexedDB + Workout Sessions + Automatic PRs + Smart Rest Timer + Charts
+ * Offline-first, vanilla JS, single file.
+ * ============================================== */
+
 // ============ TAB NAVIGATION ============
 document.querySelectorAll('.nb[data-t]').forEach(b=>{
   b.addEventListener('click',()=>{
@@ -1482,11 +1645,17 @@ document.querySelectorAll('.nb[data-t]').forEach(b=>{
     const sec=document.getElementById('t'+b.dataset.t);
     if(sec) sec.classList.add('a');
     window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+    // إذا فُتح تبويب "تقدمي" حدّث محتواه
+    if(b.dataset.t==='7') refreshProgressTab();
   });
 });
 
 // ============ DAY TOGGLE ============
-function tg(e){e.classList.toggle('open')}
+function tg(e){
+  // لا تطوي عند الضغط على الأزرار داخل اليوم
+  if(event && event.target.closest('.session-ctrl,.track-input,.save-btn,.dby')) return;
+  e.classList.toggle('open');
+}
 
 // ============ SCROLL PROGRESS + BACK TO TOP ============
 window.addEventListener('scroll',()=>{
@@ -1499,26 +1668,7 @@ window.addEventListener('scroll',()=>{
 
 function scrollTop(){window.scrollTo({top:0,behavior:'smooth'})}
 
-// ============ REST TIMER ============
-let tI=null,tS2=90,tR=false,tDf=90;
-const tDel=document.getElementById('tD'),tFl=document.getElementById('tF'),tTr=document.getElementById('tTrig'),tSb=document.getElementById('tS');
-function showT(){tFl.classList.add('show');tTr.classList.add('hid')}
-function setT(s){tDf=s;tS2=s;tR=false;clearInterval(tI);tDel.textContent=s;tSb.textContent='▶';document.querySelectorAll('.tpr').forEach(p=>{p.classList.toggle('a',parseInt(p.textContent)===s)})}
-function startT(){if(tR){clearInterval(tI);tR=false;tSb.textContent='▶';return}tR=true;tSb.textContent='⏸';tI=setInterval(()=>{tS2--;tDel.textContent=tS2;if(tS2<=0){clearInterval(tI);tR=false;tDel.textContent='✓';tSb.textContent='▶';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}setTimeout(()=>{tS2=tDf;tDel.textContent=tDf},2000)}},1000)}
-function resetT(){clearInterval(tI);tR=false;tS2=tDf;tDel.textContent=tDf;tSb.textContent='▶';tFl.classList.remove('show');tTr.classList.remove('hid')}
-
-// ============ TRACKING SYSTEM ============
-const STORAGE_KEY='bulkmode_tracker_v1';
-
-function getData(){
-  try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{logs:[],lastWeights:{}}}
-  catch(e){return {logs:[],lastWeights:{}}}
-}
-
-function saveData(data){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-}
-
+// ============ TOAST ============
 function showToast(msg,color='var(--grn)'){
   const t=document.getElementById('toast');
   t.textContent=msg;
@@ -1528,17 +1678,109 @@ function showToast(msg,color='var(--grn)'){
   setTimeout(()=>t.classList.remove('show'),2500);
 }
 
-// Extract exercise name from step
+// ============ INDEXEDDB WRAPPER ============
+// مغلّف مبسّط للوصول لـ IndexedDB بطريقة async/await
+const DB_NAME='bulkmode_db';
+const DB_VERSION=1;
+const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings'];
+
+const db={
+  _h:null,
+  async open(){
+    if(this._h) return this._h;
+    return new Promise((res,rej)=>{
+      const req=indexedDB.open(DB_NAME,DB_VERSION);
+      req.onerror=()=>rej(req.error);
+      req.onsuccess=()=>{this._h=req.result;res(this._h)};
+      req.onupgradeneeded=(e)=>{
+        const d=e.target.result;
+        if(!d.objectStoreNames.contains('workouts')){
+          const s=d.createObjectStore('workouts',{keyPath:'id'});
+          s.createIndex('date','date');
+          s.createIndex('dayType','dayType');
+        }
+        if(!d.objectStoreNames.contains('sets')){
+          const s=d.createObjectStore('sets',{keyPath:'id',autoIncrement:true});
+          s.createIndex('workoutId','workoutId');
+          s.createIndex('exerciseName','exerciseName');
+          s.createIndex('date','date');
+        }
+        if(!d.objectStoreNames.contains('exercises')) d.createObjectStore('exercises',{keyPath:'name'});
+        if(!d.objectStoreNames.contains('bodyMetrics')) d.createObjectStore('bodyMetrics',{keyPath:'date'});
+        if(!d.objectStoreNames.contains('prs')){
+          const s=d.createObjectStore('prs',{keyPath:'id',autoIncrement:true});
+          s.createIndex('exerciseName','exerciseName');
+          s.createIndex('type','type');
+        }
+        if(!d.objectStoreNames.contains('progressPhotos')) d.createObjectStore('progressPhotos',{keyPath:'id',autoIncrement:true});
+        if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+      };
+    });
+  },
+  async add(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).add(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async put(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).put(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async get(store,key){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readonly');const r=tx.objectStore(store).get(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async getAll(store,idx,query){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readonly');const src=idx?tx.objectStore(store).index(idx):tx.objectStore(store);const r=query!==undefined?src.getAll(query):src.getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async delete(store,key){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})},
+  async clear(store){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+};
+
+// ============ MIGRATION FROM LOCALSTORAGE ============
+// ترحيل بيانات النسخة القديمة (LocalStorage) لـ IndexedDB
+async function migrateFromLS(){
+  const flag=await db.get('settings','migration_v1');
+  if(flag&&flag.value) return;
+
+  const raw=localStorage.getItem('bulkmode_tracker_v1');
+  if(raw){
+    try{
+      const old=JSON.parse(raw);
+      if(old.logs && old.logs.length){
+        // group logs by date to create synthetic workouts
+        const grouped={};
+        old.logs.forEach(l=>{
+          const day=(l.date||new Date().toISOString()).split('T')[0];
+          if(!grouped[day]) grouped[day]={dayType:l.day||'مستورد',logs:[]};
+          grouped[day].logs.push(l);
+        });
+        let migCount=0;
+        for(const [date,grp] of Object.entries(grouped)){
+          const wId='legacy_'+date;
+          let totalVol=0;
+          grp.logs.forEach(l=>totalVol+=(l.weight||0)*(l.reps||0));
+          await db.put('workouts',{
+            id:wId,date:date,dayType:grp.dayType,
+            startTime:grp.logs[0].date,
+            endTime:grp.logs[grp.logs.length-1].date,
+            duration:0,totalVolume:totalVol,
+            setsCount:grp.logs.length,notes:'مستورد من النسخة القديمة'
+          });
+          for(const l of grp.logs){
+            await db.add('sets',{
+              workoutId:wId,exerciseName:l.exercise,
+              weight:l.weight||0,reps:l.reps||0,
+              timestamp:l.date,date:date,
+              isPR:false,prType:null
+            });
+            migCount++;
+          }
+        }
+        if(migCount>0) setTimeout(()=>showToast(`✓ تم ترحيل ${migCount} سجل من النسخة السابقة`),800);
+      }
+    }catch(e){console.warn('Migration error:',e)}
+  }
+  await db.put('settings',{key:'migration_v1',value:true});
+}
+
+// ============ HELPERS ============
 function getExerciseName(stepEl){
   const nameEl=stepEl.querySelector('.step-name');
   if(!nameEl) return null;
   let name=nameEl.textContent.trim();
-  // Strip "— سيت ١" etc
   name=name.replace(/\s*—\s*سيت.*$/,'').replace(/\s*-\s*سيت.*$/,'').replace(/\s*\(.*?\)\s*$/,'').trim();
   return name;
 }
 
-// Determine day from step's parent
 function getDayLabel(stepEl){
   const dy=stepEl.closest('.dy');
   if(!dy) return 'يوم غير محدد';
@@ -1546,119 +1788,583 @@ function getDayLabel(stepEl){
   return dn?dn.textContent.split('—')[0].trim():'يوم';
 }
 
-// Inject tracking inputs into each exercise step (not rest/warmup)
-function injectTrackingInputs(){
+function fmtDate(iso){
+  if(!iso) return '';
+  const d=new Date(iso);
+  return d.toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
+}
+
+function fmtDuration(secs){
+  const m=Math.floor(secs/60);
+  const s=secs%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+// ============ INJECT TRACKING INPUTS (async) ============
+// حقن خانات الإدخال داخل كل تمرين، مع جلب آخر سيت من IndexedDB
+async function injectTrackingInputs(){
   const steps=document.querySelectorAll('.step:not(.rest):not(.warmup):not(.done)');
-  steps.forEach((step,idx)=>{
+
+  // optimize: استدعاء واحد لكل السيتات ثم تجميع آخر سيت لكل تمرين
+  const allSets=await db.getAll('sets');
+  const lastByName={};
+  for(const s of allSets){
+    const cur=lastByName[s.exerciseName];
+    if(!cur || new Date(s.timestamp)>new Date(cur.timestamp)){
+      lastByName[s.exerciseName]=s;
+    }
+  }
+
+  steps.forEach(step=>{
     const exName=getExerciseName(step);
     if(!exName) return;
     if(step.querySelector('.track-input')) return;
-    
+
     const inputDiv=document.createElement('div');
     inputDiv.className='track-input';
-    
+
     const exKey=exName.replace(/\s+/g,'_');
-    const data=getData();
-    const lastEntry=data.lastWeights[exKey];
-    const lastText=lastEntry?`آخر مرة: <b>${lastEntry.weight}كجم × ${lastEntry.reps}</b>`:'سجّل أول مرة';
-    
+    const last=lastByName[exName];
+    const lastText=last?`آخر مرة: <b>${last.weight}كجم × ${last.reps}</b>`:'سجّل أول مرة';
+
     inputDiv.innerHTML=`
       <label>كجم</label>
-      <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${lastEntry?lastEntry.weight:''}">
+      <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${last?last.weight:''}">
       <label>تكرار</label>
-      <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${lastEntry?lastEntry.reps:''}">
+      <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${last?last.reps:''}">
       <span class="last">${lastText}</span>
-      <button class="save-btn" onclick="saveSet(this)">حفظ</button>
+      <button class="save-btn" onclick="saveSet(this);event.stopPropagation()">حفظ</button>
     `;
     step.querySelector('.step-body').appendChild(inputDiv);
   });
 }
 
-function saveSet(btn){
+// ============ INJECT SESSION CONTROLS PER DAY ============
+// زر "بدء الجلسة" أعلى كل يوم (داخل المحتوى المطوي)
+function injectSessionControls(){
+  document.querySelectorAll('.dy').forEach(dy=>{
+    const dbi=dy.querySelector('.dbi');
+    if(!dbi || dbi.querySelector('.session-ctrl')) return;
+    const dn=dy.querySelector('.dn');
+    if(!dn) return;
+    const dayType=dn.textContent.split('—')[0].trim();
+    const ctrl=document.createElement('div');
+    ctrl.className='session-ctrl';
+    ctrl.innerHTML=`
+      <button class="session-start-btn" data-day="${dayType}" onclick="onStartSession('${dayType.replace(/'/g,"\\'")}');event.stopPropagation()">▶ بدء الجلسة</button>
+      <span class="session-ctrl-hint">سجّل سيتاتك ضمن جلسة لتُحسب المدة و الـ PRs</span>
+    `;
+    dbi.insertBefore(ctrl,dbi.firstChild);
+  });
+}
+
+// ============ SESSION MANAGEMENT ============
+// إدارة جلسة التمرين النشطة
+let currentSession=null;
+let sessionTimerId=null;
+
+async function loadCurrentSession(){
+  const s=await db.get('settings','currentSession');
+  if(s && s.value){
+    currentSession=s.value;
+    updateSessionUI();
+    startSessionTicker();
+  }
+}
+
+async function onStartSession(dayType){
+  if(currentSession){
+    if(currentSession.dayType===dayType){
+      if(!confirm('الجلسة الحالية بنفس اليوم. هل تريد إنهاءها؟')) return;
+      await endSession();
+      return;
+    }
+    if(!confirm(`لديك جلسة نشطة (${currentSession.dayType}). هل تريد إنهاءها وبدء ${dayType}؟`)) return;
+    await endSession(true);
+  }
+  currentSession={
+    id:'w_'+Date.now(),
+    dayType:dayType,
+    date:new Date().toISOString().split('T')[0],
+    startTime:new Date().toISOString(),
+    setsCount:0,totalVolume:0,prCount:0,
+    prList:[],notes:''
+  };
+  await db.put('settings',{key:'currentSession',value:currentSession});
+  updateSessionUI();
+  startSessionTicker();
+  try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}
+  showToast('🔥 بدأت جلسة '+dayType);
+  // اطلب إذن الإشعارات عند بدء أول جلسة (لمؤقت الراحة)
+  requestNotifPermission();
+}
+
+function startSessionTicker(){
+  if(sessionTimerId) clearInterval(sessionTimerId);
+  const tick=()=>{
+    if(!currentSession){clearInterval(sessionTimerId);return}
+    const el=document.getElementById('sessElapsed');
+    if(el){
+      const ms=Date.now()-new Date(currentSession.startTime).getTime();
+      const secs=Math.floor(ms/1000);
+      el.textContent=fmtDuration(secs);
+    }
+  };
+  tick();
+  sessionTimerId=setInterval(tick,1000);
+}
+
+function updateSessionUI(){
+  const bar=document.getElementById('sessBar');
+  const startBtns=document.querySelectorAll('.session-start-btn');
+  if(currentSession){
+    document.body.classList.add('sess-active');
+    bar.classList.add('show');
+    document.getElementById('sessDayType').textContent=currentSession.dayType;
+    document.getElementById('sessSetsCount').textContent=currentSession.setsCount;
+    document.getElementById('sessPrCount').textContent=currentSession.prCount;
+    startBtns.forEach(b=>{
+      const dt=b.dataset.day;
+      if(dt===currentSession.dayType){
+        b.classList.add('active');
+        b.textContent='⏺ الجلسة نشطة — إنهاء';
+        b.onclick=(e)=>{e.stopPropagation();endSession()};
+      }else{
+        b.classList.remove('active');
+        b.textContent='▶ بدء الجلسة';
+        b.onclick=(e)=>{e.stopPropagation();onStartSession(dt)};
+      }
+    });
+  }else{
+    document.body.classList.remove('sess-active');
+    bar.classList.remove('show');
+    startBtns.forEach(b=>{
+      b.classList.remove('active');
+      b.textContent='▶ بدء الجلسة';
+      const dt=b.dataset.day;
+      b.onclick=(e)=>{e.stopPropagation();onStartSession(dt)};
+    });
+  }
+}
+
+async function endSession(silent=false){
+  if(!currentSession) return;
+  const endTime=new Date().toISOString();
+  const duration=Math.round((new Date(endTime)-new Date(currentSession.startTime))/1000);
+
+  // احفظ الجلسة كـ workout كامل
+  const workout={
+    id:currentSession.id,
+    date:currentSession.date,
+    dayType:currentSession.dayType,
+    startTime:currentSession.startTime,
+    endTime:endTime,duration:duration,
+    totalVolume:currentSession.totalVolume,
+    setsCount:currentSession.setsCount,
+    prCount:currentSession.prCount,
+    notes:currentSession.notes||''
+  };
+  await db.put('workouts',workout);
+
+  const finished={...currentSession,duration};
+  currentSession=null;
+  await db.put('settings',{key:'currentSession',value:null});
+  if(sessionTimerId){clearInterval(sessionTimerId);sessionTimerId=null}
+  updateSessionUI();
+
+  // أزل علامات completed من السيتات
+  document.querySelectorAll('.step.completed,.step.has-pr').forEach(s=>{
+    s.classList.remove('completed','has-pr');
+    const btn=s.querySelector('.save-btn');
+    if(btn){btn.textContent='حفظ';btn.classList.remove('saved')}
+  });
+
+  if(!silent){
+    showSessionSummary(finished);
+    try{navigator.vibrate&&navigator.vibrate([100,50,200])}catch(e){}
+  }
+}
+
+function showSessionSummary(s){
+  document.getElementById('summaryDay').textContent=s.dayType;
+  const prsHtml=(s.prList&&s.prList.length)?
+    `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${p.exerciseName} — ${p.label}: <b>${p.value}</b></div>`).join('')}</div>`
+    :'';
+  document.getElementById('summaryBody').innerHTML=`
+    <div class="summary-grid">
+      <div class="summary-stat"><span class="ss-num">${fmtDuration(s.duration)}</span><span class="ss-lbl">مدة الجلسة</span></div>
+      <div class="summary-stat"><span class="ss-num">${s.setsCount}</span><span class="ss-lbl">عدد السيتات</span></div>
+      <div class="summary-stat"><span class="ss-num">${Math.round(s.totalVolume).toLocaleString('ar-SA')}</span><span class="ss-lbl">إجمالي الحجم</span></div>
+      <div class="summary-stat ${s.prCount>0?'gold':''}"><span class="ss-num">${s.prCount}</span><span class="ss-lbl">🏆 أرقام قياسية</span></div>
+    </div>
+    ${prsHtml}
+  `;
+  document.getElementById('summaryModal').classList.add('open');
+}
+
+function closeSummary(){
+  document.getElementById('summaryModal').classList.remove('open');
+}
+
+// ============ PR DETECTION ============
+// كشف الأرقام القياسية تلقائياً عند كل سيت محفوظ
+const EPLEY=(w,r)=>w*(1+r/30);
+
+async function detectPRs(setRec){
+  const all=await db.getAll('sets','exerciseName',setRec.exerciseName);
+  const prev=all.filter(s=>s.id!==setRec.id);
+  const prs=[];
+
+  // 1. Weight PR — أعلى وزن في التمرين
+  const maxW=prev.length?Math.max(...prev.map(s=>s.weight)):0;
+  if(setRec.weight>maxW) prs.push({type:'weight',value:setRec.weight,label:`أعلى وزن — ${setRec.weight}كجم`});
+
+  // 2. Volume PR — أعلى حجم في سيت واحد
+  const sv=setRec.weight*setRec.reps;
+  const maxV=prev.length?Math.max(...prev.map(s=>s.weight*s.reps)):0;
+  if(sv>maxV) prs.push({type:'volume',value:sv,label:`حجم سيت — ${sv}`});
+
+  // 3. 1RM PR (معادلة Epley)
+  const s1=EPLEY(setRec.weight,setRec.reps);
+  const max1=prev.length?Math.max(...prev.map(s=>EPLEY(s.weight,s.reps))):0;
+  if(s1>max1) prs.push({type:'1rm',value:Math.round(s1*10)/10,label:`1RM مقدّر — ${(Math.round(s1*10)/10)}كجم`});
+
+  // 4. Rep PR — أعلى تكرار عند نفس الوزن
+  const sameW=prev.filter(s=>s.weight===setRec.weight);
+  if(sameW.length){
+    const maxR=Math.max(...sameW.map(s=>s.reps));
+    if(setRec.reps>maxR) prs.push({type:'reps',value:setRec.reps,label:`تكرار عند ${setRec.weight}كجم — ${setRec.reps}`});
+  }
+
+  // احفظ كل PR في الـ store
+  for(const pr of prs){
+    await db.add('prs',{
+      exerciseName:setRec.exerciseName,
+      type:pr.type,value:pr.value,
+      date:setRec.timestamp,setId:setRec.id
+    });
+  }
+  return prs;
+}
+
+function celebratePR(prs,exName){
+  const overlay=document.createElement('div');
+  overlay.className='pr-flash';
+  overlay.innerHTML=`
+    <div class="pr-flash-inner">
+      <div class="pr-flash-icon">🏆</div>
+      <div class="pr-flash-title">رقم قياسي جديد!</div>
+      <div class="pr-flash-ex">${exName}</div>
+      <div class="pr-flash-prs">
+        ${prs.map(p=>`<div class="pr-flash-item">${p.label}</div>`).join('')}
+      </div>
+    </div>
+  `;
+  overlay.onclick=()=>{overlay.classList.remove('show');setTimeout(()=>overlay.remove(),400)};
+  document.body.appendChild(overlay);
+  setTimeout(()=>overlay.classList.add('show'),50);
+  try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200])}catch(e){}
+  setTimeout(()=>{overlay.classList.remove('show');setTimeout(()=>overlay.remove(),400)},3000);
+}
+
+// ============ SAVE SET ============
+async function saveSet(btn){
   const trackDiv=btn.closest('.track-input');
   const step=btn.closest('.step');
   const weightInput=trackDiv.querySelector('.weight-input');
   const repsInput=trackDiv.querySelector('.reps-input');
   const weight=parseFloat(weightInput.value);
   const reps=parseInt(repsInput.value);
-  const exKey=weightInput.dataset.ex;
   const exName=weightInput.dataset.name;
-  
+
   if(isNaN(weight)||isNaN(reps)||reps<=0){
     showToast('⚠️ أدخل وزن وتكرارات صحيحة','var(--red)');
     return;
   }
-  
-  const data=getData();
-  data.logs.push({
-    date:new Date().toISOString(),
-    day:getDayLabel(step),
-    exercise:exName,
-    weight:weight,
-    reps:reps
-  });
-  data.lastWeights[exKey]={weight,reps,date:new Date().toISOString()};
-  // Keep only last 1000 logs to prevent storage bloat
-  if(data.logs.length>1000) data.logs=data.logs.slice(-1000);
-  saveData(data);
-  
-  // Visual feedback
-  btn.textContent='✓ حُفظ';
-  btn.classList.add('saved');
-  step.classList.add('completed');
-  trackDiv.querySelector('.last').innerHTML=`آخر مرة: <b>${weight}كجم × ${reps}</b>`;
-  showToast(`✓ ${exName}: ${weight}كجم × ${reps}`);
-  
-  setTimeout(()=>{
-    btn.textContent='حفظ';
-    btn.classList.remove('saved');
-  },2000);
+
+  const dayType=getDayLabel(step);
+
+  // إذا ما في جلسة نشطة، ابدأ واحدة تلقائياً
+  if(!currentSession){
+    await onStartSession(dayType);
+    if(!currentSession) return; // user cancelled
+  }
+
+  try{
+    const now=new Date().toISOString();
+    const setRec={
+      workoutId:currentSession.id,
+      exerciseName:exName,
+      weight:weight,reps:reps,
+      timestamp:now,
+      date:now.split('T')[0],
+      isPR:false,prType:null
+    };
+    const setId=await db.add('sets',setRec);
+    setRec.id=setId;
+
+    // حدّث إجماليات الجلسة
+    currentSession.setsCount++;
+    currentSession.totalVolume+=weight*reps;
+
+    // كشف الأرقام القياسية
+    const prs=await detectPRs(setRec);
+    if(prs.length){
+      setRec.isPR=true;
+      setRec.prType=prs.map(p=>p.type).join(',');
+      await db.put('sets',setRec);
+      currentSession.prCount+=prs.length;
+      if(!currentSession.prList) currentSession.prList=[];
+      prs.forEach(p=>currentSession.prList.push({...p,exerciseName:exName}));
+    }
+    await db.put('settings',{key:'currentSession',value:currentSession});
+    updateSessionUI();
+
+    // Feedback
+    btn.textContent='✓ حُفظ';
+    btn.classList.add('saved');
+    step.classList.add('completed');
+    if(prs.length) step.classList.add('has-pr');
+    trackDiv.querySelector('.last').innerHTML=`آخر مرة: <b>${weight}كجم × ${reps}</b>`;
+
+    if(prs.length){
+      celebratePR(prs,exName);
+    }else{
+      showToast(`✓ ${exName}: ${weight}كجم × ${reps}`);
+      try{navigator.vibrate&&navigator.vibrate(50)}catch(e){}
+    }
+
+    // ابدأ مؤقت الراحة تلقائياً
+    const restDur=getRestDuration(step);
+    startAutoRest(restDur);
+
+    setTimeout(()=>{btn.textContent='حفظ';btn.classList.remove('saved')},2000);
+  }catch(e){
+    console.error(e);
+    showToast('⚠️ فشل الحفظ: '+e.message,'var(--red)');
+  }
 }
 
-// ============ STATS MODAL ============
-function openStats(){
-  const data=getData();
+// ============ REST DURATION DETECTION ============
+function getRestDuration(step){
+  // ابحث عن الـ "step.rest" التالي وحاول استخراج عدد الثواني من نصه
+  let next=step.nextElementSibling;
+  let hops=0;
+  while(next && hops<3){
+    if(next.classList && next.classList.contains('rest')){
+      const info=(next.querySelector('.step-info')||next.querySelector('.step-name')||{}).textContent||'';
+      const m=info.match(/(\d+)\s*ث/);
+      if(m) return parseInt(m[1]);
+      break;
+    }
+    next=next.nextElementSibling;
+    hops++;
+  }
+  // افتراضي: SOLO = 90, paired = 60
+  return step.classList.contains('solo-set')?90:60;
+}
+
+// ============ ENHANCED REST TIMER ============
+// مؤقت يعمل بالـ timestamps (لا يتأثر بخمول التاب) + إشعارات + اهتزاز
+const tDel=()=>document.getElementById('tD');
+const tFl=()=>document.getElementById('tF');
+const tTr=()=>document.getElementById('tTrig');
+const tSb=()=>document.getElementById('tS');
+
+const REST={
+  active:false,
+  endTime:0,
+  defaultDur:90,
+  intervalId:null,
+  audioCtx:null
+};
+
+function showT(){tFl().classList.add('show');tTr().classList.add('hid')}
+function hideT(){tFl().classList.remove('show');tTr().classList.remove('hid')}
+
+function setT(s){
+  REST.defaultDur=s;
+  if(REST.active){
+    // إعادة ضبط الوقت أثناء التشغيل
+    REST.endTime=Date.now()+s*1000;
+  }else{
+    tDel().textContent=s;
+    tDel().classList.remove('warn');
+    tSb().textContent='▶';
+  }
+  document.querySelectorAll('.tpr').forEach(p=>{
+    const pv=parseInt(p.textContent);
+    p.classList.toggle('a',!isNaN(pv) && pv===s);
+  });
+}
+
+function startT(){
+  if(REST.active){
+    // إيقاف
+    if(REST.intervalId) clearInterval(REST.intervalId);
+    REST.active=false;
+    tSb().textContent='▶';
+    return;
+  }
+  startAutoRest(REST.defaultDur);
+}
+
+function startAutoRest(seconds){
+  if(REST.intervalId) clearInterval(REST.intervalId);
+  REST.defaultDur=seconds;
+  REST.active=true;
+  REST.endTime=Date.now()+seconds*1000;
+  showT();
+  tTr().classList.add('active');
+  tSb().textContent='⏸';
+  tickRest();
+  REST.intervalId=setInterval(tickRest,250);
+}
+
+function tickRest(){
+  if(!REST.active) return;
+  const remaining=Math.max(0,Math.ceil((REST.endTime-Date.now())/1000));
+  tDel().textContent=remaining;
+  if(remaining<=5 && remaining>0) tDel().classList.add('warn');
+  else tDel().classList.remove('warn');
+  if(remaining<=0){
+    onRestComplete();
+  }
+}
+
+function onRestComplete(){
+  if(REST.intervalId) clearInterval(REST.intervalId);
+  REST.active=false;
+  tDel().textContent='✓';
+  tDel().classList.remove('warn');
+  tSb().textContent='▶';
+  tTr().classList.remove('active');
+  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+  playBeep();
+  notifyRest();
+  setTimeout(()=>{
+    if(!REST.active){tDel().textContent=REST.defaultDur}
+  },3000);
+}
+
+function resetT(){
+  if(REST.intervalId) clearInterval(REST.intervalId);
+  REST.active=false;
+  tDel().textContent=REST.defaultDur;
+  tDel().classList.remove('warn');
+  tSb().textContent='▶';
+  tTr().classList.remove('active');
+  hideT();
+}
+
+function skipT(){
+  if(!REST.active){hideT();return}
+  REST.endTime=Date.now();
+  tickRest();
+}
+
+function extendT(s){
+  if(REST.active){
+    REST.endTime+=s*1000;
+    tickRest();
+    showToast(`+${s}s`);
+  }else{
+    setT(REST.defaultDur+s);
+  }
+}
+
+function playBeep(){
+  try{
+    if(!REST.audioCtx) REST.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const ctx=REST.audioCtx;
+    if(ctx.state==='suspended') ctx.resume();
+    // ثلاث نقرات قصيرة
+    [0,0.18,0.36].forEach(t=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=t===0.36?1100:880;
+      gain.gain.setValueAtTime(0.001,ctx.currentTime+t);
+      gain.gain.exponentialRampToValueAtTime(0.35,ctx.currentTime+t+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.16);
+      osc.start(ctx.currentTime+t);
+      osc.stop(ctx.currentTime+t+0.18);
+    });
+  }catch(e){}
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default'){
+    try{await Notification.requestPermission()}catch(e){}
+  }
+}
+
+function notifyRest(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission!=='granted') return;
+  try{
+    new Notification('⏱ انتهت الراحة',{
+      body:'جاهز للسيت التالي 💪',
+      icon:'icons/icon-192.png',
+      tag:'rest-done',silent:false
+    });
+  }catch(e){}
+}
+
+// Page Visibility — لمّا يرجع للتاب نحدّث العداد
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && REST.active) tickRest();
+});
+
+// ============ STATS MODAL (legacy quick view) ============
+async function openStats(){
   const sb=document.getElementById('statsBody');
   const hb=document.getElementById('historyBody');
-  
-  const total=data.logs.length;
-  const uniqueExercises=new Set(data.logs.map(l=>l.exercise)).size;
-  const totalVolume=data.logs.reduce((s,l)=>s+(l.weight*l.reps),0).toFixed(0);
-  const sessions=new Set(data.logs.map(l=>l.date.split('T')[0])).size;
-  
+  sb.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+  hb.innerHTML='';
+
+  const sets=await db.getAll('sets');
+  const workouts=await db.getAll('workouts');
+
+  const total=sets.length;
+  const uniqueExercises=new Set(sets.map(s=>s.exerciseName)).size;
+  const totalVolume=sets.reduce((a,s)=>a+s.weight*s.reps,0);
+  const sessions=workouts.length;
+
   sb.innerHTML=`
     <div class="stats-row"><span>إجمالي السيتات المسجّلة</span><b>${total}</b></div>
     <div class="stats-row"><span>عدد التمارين المختلفة</span><b>${uniqueExercises}</b></div>
-    <div class="stats-row"><span>إجمالي الحجم (كجم × تكرار)</span><b>${totalVolume.toLocaleString('ar-SA')}</b></div>
-    <div class="stats-row"><span>عدد أيام التمرين</span><b>${sessions}</b></div>
+    <div class="stats-row"><span>إجمالي الحجم (كجم × تكرار)</span><b>${Math.round(totalVolume).toLocaleString('ar-SA')}</b></div>
+    <div class="stats-row"><span>عدد الجلسات</span><b>${sessions}</b></div>
   `;
-  
-  // Group last logs by date
-  const lastLogs=data.logs.slice(-50).reverse();
-  const byDate={};
-  lastLogs.forEach(l=>{
-    const d=l.date.split('T')[0];
-    if(!byDate[d]) byDate[d]={day:l.day,exercises:{}};
-    if(!byDate[d].exercises[l.exercise]) byDate[d].exercises[l.exercise]=[];
-    byDate[d].exercises[l.exercise].push(`${l.weight}×${l.reps}`);
-  });
-  
-  const dates=Object.keys(byDate).slice(0,10);
-  if(dates.length===0){
+
+  // آخر ١٠ جلسات
+  const recent=workouts.sort((a,b)=>new Date(b.startTime)-new Date(a.startTime)).slice(0,10);
+  if(!recent.length){
     hb.innerHTML='<div style="text-align:center;color:var(--tx3);padding:20px">لم تُسجّل أي تمارين بعد</div>';
   }else{
-    hb.innerHTML=dates.map(d=>{
-      const day=byDate[d];
-      const exHtml=Object.entries(day.exercises).map(([ex,sets])=>
-        `<div class="h-ex"><b>${ex}</b><span>${sets.join(' · ')}</span></div>`
+    const setsByWorkout={};
+    for(const w of recent){
+      const ws=await db.getAll('sets','workoutId',w.id);
+      setsByWorkout[w.id]=ws;
+    }
+    hb.innerHTML=recent.map(w=>{
+      const ws=setsByWorkout[w.id]||[];
+      const byEx={};
+      ws.forEach(s=>{
+        if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
+        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.isPR?' 🏆':''}`);
+      });
+      const exHtml=Object.entries(byEx).map(([ex,arr])=>
+        `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
       ).join('');
       return `<div class="history-day">
-        <div class="h-date">${d} · ${day.day}</div>
+        <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ${fmtDuration(w.duration||0)}</div>
         ${exHtml}
       </div>`;
     }).join('');
   }
-  
   document.getElementById('statsModal').classList.add('open');
 }
 
@@ -1667,68 +2373,326 @@ function closeStats(){
 }
 
 // ============ EXPORT / IMPORT ============
-function exportData(){
-  const data=getData();
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+async function exportData(){
+  const dump={
+    version:'v5',
+    exportedAt:new Date().toISOString(),
+    workouts:await db.getAll('workouts'),
+    sets:await db.getAll('sets'),
+    exercises:await db.getAll('exercises'),
+    bodyMetrics:await db.getAll('bodyMetrics'),
+    prs:await db.getAll('prs'),
+    settings:await db.getAll('settings')
+  };
+  const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`bulkmode_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.download=`bulkmode_v5_backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('💾 تم تصدير النسخة الاحتياطية');
 }
 
-function importData(event){
+async function importData(event){
   const file=event.target.files[0];
   if(!file) return;
   const reader=new FileReader();
-  reader.onload=(e)=>{
+  reader.onload=async(e)=>{
     try{
-      const imported=JSON.parse(e.target.result);
-      if(!imported.logs||!imported.lastWeights) throw new Error('بنية ملف غير صحيحة');
-      if(confirm(`استيراد ${imported.logs.length} سجل؟ سيُستبدل ما هو موجود.`)){
-        saveData(imported);
-        showToast('✓ تم استيراد البيانات بنجاح');
+      const imp=JSON.parse(e.target.result);
+      // دعم النسخة القديمة (logs + lastWeights)
+      if(imp.logs && imp.lastWeights){
+        if(!confirm(`استيراد ${imp.logs.length} سجل من نسخة قديمة؟`)) return;
+        localStorage.setItem('bulkmode_tracker_v1',JSON.stringify(imp));
+        // أعد الترحيل بإجبار
+        await db.delete('settings','migration_v1');
+        await migrateFromLS();
+        showToast('✓ تم استيراد البيانات القديمة');
         setTimeout(()=>location.reload(),1000);
+        return;
       }
-    }catch(e){
-      showToast('⚠️ ملف غير صالح: '+e.message,'var(--red)');
+      if(!imp.version || !imp.sets){
+        throw new Error('بنية ملف غير معروفة');
+      }
+      const setsCount=(imp.sets||[]).length;
+      if(!confirm(`استيراد ${setsCount} سيت + ${(imp.workouts||[]).length} جلسة؟ سيُمسح ما هو موجود.`)) return;
+      // امسح كل المتجرات (عدا settings.migration_v1)
+      for(const st of ['workouts','sets','exercises','bodyMetrics','prs','progressPhotos']){
+        await db.clear(st);
+      }
+      for(const w of (imp.workouts||[])) await db.put('workouts',w);
+      for(const s of (imp.sets||[])){const c={...s};delete c.id;await db.add('sets',c)}
+      for(const ex of (imp.exercises||[])) await db.put('exercises',ex);
+      for(const bm of (imp.bodyMetrics||[])) await db.put('bodyMetrics',bm);
+      for(const pr of (imp.prs||[])){const c={...pr};delete c.id;await db.add('prs',c)}
+      showToast('✓ تم استيراد البيانات بنجاح');
+      setTimeout(()=>location.reload(),1000);
+    }catch(err){
+      showToast('⚠️ ملف غير صالح: '+err.message,'var(--red)');
     }
   };
   reader.readAsText(file);
   event.target.value='';
 }
 
-function clearAllData(){
+async function clearAllData(){
   if(!confirm('⚠️ هل أنت متأكد من مسح كل بيانات التتبع؟ لا يمكن التراجع.')) return;
   if(!confirm('🚨 تأكيد نهائي — كل البيانات ستُمسح. متأكد؟')) return;
-  localStorage.removeItem(STORAGE_KEY);
+  for(const st of STORES){await db.clear(st)}
+  localStorage.removeItem('bulkmode_tracker_v1');
   showToast('🗑 تم مسح كل البيانات','var(--red)');
   setTimeout(()=>location.reload(),1000);
 }
 
+// ============ PROGRESS TAB (PRs / Charts / History) ============
+document.querySelectorAll('.prog-tab').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.prog-tab').forEach(x=>x.classList.remove('a'));
+    document.querySelectorAll('.prog-pane').forEach(x=>x.classList.remove('a'));
+    b.classList.add('a');
+    const pane=document.getElementById('pp'+b.dataset.pt[0].toUpperCase()+b.dataset.pt.slice(1));
+    if(pane) pane.classList.add('a');
+    if(b.dataset.pt==='charts') renderCharts();
+    if(b.dataset.pt==='history') renderHistory();
+    if(b.dataset.pt==='prs') renderPRs();
+  });
+});
+
+async function refreshProgressTab(){
+  const active=document.querySelector('.prog-tab.a');
+  if(!active) return;
+  const pt=active.dataset.pt;
+  if(pt==='prs') renderPRs();
+  else if(pt==='charts') renderCharts();
+  else if(pt==='history') renderHistory();
+}
+
+async function renderPRs(){
+  const body=document.getElementById('prsBody');
+  body.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+  const prs=await db.getAll('prs');
+  if(!prs.length){
+    body.innerHTML=`<div class="empty-state"><div class="es-icon">🏆</div><div class="es-text">لم تحطّم أي رقم قياسي بعد.<br><b>ابدأ جلسة وسجّل سيتك الأول!</b></div></div>`;
+    return;
+  }
+  // group by exercise, then by type → keep best
+  const byEx={};
+  prs.forEach(p=>{
+    if(!byEx[p.exerciseName]) byEx[p.exerciseName]={};
+    const cur=byEx[p.exerciseName][p.type];
+    if(!cur || p.value>cur.value) byEx[p.exerciseName][p.type]=p;
+  });
+  const typeLbl={weight:'وزن',volume:'حجم',reps:'تكرار','1rm':'1RM'};
+  const items=Object.entries(byEx).sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([ex,types])=>{
+    const lastDate=Math.max(...Object.values(types).map(t=>new Date(t.date).getTime()));
+    const typesHtml=Object.entries(types).map(([t,p])=>{
+      return `<span>${typeLbl[t]||t}: <b>${p.value}${t==='weight'||t==='1rm'?'كجم':''}</b></span>`;
+    }).join('');
+    return `<div class="pr-item">
+      <div class="pr-icon">🏆</div>
+      <div class="pr-body">
+        <div class="pr-name">${ex}</div>
+        <div class="pr-types">${typesHtml}</div>
+      </div>
+      <div class="pr-date">${fmtDate(new Date(lastDate).toISOString())}</div>
+    </div>`;
+  });
+  body.innerHTML=`<div class="pr-list">${items.join('')}</div>`;
+}
+
+async function renderHistory(){
+  const body=document.getElementById('historyBody2');
+  body.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+  const workouts=(await db.getAll('workouts')).sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  if(!workouts.length){
+    body.innerHTML=`<div class="empty-state"><div class="es-icon">📜</div><div class="es-text">لا توجد جلسات بعد.<br><b>ابدأ أول جلسة من تبويب التمارين</b></div></div>`;
+    return;
+  }
+  const items=[];
+  for(const w of workouts.slice(0,30)){
+    const ws=await db.getAll('sets','workoutId',w.id);
+    const byEx={};
+    ws.forEach(s=>{
+      if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
+      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.isPR?' 🏆':''}`);
+    });
+    const exHtml=Object.entries(byEx).map(([ex,arr])=>
+      `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
+    ).join('');
+    items.push(`<div class="history-day">
+      <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} سيت · 📊 ${Math.round(w.totalVolume||0)}${w.prCount?' · 🏆 '+w.prCount:''}</div>
+      ${exHtml}
+    </div>`);
+  }
+  body.innerHTML=items.join('');
+}
+
+// ============ CHART.JS (LAZY) ============
+let _chartLoaded=false;
+async function loadChart(){
+  if(_chartLoaded) return window.Chart;
+  if(window.Chart){_chartLoaded=true;return window.Chart}
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.onload=()=>{_chartLoaded=true;res(window.Chart)};
+    s.onerror=()=>rej(new Error('فشل تحميل Chart.js — تأكد من الاتصال أول مرة'));
+    document.head.appendChild(s);
+  });
+}
+
+const CHART_BASE_OPTS={
+  responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{labels:{color:'#DEE0E6',font:{family:'Rubik',size:11}}}},
+  scales:{
+    x:{ticks:{color:'#8890A0',font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+    y:{ticks:{color:'#8890A0',font:{family:'JetBrains Mono',size:10}},grid:{color:'rgba(255,255,255,.04)'},beginAtZero:true}
+  }
+};
+
+let _charts={ex:null,vol:null,bw:null};
+
+async function renderCharts(){
+  const sel=document.getElementById('chartExSel');
+  try{
+    await loadChart();
+  }catch(e){
+    document.getElementById('ppCharts').innerHTML=`<div class="empty-state"><div class="es-icon">📡</div><div class="es-text">${e.message}</div></div>`;
+    return;
+  }
+
+  // املأ قائمة التمارين
+  const sets=await db.getAll('sets');
+  const exNames=[...new Set(sets.map(s=>s.exerciseName))].sort((a,b)=>a.localeCompare(b,'ar'));
+  if(sel.options.length<=1){
+    exNames.forEach(n=>{
+      const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o);
+    });
+    sel.onchange=()=>renderExerciseChart(sel.value);
+    if(exNames.length) sel.value=exNames[0];
+  }
+  if(sel.value) renderExerciseChart(sel.value);
+  renderVolumeChart(sets);
+  renderBodyWeightChart();
+}
+
+async function renderExerciseChart(name){
+  if(!name) return;
+  const Chart=window.Chart;
+  const sets=(await db.getAll('sets','exerciseName',name)).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+  if(!sets.length) return;
+  const labels=sets.map(s=>s.date);
+  const weights=sets.map(s=>s.weight);
+  const oneRM=sets.map(s=>Math.round(EPLEY(s.weight,s.reps)*10)/10);
+
+  const ctx=document.getElementById('chartEx').getContext('2d');
+  if(_charts.ex) _charts.ex.destroy();
+  _charts.ex=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'الوزن (كجم)',data:weights,borderColor:'#D4A853',backgroundColor:'rgba(212,168,83,.15)',tension:.3,fill:true,pointBackgroundColor:'#EDCA7A'},
+      {label:'1RM مقدّر (كجم)',data:oneRM,borderColor:'#5AB4FF',backgroundColor:'rgba(90,180,255,.06)',tension:.3,fill:false,borderDash:[6,4],pointRadius:2}
+    ]},
+    options:CHART_BASE_OPTS
+  });
+}
+
+function renderVolumeChart(sets){
+  const Chart=window.Chart;
+  // اجمع حسب الأسبوع
+  const weekly={};
+  sets.forEach(s=>{
+    const d=new Date(s.date);
+    const wk=getWeekKey(d);
+    weekly[wk]=(weekly[wk]||0)+s.weight*s.reps;
+  });
+  const labels=Object.keys(weekly).sort();
+  const data=labels.map(l=>Math.round(weekly[l]));
+  const ctx=document.getElementById('chartVol').getContext('2d');
+  if(_charts.vol) _charts.vol.destroy();
+  if(!labels.length){
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    return;
+  }
+  _charts.vol=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'الحجم الأسبوعي',data,backgroundColor:'rgba(212,168,83,.55)',borderColor:'#D4A853',borderWidth:1,borderRadius:6}]},
+    options:CHART_BASE_OPTS
+  });
+}
+
+async function renderBodyWeightChart(){
+  const Chart=window.Chart;
+  const bm=(await db.getAll('bodyMetrics')).filter(b=>b.bodyWeight).sort((a,b)=>a.date.localeCompare(b.date));
+  const ctx=document.getElementById('chartBW').getContext('2d');
+  if(_charts.bw) _charts.bw.destroy();
+  if(!bm.length){
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    return;
+  }
+  _charts.bw=new Chart(ctx,{
+    type:'line',
+    data:{labels:bm.map(b=>b.date),datasets:[{label:'الوزن (كجم)',data:bm.map(b=>b.bodyWeight),borderColor:'#5AE68A',backgroundColor:'rgba(90,230,138,.12)',tension:.3,fill:true,pointBackgroundColor:'#5AE68A'}]},
+    options:CHART_BASE_OPTS
+  });
+}
+
+function getWeekKey(d){
+  // ISO week — أبسط بمعزل عن المنطقة
+  const target=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dayNr=(target.getUTCDay()+6)%7;
+  target.setUTCDate(target.getUTCDate()-dayNr+3);
+  const firstThursday=target.valueOf();
+  target.setUTCMonth(0,1);
+  if(target.getUTCDay()!==4) target.setUTCMonth(0,1+((4-target.getUTCDay())+7)%7);
+  const w=1+Math.ceil((firstThursday-target)/(7*24*3600*1000));
+  return `${d.getUTCFullYear()}-W${String(w).padStart(2,'0')}`;
+}
+
 // ============ FAB MENU ============
-document.getElementById('fabBtn').addEventListener('click',()=>{
+document.getElementById('fabBtn').addEventListener('click',(e)=>{
+  e.stopPropagation();
   document.getElementById('fabMenu').classList.toggle('open');
 });
 
-// Close FAB menu when clicking outside
 document.addEventListener('click',(e)=>{
   if(!e.target.closest('#fabBtn')&&!e.target.closest('#fabMenu')){
     document.getElementById('fabMenu').classList.remove('open');
   }
 });
 
-// Close modal when clicking outside
+// ============ MODAL OUTSIDE CLICKS ============
 document.getElementById('statsModal').addEventListener('click',(e)=>{
   if(e.target.id==='statsModal') closeStats();
 });
-
-// ============ INITIALIZE ============
-window.addEventListener('DOMContentLoaded',()=>{
-  injectTrackingInputs();
+document.getElementById('summaryModal').addEventListener('click',(e)=>{
+  if(e.target.id==='summaryModal') closeSummary();
 });
+
+// ============ INIT ============
+window.addEventListener('DOMContentLoaded',async()=>{
+  try{
+    await db.open();
+    await migrateFromLS();
+    injectSessionControls();
+    await injectTrackingInputs();
+    await loadCurrentSession();
+  }catch(e){
+    console.error('Init error:',e);
+    showToast('⚠️ خطأ في تحميل قاعدة البيانات','var(--red)');
+  }
+});
+
+// تفعيل الصوت مبكراً (لـ iOS) — يتطلب لمسة من المستخدم
+document.addEventListener('click',()=>{
+  if(!REST.audioCtx){
+    try{
+      REST.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+      if(REST.audioCtx.state==='suspended') REST.audioCtx.resume();
+    }catch(e){}
+  }
+},{once:true});
 
 // ============ SERVICE WORKER REGISTRATION (PWA) ============
 if('serviceWorker' in navigator){
