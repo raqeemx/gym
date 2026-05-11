@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V5)
-const CACHE_NAME = 'bulkmode-v5';
+// BULK MODE Service Worker — Offline-first (V6)
+const CACHE_NAME = 'bulkmode-v6';
 const CHART_JS = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
 const ASSETS = [
   './',

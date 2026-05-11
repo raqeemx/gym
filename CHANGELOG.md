@@ -4,6 +4,94 @@
 
 ---
 
+## [V6 — البدائل الذكية] — 2026-05-11
+
+نظام كامل لاستبدال أي تمرين ببديل ذكي عند ازدحام الجهاز، مع كتالوج شامل وتعلّم تفضيلات المستخدم.
+
+### ✨ جديد
+
+#### 1. كتالوج البدائل (EXERCISE_ALTERNATIVES)
+- ~25 تمريناً × 3-5 بدائل لكل تمرين = **~110+ بديل** مكتمل
+- لكل بديل: اسم، سبب الاختيار، تطابق العضلة (0-100%)، الجهاز المطلوب
+- علامة **⚡ peakFriendly** للبدائل الأقل ازدحاماً في وقت الذروة
+- تطبيع تلقائي لأسماء التمارين المتغيّرة (`Chest Press بطيء` → `Chest Press`، `Pulley — Bicep Curl` → `Pulley Curl`)
+- يشمل: Chest Press, Pectoral Fly, Crossover, Lat Machine, Vertical Traction, Pulley, Low Row, Upper Back, Chin Ups, Shoulder Press, Delts, Reverse Fly, Arm Curl/Extension, Pulley Curl/Pushdown, Dips, Leg Press, Leg Extension, Prone Leg Curl, Abductor, Adductor, Calf Raise, Lower Back, Rotary Torso, Abdominal Crunch, Hanging Leg Raise
+
+#### 2. زر "⇄ بديل؟" تلقائي
+- يُحقَن بجانب كل تمرين قابل للاستبدال (يتجاهل rest/warmup/تمارين بدون بدائل)
+- موقع `top:6px;left:8px` (في RTL = أعلى-يسار visual) — صغير وغير مزعج
+- يتلوّن أزرق عند تفعيل بديل
+
+#### 3. Bottom Sheet Modal احترافي
+- ينزلق من أسفل بانيميشن سلس (`slideUpSheet` 0.35s)
+- يُغلق بـ **٣ طرق:** زر ✕، النقر خارجه، أو **swipe down** (touch events)
+- شريط grabber في الأعلى للإشارة لإمكانية السحب
+- مغلق على body scroll عند الفتح
+- بطاقات بديل فيها:
+  - ترقيم (1, 2, 3...) — حسب الأولوية
+  - شارة ⚡ متاح للبدائل الـ peakFriendly
+  - شريط تطابق العضلة animated من 0 إلى المئوية
+  - السبب والجهاز
+  - زر "استخدم هذا البديل"
+- البديل الحالي يُعلّم بإطار أزرق وزر "✓ البديل الحالي"
+
+#### 4. الذكاء (3 ميزات)
+**أ. تحذير وقت الذروة (6-9 مساءً):**
+- بانر برتقالي في الأعلى
+- إعادة ترتيب البدائل لتظهر الـ peakFriendly أولاً
+
+**ب. اقتراح الاستبدال الدائم:**
+- بعد ٣ مرات استبدال متكررة لنفس الزوج، يظهر بانر بنفسجي
+- "💡 لاحظنا إنك استبدلت X بـ Y ٣ مرات. تبي نخلّيه دائم؟"
+- زر "نعم، استبدل دائماً" يحفظ في `substitutionPrefs`
+- التفضيل الدائم يُطبّق تلقائياً على كل الأيام في المستقبل
+
+**ج. "ما لقيت اللي يناسبك؟":**
+- رابط في أسفل الـ Modal يعرض كل الـ ٢٤ جهاز
+- المستخدم يختار يدوياً أي جهاز كبديل
+
+#### 5. التكامل مع نظام التتبع V5
+- عند تطبيق البديل: يُحدَّث `data-name` و `data-ex` في الـ track-input
+- السيت يُحفظ تحت اسم البديل في IndexedDB
+- "آخر مرة" تجلب سجل البديل من IndexedDB
+- علامة 🔄 بصرية على الـ step بشارة "بديل"
+- زر صغير "↩ استعد X" بجانب الاسم البديل
+- استعادة الأصلي ترجع الـ data-name للقيمة الأصلية (مع variants)
+
+#### 6. التخزين والاسترجاع
+كل البيانات في IndexedDB `settings` store:
+- `substitutions` — استبدالات لكل-ستيب: `{ stepId: {original, substitute, date, dayType} }`
+- `substitutionPrefs` — تفضيلات دائمة: `{ original: substitute }`
+- `substitutionHistory` — تاريخ مرات الاستبدال (capped at 200 entries) للاقتراح الذكي
+- **استرجاع تلقائي** عند فتح التطبيق
+- **يُضمَّن في export/import JSON** تلقائياً (لأنه ضمن settings)
+
+#### 7. IDs مستقرة للـ Steps
+- `ensureStepIds()` يولّد IDs بصيغة `step-D<dayIdx>-S<stepIdx>`
+- مستقرة عبر إعادة التحميل طالما ترتيب اليوم ثابت
+- مطلوبة لربط الاستبدال بالـ DOM بعد reload
+
+### 🛡️ Service Worker
+- نسخة جديدة: `bulkmode-v6` (من `v5`)
+
+### 🎨 CSS جديد
+- `.alt-btn` — زر صغير ذهبي بـ position:absolute
+- `.alt-modal` + `.alt-sheet` — Bottom sheet مع grabber
+- `.alt-card` — بطاقة البديل (مع variants: `.peak-friendly`, `.current`)
+- `.alt-match-bar` + `.alt-match-fill` — شريط تطابق متحرّك
+- `.peak-warning` — بانر برتقالي
+- `.smart-suggest` — بانر بنفسجي
+- `.exercise-substituted` — تنسيق الستيب المستبدَل (لون أزرق + شارة 🔄)
+- `.restore-original-btn` — زر استعادة صغير
+- `.alt-all` — شبكة كل الأجهزة (٢ أعمدة)
+
+### 🐛 الحلول الذكية
+- التعامل مع variants (`بطيء`, `ثقيل`, `Pulley — Bicep Curl`) عبر `normalizeExName`
+- swipe-to-dismiss لا يُفعَّل إلا عند `sheet.scrollTop===0` (لا يتعارض مع التمرير الداخلي)
+- البدائل الدائمة لا تُسجَّل في history (تتجنب over-counting في الاقتراحات الذكية)
+
+---
+
 ## [V5 — المستوى ١] — 2026-05-11
 
 أعمق ترقية منذ إطلاق التطبيق. تحويل من **برنامج تتبع بسيط** إلى **تطبيق احترافي** يضاهي Hevy و Strong.
