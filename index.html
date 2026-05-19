@@ -273,6 +273,76 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
 .history-day .h-ex b{color:#fff;font-weight:500}
 .history-day .h-ex span{color:var(--g2);font-family:'JetBrains Mono',monospace;font-size:11px}
 
+/* ===== Enhanced Stats V2 ===== */
+.stats-hero{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
+.sh-item{background:linear-gradient(145deg,rgba(212,168,83,.08),rgba(212,168,83,.02));border:1px solid rgba(212,168,83,.15);border-radius:12px;padding:14px 10px;text-align:center;transition:.2s}
+.sh-item.sh-fire{background:linear-gradient(145deg,rgba(255,90,95,.12),rgba(255,184,90,.06));border-color:rgba(255,90,95,.3);animation:glow 2.4s infinite}
+.sh-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:#fff;line-height:1.1}
+.sh-lbl{font-size:10px;color:var(--tx2);margin-top:4px;font-family:'Outfit',sans-serif;letter-spacing:.3px}
+
+.stats-section{margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.05)}
+.stats-section:first-child{border-top:none;padding-top:0;margin-top:0}
+.ss-title{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:var(--g2);margin-bottom:12px;letter-spacing:.3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ss-sub{font-size:10px;color:var(--tx3);font-weight:400;letter-spacing:0}
+.ss-empty{text-align:center;color:var(--tx3);font-size:12px;padding:14px}
+
+/* Weekly compare */
+.week-compare{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.wcm{background:var(--s2);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px 12px}
+.wcm-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:#fff;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.wcm-lbl{font-size:10px;color:var(--tx3);margin-top:3px;font-family:'Outfit',sans-serif}
+.wcm-d{font-size:10px;font-weight:600;padding:2px 6px;border-radius:6px;font-family:'Rubik',sans-serif}
+.wcm-d.up{background:rgba(90,230,138,.15);color:var(--grn)}
+.wcm-d.down{background:rgba(255,90,95,.15);color:var(--red)}
+.wcm-d.flat{background:rgba(255,255,255,.06);color:var(--tx3)}
+
+/* Upper/Lower bar */
+.ul-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.06);margin-bottom:8px}
+.ul-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;font-family:'Outfit',sans-serif;letter-spacing:.3px;transition:.3s;min-width:0}
+.ul-seg.upper{background:linear-gradient(135deg,#FF5A5F,#FFB85A)}
+.ul-seg.lower{background:linear-gradient(135deg,#5AE68A,#5AB4FF);color:#000}
+.ul-seg.core{background:rgba(136,144,160,.5);color:#fff}
+.ul-hint{font-size:11px;color:var(--tx2);padding:6px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);border-radius:8px;line-height:1.6}
+
+/* Muscle group rows */
+.mg-list{display:flex;flex-direction:column;gap:8px}
+.mg-row{}
+.mg-head{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;font-family:'Outfit',sans-serif}
+.mg-name{font-weight:700}
+.mg-val{color:var(--tx2);font-family:'JetBrains Mono',monospace}
+.mg-val small{color:var(--tx3);font-size:10px}
+.mg-bar-bg{height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.mg-bar-fill{height:100%;border-radius:3px;transition:width .5s cubic-bezier(.16,1,.3,1)}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:8px}
+.hm-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.4);cursor:default;transition:.2s}
+.hm-cell:hover{transform:scale(1.15)}
+.hm-cell.hm-0{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04)}
+.hm-cell.hm-1{background:rgba(212,168,83,.18)}
+.hm-cell.hm-2{background:rgba(212,168,83,.35)}
+.hm-cell.hm-3{background:rgba(212,168,83,.6)}
+.hm-cell.hm-4{background:linear-gradient(135deg,var(--g1),var(--g2));color:#000;font-weight:700}
+.hm-d{pointer-events:none}
+.hm-legend{display:flex;align-items:center;gap:4px;justify-content:flex-end;font-size:10px;color:var(--tx3);margin-top:4px}
+.hm-legend .hm-cell{width:14px;height:14px;aspect-ratio:auto}
+
+/* Top lifts */
+.top-lifts{display:flex;flex-direction:column;gap:6px}
+.tl-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--s2);border:1px solid rgba(255,255,255,.04);border-radius:10px;transition:.2s}
+.tl-row:hover{border-color:rgba(212,168,83,.2)}
+.tl-rank{font-size:16px;width:24px;text-align:center;font-family:'JetBrains Mono',monospace;color:var(--g2);font-weight:800}
+.tl-body{flex:1;min-width:0}
+.tl-name{font-size:12px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-date{font-size:10px;color:var(--tx3);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.tl-w{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--g2)}
+.tl-w small{font-size:10px;color:var(--tx3);font-weight:400;display:block;text-align:left}
+
+/* Day type frequency */
+.dt-list{display:flex;flex-direction:column;gap:4px}
+.dt-row{display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.02);border-radius:8px;font-size:12px;color:var(--tx)}
+.dt-row b{color:var(--g2);font-family:'JetBrains Mono',monospace}
+
 /* Toast notification */
 .toast{position:fixed;bottom:100px;right:50%;transform:translate(50%,20px);background:var(--s2);border:1px solid var(--grn);color:var(--grn);padding:12px 20px;border-radius:10px;font-family:'Rubik';font-size:13px;font-weight:600;z-index:10001;opacity:0;pointer-events:none;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .toast.show{opacity:1;transform:translate(50%,0)}
@@ -2385,7 +2455,121 @@ document.addEventListener('visibilitychange',()=>{
   if(!document.hidden && REST.active) tickRest();
 });
 
-// ============ STATS MODAL (legacy quick view) ============
+// ============ STATS MODAL (enhanced V2) ============
+// أدوات مساعدة للإحصائيات (تستخدم تواريخ ISO UTC للاتساق مع التخزين)
+function _isoDay(d){return new Date(d||Date.now()).toISOString().split('T')[0]}
+function _isoDayShift(isoDay,deltaDays){
+  const t=new Date(isoDay+'T00:00:00Z').getTime()+deltaDays*86400000;
+  return new Date(t).toISOString().split('T')[0];
+}
+function _daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d}
+function _msInDay(){return 86400000}
+
+// يحسب سلسلة الأيام المتتالية (Streak): يحسب الأيام التي تمرّنت بها بدون انقطاع
+function computeStreak(workouts){
+  if(!workouts.length) return {current:0,best:0};
+  const daysSet=new Set(workouts.map(w=>w.startTime.split('T')[0]));
+  const days=[...daysSet].sort();
+  const today=_isoDay();
+  const yest=_isoDayShift(today,-1);
+  // current streak — يبدأ من اليوم لو تمرّنت، وإلا من أمس
+  let cur=0;
+  let cursor=daysSet.has(today)?today:(daysSet.has(yest)?yest:null);
+  while(cursor && daysSet.has(cursor)){
+    cur++;
+    cursor=_isoDayShift(cursor,-1);
+  }
+  // best streak ever
+  let best=0,run=0,prev=null;
+  days.forEach(ds=>{
+    if(prev && _isoDayShift(prev,1)===ds) run++;
+    else run=1;
+    if(run>best) best=run;
+    prev=ds;
+  });
+  return {current:cur,best};
+}
+
+// يحسب الإحصائيات لنطاق زمني (n days back from now)
+function statsForRange(sets,workouts,daysBack){
+  const cutoff=_daysAgo(daysBack).getTime();
+  const inRangeSets=sets.filter(s=>new Date(s.timestamp).getTime()>=cutoff);
+  const inRangeW=workouts.filter(w=>new Date(w.startTime).getTime()>=cutoff);
+  const volume=inRangeSets.reduce((a,s)=>a+s.weight*s.reps,0);
+  const prCount=inRangeSets.filter(s=>s.isPR).length;
+  return {
+    sets:inRangeSets.length,
+    volume:Math.round(volume),
+    sessions:inRangeW.length,
+    prs:prCount,
+    duration:inRangeW.reduce((a,w)=>a+(w.duration||0),0)
+  };
+}
+
+// مقارنة نسبية: +12% أو -5%
+function pctDelta(now,prev){
+  if(!prev) return now>0?{txt:'+جديد',cls:'up'}:{txt:'—',cls:'flat'};
+  const d=Math.round(((now-prev)/prev)*100);
+  if(d===0) return {txt:'0%',cls:'flat'};
+  return {txt:(d>0?'+':'')+d+'%',cls:d>0?'up':'down'};
+}
+
+// تقسيم الحجم حسب المجموعة العضلية لنطاق ٢٨ يوم الأخيرة
+function volumeByMuscle(sets,daysBack=28){
+  const cutoff=_daysAgo(daysBack).getTime();
+  const buckets={};
+  let unknown=0;
+  sets.forEach(s=>{
+    if(new Date(s.timestamp).getTime()<cutoff) return;
+    const mg=getMuscleGroup(s.exerciseName);
+    if(!mg){unknown+=s.weight*s.reps;return}
+    if(!buckets[mg.group]) buckets[mg.group]={vol:0,region:mg.region};
+    buckets[mg.group].vol+=s.weight*s.reps;
+  });
+  return {buckets,unknown:Math.round(unknown)};
+}
+
+// تكرار نوع اليوم
+function dayTypeCounts(workouts){
+  const c={};
+  workouts.forEach(w=>{const k=w.dayType||'غير محدد';c[k]=(c[k]||0)+1});
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]);
+}
+
+// أعلى ٥ أوزان رفعتها في حياتك
+function topLifts(sets,limit=5){
+  const byEx={};
+  sets.forEach(s=>{
+    if(!byEx[s.exerciseName] || s.weight>byEx[s.exerciseName].weight){
+      byEx[s.exerciseName]={weight:s.weight,reps:s.reps,date:s.date};
+    }
+  });
+  return Object.entries(byEx)
+    .map(([ex,d])=>({ex,...d}))
+    .sort((a,b)=>b.weight-a.weight)
+    .slice(0,limit);
+}
+
+// تقويم حراري آخر ٣٠ يوم — يرجّع مصفوفة [{date,intensity}]
+function calendarHeatmap(workouts,days=30){
+  const today=_isoDay();
+  const map={};
+  workouts.forEach(w=>{
+    const k=w.startTime.split('T')[0];
+    const vol=w.totalVolume||0;
+    if(!map[k] || vol>map[k]) map[k]=vol;
+  });
+  const result=[];
+  const max=Math.max(1,...Object.values(map));
+  for(let i=days-1;i>=0;i--){
+    const ds=_isoDayShift(today,-i);
+    const v=map[ds]||0;
+    const intensity=v>0?Math.min(4,Math.ceil((v/max)*4)):0;
+    result.push({date:ds,intensity,volume:v});
+  }
+  return result;
+}
+
 async function openStats(){
   document.body.style.overflow='hidden';
   const sb=document.getElementById('statsBody');
@@ -2396,16 +2580,192 @@ async function openStats(){
   const sets=await db.getAll('sets');
   const workouts=await db.getAll('workouts');
 
+  if(!sets.length && !workouts.length){
+    sb.innerHTML=`<div class="empty-state"><div class="es-icon">📊</div><div class="es-text">لم تُسجّل أي بيانات بعد.<br><b>ابدأ أول جلسة من تبويب التمارين!</b></div></div>`;
+    document.getElementById('statsModal').classList.add('open');
+    return;
+  }
+
+  // إحصائيات إجمالية
   const total=sets.length;
   const uniqueExercises=new Set(sets.map(s=>s.exerciseName)).size;
   const totalVolume=sets.reduce((a,s)=>a+s.weight*s.reps,0);
   const sessions=workouts.length;
+  const totalDuration=workouts.reduce((a,w)=>a+(w.duration||0),0);
+  const totalHours=Math.round(totalDuration/360)/10;
 
+  // streak
+  const streak=computeStreak(workouts);
+
+  // مقارنة هذا الأسبوع vs السابق
+  const week=statsForRange(sets,workouts,7);
+  const prevWeek=statsForRange(
+    sets.filter(s=>new Date(s.timestamp).getTime()<_daysAgo(7).getTime()),
+    workouts.filter(w=>new Date(w.startTime).getTime()<_daysAgo(7).getTime()),
+    7
+  );
+
+  // تقسيم العضلات (٢٨ يوم)
+  const muscle=volumeByMuscle(sets,28);
+  const muscleEntries=Object.entries(muscle.buckets).sort((a,b)=>b[1].vol-a[1].vol);
+  const muscleTotal=muscleEntries.reduce((a,[_,v])=>a+v.vol,0);
+  const upperVol=muscleEntries.filter(([_,v])=>v.region==='upper').reduce((a,[_,v])=>a+v.vol,0);
+  const lowerVol=muscleEntries.filter(([_,v])=>v.region==='lower').reduce((a,[_,v])=>a+v.vol,0);
+  const coreVol=muscleEntries.filter(([_,v])=>v.region==='core').reduce((a,[_,v])=>a+v.vol,0);
+  const upperPct=muscleTotal?Math.round((upperVol/muscleTotal)*100):0;
+  const lowerPct=muscleTotal?Math.round((lowerVol/muscleTotal)*100):0;
+  const corePct=muscleTotal?100-upperPct-lowerPct:0;
+
+  // تكرار نوع الجلسة
+  const dayTypes=dayTypeCounts(workouts);
+
+  // أعلى ٥ أوزان
+  const tops=topLifts(sets,5);
+
+  // التقويم الحراري
+  const heat=calendarHeatmap(workouts,30);
+  const trainedDays30=heat.filter(h=>h.intensity>0).length;
+
+  // مقارنات نسبية
+  const dSets=pctDelta(week.sets,prevWeek.sets);
+  const dVol=pctDelta(week.volume,prevWeek.volume);
+  const dPRs=pctDelta(week.prs,prevWeek.prs);
+
+  // ======= بناء الـ HTML =======
   sb.innerHTML=`
-    <div class="stats-row"><span>إجمالي السيتات المسجّلة</span><b>${total}</b></div>
-    <div class="stats-row"><span>عدد التمارين المختلفة</span><b>${uniqueExercises}</b></div>
-    <div class="stats-row"><span>إجمالي الحجم (كجم × تكرار)</span><b>${Math.round(totalVolume).toLocaleString('ar-SA')}</b></div>
-    <div class="stats-row"><span>عدد الجلسات</span><b>${sessions}</b></div>
+    <!-- HERO STATS -->
+    <div class="stats-hero">
+      <div class="sh-item">
+        <div class="sh-val">${sessions}</div>
+        <div class="sh-lbl">جلسة</div>
+      </div>
+      <div class="sh-item">
+        <div class="sh-val">${Math.round(totalVolume).toLocaleString('ar-SA')}</div>
+        <div class="sh-lbl">حجم كلي (كجم)</div>
+      </div>
+      <div class="sh-item ${streak.current>=3?'sh-fire':''}">
+        <div class="sh-val">${streak.current}${streak.current>=3?' 🔥':''}</div>
+        <div class="sh-lbl">سلسلة حالية (أفضل: ${streak.best})</div>
+      </div>
+      <div class="sh-item">
+        <div class="sh-val">${totalHours}س</div>
+        <div class="sh-lbl">إجمالي وقت التدريب</div>
+      </div>
+    </div>
+
+    <!-- WEEKLY COMPARE -->
+    <div class="stats-section">
+      <div class="ss-title">📅 هذا الأسبوع <span class="ss-sub">vs الأسبوع الماضي</span></div>
+      <div class="week-compare">
+        <div class="wcm">
+          <div class="wcm-val">${week.sessions}</div>
+          <div class="wcm-lbl">جلسات</div>
+        </div>
+        <div class="wcm">
+          <div class="wcm-val">${week.sets} <span class="wcm-d ${dSets.cls}">${dSets.txt}</span></div>
+          <div class="wcm-lbl">سيتات</div>
+        </div>
+        <div class="wcm">
+          <div class="wcm-val">${week.volume.toLocaleString('ar-SA')} <span class="wcm-d ${dVol.cls}">${dVol.txt}</span></div>
+          <div class="wcm-lbl">حجم (كجم)</div>
+        </div>
+        <div class="wcm">
+          <div class="wcm-val">${week.prs} <span class="wcm-d ${dPRs.cls}">${dPRs.txt}</span></div>
+          <div class="wcm-lbl">🏆 أرقام جديدة</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPPER vs LOWER PRIORITY CHECK -->
+    <div class="stats-section">
+      <div class="ss-title">⚡ توزيع التركيز <span class="ss-sub">(آخر ٢٨ يوم)</span></div>
+      ${muscleTotal===0?'<div class="ss-empty">لا توجد بيانات كافية بعد</div>':`
+      <div class="ul-bar">
+        <div class="ul-seg upper" style="flex:${upperPct}">${upperPct>10?upperPct+'% علوي':''}</div>
+        <div class="ul-seg lower" style="flex:${lowerPct}">${lowerPct>10?lowerPct+'% سفلي':''}</div>
+        <div class="ul-seg core" style="flex:${corePct}">${corePct>10?corePct+'% كور':''}</div>
+      </div>
+      <div class="ul-hint">
+        ${upperPct>=70?'✅ <b>ممتاز</b> — تركيزك على العلوي يطابق هدف "ضخم وقوي"':
+          upperPct>=55?'⚠️ تركيزك متوازن — لو هدفك العلوي، خفّف أيام الأرجل':
+          '❌ تركيزك ضعيف على العلوي — راجع البرنامج'}
+      </div>`}
+    </div>
+
+    <!-- MUSCLE GROUP BREAKDOWN -->
+    ${muscleEntries.length?`
+    <div class="stats-section">
+      <div class="ss-title">💪 الحجم حسب العضلة <span class="ss-sub">(آخر ٢٨ يوم)</span></div>
+      <div class="mg-list">
+        ${muscleEntries.map(([name,v])=>{
+          const pct=Math.round((v.vol/muscleTotal)*100);
+          const color=MUSCLE_COLORS[name]||'#D4A853';
+          return `<div class="mg-row">
+            <div class="mg-head"><span class="mg-name" style="color:${color}">${name}</span><span class="mg-val">${Math.round(v.vol).toLocaleString('ar-SA')} <small>(${pct}%)</small></span></div>
+            <div class="mg-bar-bg"><div class="mg-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:''}
+
+    <!-- 30-DAY HEATMAP -->
+    <div class="stats-section">
+      <div class="ss-title">🗓️ آخر ٣٠ يوم <span class="ss-sub">${trainedDays30}/30 يوم تدريب</span></div>
+      <div class="heatmap">
+        ${heat.map(h=>{
+          const dayNum=parseInt(h.date.split('-')[2]);
+          const tip=h.intensity?`${fmtDate(h.date)} · ${Math.round(h.volume).toLocaleString('ar-SA')} كجم`:fmtDate(h.date)+' · راحة';
+          return `<div class="hm-cell hm-${h.intensity}" title="${tip}"><span class="hm-d">${dayNum}</span></div>`;
+        }).join('')}
+      </div>
+      <div class="hm-legend">
+        <span>أقل</span>
+        <div class="hm-cell hm-0"></div>
+        <div class="hm-cell hm-1"></div>
+        <div class="hm-cell hm-2"></div>
+        <div class="hm-cell hm-3"></div>
+        <div class="hm-cell hm-4"></div>
+        <span>أكثر</span>
+      </div>
+    </div>
+
+    <!-- TOP LIFTS -->
+    ${tops.length?`
+    <div class="stats-section">
+      <div class="ss-title">🥇 أعلى ٥ أوزان <span class="ss-sub">رفعتها في حياتك</span></div>
+      <div class="top-lifts">
+        ${tops.map((t,i)=>`
+          <div class="tl-row">
+            <div class="tl-rank">${['🥇','🥈','🥉','4','5'][i]}</div>
+            <div class="tl-body">
+              <div class="tl-name">${t.ex}</div>
+              <div class="tl-date">${fmtDate(t.date)}</div>
+            </div>
+            <div class="tl-w">${t.weight}<small>كجم × ${t.reps}</small></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`:''}
+
+    <!-- DAY TYPE FREQUENCY -->
+    ${dayTypes.length?`
+    <div class="stats-section">
+      <div class="ss-title">📊 تكرار نوع الجلسة</div>
+      <div class="dt-list">
+        ${dayTypes.map(([name,count])=>`
+          <div class="dt-row"><span>${name}</span><b>${count}×</b></div>
+        `).join('')}
+      </div>
+    </div>`:''}
+
+    <!-- OVERALL STATS -->
+    <div class="stats-section">
+      <div class="ss-title">📈 إحصائيات شاملة</div>
+      <div class="stats-row"><span>إجمالي السيتات</span><b>${total}</b></div>
+      <div class="stats-row"><span>التمارين المختلفة</span><b>${uniqueExercises}</b></div>
+      <div class="stats-row"><span>متوسط سيتات/جلسة</span><b>${sessions?Math.round(total/sessions):0}</b></div>
+      <div class="stats-row"><span>متوسط مدة الجلسة</span><b>${sessions?fmtDuration(Math.round(totalDuration/sessions)):'—'}</b></div>
+    </div>
   `;
 
   // آخر ١٠ جلسات
@@ -2428,8 +2788,9 @@ async function openStats(){
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
       ).join('');
+      const vol=Math.round(w.totalVolume||0).toLocaleString('ar-SA');
       return `<div class="history-day">
-        <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ${fmtDuration(w.duration||0)}</div>
+        <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} · 📊 ${vol}${w.prCount?' · 🏆 '+w.prCount:''}</div>
         ${exHtml}
       </div>`;
     }).join('');
@@ -2896,6 +3257,62 @@ const EXERCISE_ALTERNATIVES = {
     {name:"Abdominal Crunch",reason:"كرنش بجهاز — البطن العلوي",muscleMatch:65,equipment:"Abdominal Crunch Machine"}
   ]
 };
+
+// خريطة المجموعات العضلية لكل تمرين (للإحصائيات المتقدمة)
+// group: العضلة المستهدفة الرئيسية · region: علوي/سفلي/كور
+const MUSCLE_GROUP_MAP = {
+  "Chest Press":{group:"صدر",region:"upper"},
+  "Pectoral Fly":{group:"صدر",region:"upper"},
+  "Crossover Cables":{group:"صدر",region:"upper"},
+  "Push-ups":{group:"صدر",region:"upper"},
+  "Lat Machine":{group:"ظهر",region:"upper"},
+  "Vertical Traction":{group:"ظهر",region:"upper"},
+  "Low Row":{group:"ظهر",region:"upper"},
+  "Upper Back":{group:"ظهر",region:"upper"},
+  "Pulley":{group:"ظهر",region:"upper"},
+  "Chin Ups":{group:"ظهر",region:"upper"},
+  "Shoulder Press":{group:"أكتاف",region:"upper"},
+  "Delts Machine":{group:"أكتاف",region:"upper"},
+  "Reverse Fly":{group:"أكتاف",region:"upper"},
+  "Arm Curl":{group:"ذراعين",region:"upper"},
+  "Pulley Curl":{group:"ذراعين",region:"upper"},
+  "Arm Extension":{group:"ذراعين",region:"upper"},
+  "Pulley Pushdown":{group:"ذراعين",region:"upper"},
+  "Dips":{group:"ذراعين",region:"upper"},
+  "Leg Press":{group:"أرجل",region:"lower"},
+  "Leg Extension":{group:"أرجل",region:"lower"},
+  "Prone Leg Curl":{group:"أرجل",region:"lower"},
+  "Abductor":{group:"أرجل",region:"lower"},
+  "Adductor":{group:"أرجل",region:"lower"},
+  "Calf Raise":{group:"سمانة",region:"lower"},
+  "Abdominal Crunch":{group:"بطن/خصر",region:"core"},
+  "Rotary Torso":{group:"بطن/خصر",region:"core"},
+  "Hanging Leg Raise":{group:"بطن/خصر",region:"core"},
+  "Lower Back":{group:"بطن/خصر",region:"core"}
+};
+
+// ألوان المجموعات العضلية (لرسم البار)
+const MUSCLE_COLORS = {
+  "ظهر":"#5AB4FF",        // أزرق — أهم مجموعة في برنامج UPPER PRIORITY
+  "صدر":"#FF5A5F",        // أحمر
+  "أكتاف":"#FFB85A",      // برتقالي
+  "ذراعين":"#B08AFF",     // بنفسجي
+  "أرجل":"#5AE68A",       // أخضر
+  "سمانة":"#5AE68A",      // أخضر فاتح
+  "بطن/خصر":"#8890A0"    // رمادي
+};
+
+// يرجّع المجموعة العضلية لاسم تمرين (مع تطبيع وفولباك)
+function getMuscleGroup(exName){
+  if(!exName) return null;
+  const norm=normalizeExName(exName);
+  if(MUSCLE_GROUP_MAP[norm]) return MUSCLE_GROUP_MAP[norm];
+  // محاولة جزئية (لو الاسم فيه إضافات)
+  for(const key of Object.keys(MUSCLE_GROUP_MAP)){
+    if(norm.includes(key)) return MUSCLE_GROUP_MAP[key];
+  }
+  return null;
+}
 
 // قائمة كل الأجهزة المتاحة في الجيم (للـ "ما لقيت اللي يناسبك؟")
 const ALL_EQUIPMENT = [
