@@ -365,18 +365,18 @@ async function exportData(){
   a.download=`bulkmode_v5_backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  await db.put('settings',{key:'last_export',value:new Date().toISOString()});
+  await db.put('settings',{key:KEYS.LAST_EXPORT,value:new Date().toISOString()});
   showToast('💾 تم تصدير النسخة الاحتياطية');
 }
 
 // تذكير دائم بالتصدير الأسبوعي — لو مرّ ٧ أيام بدون تصدير
 async function checkExportReminder(){
   try{
-    const onb=await db.get('settings','onboarded');
+    const onb=await db.get('settings',KEYS.ONBOARDED);
     if(!onb || !onb.value) return; // قبل الـ onboarding لا نزعجه
     const sets=await db.getAll('sets');
     if(sets.length<5) return; // ما يستحق تذكير قبل ٥ سيتات على الأقل
-    const last=await db.get('settings','last_export');
+    const last=await db.get('settings',KEYS.LAST_EXPORT);
     const days=last?Math.floor((Date.now()-new Date(last.value).getTime())/86400000):999;
     if(days>=7){
       setTimeout(()=>{
@@ -398,7 +398,7 @@ async function importData(event){
         if(!confirm(`استيراد ${imp.logs.length} سجل من نسخة قديمة؟`)) return;
         localStorage.setItem('bulkmode_tracker_v1',JSON.stringify(imp));
         // أعد الترحيل بإجبار
-        await db.delete('settings','migration_v1');
+        await db.delete('settings',KEYS.MIGRATION_LS_V1);
         await migrateFromLS();
         showToast('✓ تم استيراد البيانات القديمة');
         setTimeout(()=>location.reload(),1000);
@@ -651,15 +651,16 @@ async function renderHistory(){
 }
 
 // ============ CHART.JS (LAZY) ============
+// V7 (#31) — نسخة محلية بدل CDN (أمان: لا CDN compromise، يعمل offline من أول مرة)
 let _chartLoaded=false;
 async function loadChart(){
   if(_chartLoaded) return window.Chart;
   if(window.Chart){_chartLoaded=true;return window.Chart}
   return new Promise((res,rej)=>{
     const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+    s.src='vendor/chart.umd.min.js';
     s.onload=()=>{_chartLoaded=true;res(window.Chart)};
-    s.onerror=()=>rej(new Error('فشل تحميل Chart.js — تأكد من الاتصال أول مرة'));
+    s.onerror=()=>rej(new Error('فشل تحميل Chart.js المحلي'));
     document.head.appendChild(s);
   });
 }

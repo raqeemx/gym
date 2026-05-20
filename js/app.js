@@ -194,13 +194,13 @@ function onbNav(direction){
 }
 
 async function finishOnboarding(){
-  await db.put('settings',{key:'onboarded',value:true,date:new Date().toISOString()});
+  await db.put('settings',{key:KEYS.ONBOARDED,value:true,date:new Date().toISOString()});
   closeOnboarding();
   showToast('🎉 جاهز! ابدأ من تبويب «التمارين»');
 }
 
 async function skipOnboarding(){
-  await db.put('settings',{key:'onboarded',value:true,date:new Date().toISOString(),skipped:true});
+  await db.put('settings',{key:KEYS.ONBOARDED,value:true,date:new Date().toISOString(),skipped:true});
   closeOnboarding();
 }
 
@@ -232,7 +232,7 @@ function openOnboarding(){
 
 async function checkOnboarding(){
   try{
-    const flag=await db.get('settings','onboarded');
+    const flag=await db.get('settings',KEYS.ONBOARDED);
     if(!flag || !flag.value){
       // أول فتح — اعرض الـ onboarding بعد تأخير صغير لتحميل العناصر
       setTimeout(()=>openOnboarding(),250);
@@ -246,6 +246,7 @@ async function checkOnboarding(){
 window.addEventListener('DOMContentLoaded',async()=>{
   try{
     await db.open();
+    await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
     await loadTheme();        // V7 #26 — حمّل الـ theme قبل أي شيء آخر
     await migrateFromLS();
     ensureStepIds();         // ID مستقر لكل step (V6)
@@ -258,32 +259,118 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await loadSubstitutions();// استرجع البدائل المحفوظة (V6)
     await loadSkippedSteps(); // استرجع حالات التخطّي اليوم (V7 — #12)
     await loadCurrentSession();
+    await checkSessionRecovery(); // V7 #36 — فحص جلسة معلّقة بعد فترة طويلة
     highlightToday();          // تظليل بطاقة اليوم + فتحها تلقائياً (V7)
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)
     await updateWeekUI();      // شارة الأسبوع + بانر deload (V7 — #15)
     await checkOnboarding();  // فحص أول فتح وعرض الـ onboarding (V7)
     await checkExportReminder(); // تذكير بالتصدير الأسبوعي (V7)
+    setupInstallPrompt();      // V7 #34 — التقاط beforeinstallprompt + iOS hint
   }catch(e){
     console.error('Init error:',e);
     showToast('⚠️ خطأ في تحميل قاعدة البيانات','var(--red)');
   }
 });
 
-// تفعيل الصوت مبكراً (لـ iOS) — يتطلب لمسة من المستخدم
-document.addEventListener('click',()=>{
-  if(!REST.audioCtx){
-    try{
-      REST.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-      if(REST.audioCtx.state==='suspended') REST.audioCtx.resume();
-    }catch(e){}
+// V7 (#35) — تفعيل الصوت مبكراً عند أي تفاعل (touchstart/pointerdown/click)
+let _audioWarmupDone=false;
+function warmupAudio(){
+  if(_audioWarmupDone) return;
+  try{
+    REST.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(REST.audioCtx.state==='suspended') REST.audioCtx.resume();
+    _audioWarmupDone=true;
+    // أزل المستمعات بعد النجاح
+    document.removeEventListener('click',warmupAudio);
+    document.removeEventListener('touchstart',warmupAudio);
+    document.removeEventListener('pointerdown',warmupAudio);
+    document.removeEventListener('keydown',warmupAudio);
+  }catch(e){}
+}
+document.addEventListener('click',warmupAudio,{passive:true});
+document.addEventListener('touchstart',warmupAudio,{passive:true});
+document.addEventListener('pointerdown',warmupAudio,{passive:true});
+document.addEventListener('keydown',warmupAudio,{passive:true});
+
+// V7 (#34) — Install Prompt (Add to Home Screen)
+let _deferredInstallPrompt=null;
+function setupInstallPrompt(){
+  // أخفِ زر التثبيت لو التطبيق مثبّت بالفعل
+  if(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone){
+    return;
   }
-},{once:true});
+  window.addEventListener('beforeinstallprompt',(e)=>{
+    e.preventDefault();
+    _deferredInstallPrompt=e;
+    showInstallButton();
+  });
+  window.addEventListener('appinstalled',()=>{
+    _deferredInstallPrompt=null;
+    const btn=document.getElementById('installBtn');
+    if(btn) btn.remove();
+    showToast('🎉 تم تثبيت التطبيق على شاشتك الرئيسية');
+  });
+  // iOS Safari (لا يدعم beforeinstallprompt) — اعرض تعليمات يدوية أول مرة
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if(isIOS && isSafari && !window.navigator.standalone){
+    db.get('settings','app:ios_install_hint_shown').then(rec=>{
+      if(!rec||!rec.value){
+        setTimeout(()=>{
+          showToast('💡 للتثبيت: اضغط مشاركة → "إضافة إلى الشاشة الرئيسية"','var(--blue)',8000);
+          db.put('settings',{key:'app:ios_install_hint_shown',value:true});
+        },4000);
+      }
+    });
+  }
+}
+
+function showInstallButton(){
+  if(document.getElementById('installBtn')) return;
+  const btn=document.createElement('button');
+  btn.id='installBtn';
+  btn.className='install-btn';
+  btn.innerHTML='📲 ثبّت التطبيق';
+  btn.onclick=async()=>{
+    if(!_deferredInstallPrompt) return;
+    _deferredInstallPrompt.prompt();
+    const choice=await _deferredInstallPrompt.userChoice;
+    _deferredInstallPrompt=null;
+    btn.remove();
+    if(choice.outcome==='accepted'){
+      showToast('🎉 جاري التثبيت...');
+    }
+  };
+  document.body.appendChild(btn);
+}
 
 // ============ SERVICE WORKER REGISTRATION (PWA) ============
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg=>console.log('SW registered:',reg.scope))
-      .catch(err=>console.log('SW registration failed:',err));
+    navigator.serviceWorker.register('service-worker.js').then(reg=>{
+      console.log('SW registered:',reg.scope);
+      // V7 (#33) — اكشف عن تحديثات
+      reg.addEventListener('updatefound',()=>{
+        const newSW=reg.installing;
+        if(!newSW) return;
+        newSW.addEventListener('statechange',()=>{
+          if(newSW.state==='installed' && navigator.serviceWorker.controller){
+            // نسخة جديدة جاهزة — اعرض toast بزر للتحديث
+            showToast('🔄 نسخة جديدة متاحة',  'var(--blue)', 12000, {
+              action:{label:'تحديث',handler:()=>{
+                newSW.postMessage({type:'SKIP_WAITING'});
+              }}
+            });
+          }
+        });
+      });
+    }).catch(err=>console.log('SW registration failed:',err));
+    // عند تغيير الـ SW النشط، أعد تحميل الصفحة
+    let _reloading=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(_reloading) return;
+      _reloading=true;
+      location.reload();
+    });
   });
 }

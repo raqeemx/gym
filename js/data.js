@@ -63,8 +63,88 @@ function showToast(msg,color='var(--grn)',duration=2500,opts={}){
 // ============ INDEXEDDB WRAPPER ============
 // مغلّف مبسّط للوصول لـ IndexedDB بطريقة async/await
 const DB_NAME='bulkmode_db';
-const DB_VERSION=1;
+const DB_VERSION=2; // V7 (#30): bumped from 1 — schema migration framework
 const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings'];
+
+// V7 (#29) — Namespaced settings keys (app:, session:, subs:)
+const KEYS={
+  // app-level
+  ONBOARDED:'app:onboarded',
+  LAST_EXPORT:'app:last_export',
+  FIRST_WORKOUT:'app:first_workout',
+  THEME:'app:theme',
+  HERO_COLLAPSED:'app:hero_collapsed',
+  MIGRATION_LS_V1:'app:migrated_from_ls_v1',
+  MIGRATION_KEYS_V2:'app:migrated_keys_v2',
+  // session-level
+  CURRENT_SESSION:'session:current',
+  SESSION_MINIMIZED:'session:minimized',
+  SKIPPED_STEPS:'session:skipped_today',
+  LAST_ACTIVE_AT:'session:last_active_at',
+  // substitution-level
+  SUBS_ACTIVE:'subs:active',
+  SUBS_PREFS:'subs:prefs',
+  SUBS_HISTORY:'subs:history'
+};
+
+// V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة
+const LEGACY_KEY_MAP={
+  'onboarded':KEYS.ONBOARDED,
+  'last_export':KEYS.LAST_EXPORT,
+  'firstWorkoutDate':KEYS.FIRST_WORKOUT,
+  'theme':KEYS.THEME,
+  'heroCollapsed':KEYS.HERO_COLLAPSED,
+  'migration_v1':KEYS.MIGRATION_LS_V1,
+  'currentSession':KEYS.CURRENT_SESSION,
+  'sessionMinimized':KEYS.SESSION_MINIMIZED,
+  'skippedSteps':KEYS.SKIPPED_STEPS,
+  'substitutions':KEYS.SUBS_ACTIVE,
+  'substitutionPrefs':KEYS.SUBS_PREFS,
+  'substitutionHistory':KEYS.SUBS_HISTORY
+};
+
+// V7 (#32) — معالجة QuotaExceededError مركزياً
+let _quotaErrorShown=false;
+function handleQuotaError(){
+  if(_quotaErrorShown) return;
+  _quotaErrorShown=true;
+  setTimeout(()=>{_quotaErrorShown=false},10000);
+  const msg='💾 المساحة شبه ممتلئة! صدّر بياناتك من 📊 → 💾 ثم احذف الجلسات الأقدم من ٦ أشهر.';
+  if(typeof showToast==='function') showToast(msg,'var(--red)',8000);
+  else alert(msg);
+}
+
+// V7 (#30) — Schema migrations (تطبّق فقط لو oldVersion < target)
+function migrateV0toV1(d){
+  // أول إصدار: أنشئ كل المتاجر
+  if(!d.objectStoreNames.contains('workouts')){
+    const s=d.createObjectStore('workouts',{keyPath:'id'});
+    s.createIndex('date','date');
+    s.createIndex('dayType','dayType');
+  }
+  if(!d.objectStoreNames.contains('sets')){
+    const s=d.createObjectStore('sets',{keyPath:'id',autoIncrement:true});
+    s.createIndex('workoutId','workoutId');
+    s.createIndex('exerciseName','exerciseName');
+    s.createIndex('date','date');
+  }
+  if(!d.objectStoreNames.contains('exercises')) d.createObjectStore('exercises',{keyPath:'name'});
+  if(!d.objectStoreNames.contains('bodyMetrics')) d.createObjectStore('bodyMetrics',{keyPath:'date'});
+  if(!d.objectStoreNames.contains('prs')){
+    const s=d.createObjectStore('prs',{keyPath:'id',autoIncrement:true});
+    s.createIndex('exerciseName','exerciseName');
+    s.createIndex('type','type');
+  }
+  if(!d.objectStoreNames.contains('progressPhotos')) d.createObjectStore('progressPhotos',{keyPath:'id',autoIncrement:true});
+  if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+}
+
+function migrateV1toV2(d){
+  // V2: لا تغييرات في schema (مخطّط بنفسه). ترحيل المفاتيح يحصل بعد open في applyDataMigrations()
+  // ضع index على prs.setId لتحسين الأداء عند الحذف (V7 #18 undo)
+  const tx=d.transaction?d.transaction:null;
+  // ملاحظة: لا نقدر نستخدم tx هنا (عبر createObjectStore جديد). فقط أضف الـ indexes إذا الـ store موجود.
+}
 
 const db={
   _h:null,
@@ -76,41 +156,48 @@ const db={
       req.onsuccess=()=>{this._h=req.result;res(this._h)};
       req.onupgradeneeded=(e)=>{
         const d=e.target.result;
-        if(!d.objectStoreNames.contains('workouts')){
-          const s=d.createObjectStore('workouts',{keyPath:'id'});
-          s.createIndex('date','date');
-          s.createIndex('dayType','dayType');
-        }
-        if(!d.objectStoreNames.contains('sets')){
-          const s=d.createObjectStore('sets',{keyPath:'id',autoIncrement:true});
-          s.createIndex('workoutId','workoutId');
-          s.createIndex('exerciseName','exerciseName');
-          s.createIndex('date','date');
-        }
-        if(!d.objectStoreNames.contains('exercises')) d.createObjectStore('exercises',{keyPath:'name'});
-        if(!d.objectStoreNames.contains('bodyMetrics')) d.createObjectStore('bodyMetrics',{keyPath:'date'});
-        if(!d.objectStoreNames.contains('prs')){
-          const s=d.createObjectStore('prs',{keyPath:'id',autoIncrement:true});
-          s.createIndex('exerciseName','exerciseName');
-          s.createIndex('type','type');
-        }
-        if(!d.objectStoreNames.contains('progressPhotos')) d.createObjectStore('progressPhotos',{keyPath:'id',autoIncrement:true});
-        if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings',{keyPath:'key'});
+        // طبّق الترحيلات بالتسلسل
+        if(e.oldVersion<1) migrateV0toV1(d);
+        if(e.oldVersion<2) migrateV1toV2(d);
       };
     });
   },
-  async add(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).add(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
-  async put(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).put(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  async add(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).add(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>{if(r.error&&r.error.name==='QuotaExceededError') handleQuotaError();rej(r.error)};tx.onerror=()=>{if(tx.error&&tx.error.name==='QuotaExceededError') handleQuotaError()}})},
+  async put(store,rec){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).put(rec);r.onsuccess=()=>res(r.result);r.onerror=()=>{if(r.error&&r.error.name==='QuotaExceededError') handleQuotaError();rej(r.error)};tx.onerror=()=>{if(tx.error&&tx.error.name==='QuotaExceededError') handleQuotaError()}})},
   async get(store,key){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readonly');const r=tx.objectStore(store).get(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
   async getAll(store,idx,query){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readonly');const src=idx?tx.objectStore(store).index(idx):tx.objectStore(store);const r=query!==undefined?src.getAll(query):src.getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
   async delete(store,key){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).delete(key);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})},
   async clear(store){const h=await this.open();return new Promise((res,rej)=>{const tx=h.transaction(store,'readwrite');const r=tx.objectStore(store).clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
 };
 
+// V7 (#29) — ترحيل مفاتيح settings للأسماء الـ namespaced
+// يُستدعى بعد db.open() (وليس داخل onupgradeneeded لأنه يحتاج عمليات async)
+async function applyDataMigrations(){
+  const done=await db.get('settings',KEYS.MIGRATION_KEYS_V2);
+  if(done && done.value) return;
+  try{
+    const all=await db.getAll('settings');
+    let renamed=0;
+    for(const rec of all){
+      const newKey=LEGACY_KEY_MAP[rec.key];
+      if(newKey && newKey!==rec.key){
+        // لو الجديد موجود بالفعل، لا نكتب فوقه
+        const existing=await db.get('settings',newKey);
+        if(!existing){
+          await db.put('settings',{...rec,key:newKey});
+        }
+        await db.delete('settings',rec.key);
+        renamed++;
+      }
+    }
+    await db.put('settings',{key:KEYS.MIGRATION_KEYS_V2,value:true,date:new Date().toISOString(),renamed});
+  }catch(e){console.warn('Settings keys migration failed:',e)}
+}
+
 // ============ MIGRATION FROM LOCALSTORAGE ============
 // ترحيل بيانات النسخة القديمة (LocalStorage) لـ IndexedDB
 async function migrateFromLS(){
-  const flag=await db.get('settings','migration_v1');
+  const flag=await db.get('settings',KEYS.MIGRATION_LS_V1);
   if(flag&&flag.value) return;
 
   const raw=localStorage.getItem('bulkmode_tracker_v1');
@@ -151,7 +238,7 @@ async function migrateFromLS(){
       }
     }catch(e){console.warn('Migration error:',e)}
   }
-  await db.put('settings',{key:'migration_v1',value:true});
+  await db.put('settings',{key:KEYS.MIGRATION_LS_V1,value:true});
 }
 
 // ============ HELPERS ============

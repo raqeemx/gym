@@ -121,6 +121,12 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
 .btt:hover{border-color:rgba(212,168,83,.3);color:var(--g2);transform:translateY(-3px)}
 .btt.show{display:flex}
 
+/* V7 (#34) — Install prompt button */
+.install-btn{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border:none;padding:13px 20px;border-radius:24px;font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;cursor:pointer;box-shadow:0 8px 24px rgba(212,168,83,.4);z-index:1000;animation:fadeUp .5s both,glow 3s infinite;-webkit-tap-highlight-color:transparent;min-height:44px}
+.install-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(212,168,83,.5)}
+.install-btn:active{transform:scale(.97)}
+@media (max-width:480px){.install-btn{bottom:90px;right:14px;padding:11px 16px;font-size:12px}}
+
 /* SCROLL PROGRESS */
 .progress-bar{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g1),var(--g2));z-index:9998;transition:width .1s;width:0;transform-origin:right}
 

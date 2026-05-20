@@ -1,6 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V7 — modular)
-const CACHE_NAME = 'bulkmode-v7';
-const CHART_JS = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+// BULK MODE Service Worker — Offline-first (V7.1 — local Chart.js, no CDN supply-chain risk)
+const CACHE_NAME = 'bulkmode-v7-1';
 const ASSETS = [
   './',
   './index.html',
@@ -13,6 +12,7 @@ const ASSETS = [
   './js/progress.js',
   './js/substitutions.js',
   './js/app.js',
+  './vendor/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 ];
 
@@ -34,6 +34,13 @@ self.addEventListener('activate', (event) => {
       )
     ).then(() => self.clients.claim())
   );
+});
+
+// V7 (#33) — استمع لـ SKIP_WAITING من العميل عشان نطبّق النسخة الجديدة فوراً
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Fetch strategy:
@@ -65,21 +72,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Chart.js (jsdelivr) — stale-while-revalidate
-  if (url.hostname.includes('cdn.jsdelivr.net')) {
-    event.respondWith(
-      caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(event.request);
-        const fetchPromise = fetch(event.request).then((response) => {
-          if (response && response.ok) cache.put(event.request, response.clone());
-          return response;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
-    );
-    return;
-  }
-
+  // V7 #31 — Chart.js now served locally من ./vendor (لا CDN)
   // Google Fonts — stale-while-revalidate
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(

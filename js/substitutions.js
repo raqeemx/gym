@@ -313,7 +313,7 @@ function injectSkipButtons(){
 async function toggleSkipStep(stepId){
   const step=document.getElementById(stepId);
   if(!step) return;
-  const rec=await db.get('settings','skippedSteps');
+  const rec=await db.get('settings',KEYS.SKIPPED_STEPS);
   const data=(rec&&rec.value)||{};
   const today=new Date().toISOString().split('T')[0];
 
@@ -321,7 +321,7 @@ async function toggleSkipStep(stepId){
     // إلغاء التخطّي
     step.classList.remove('skipped');
     delete data[stepId];
-    await db.put('settings',{key:'skippedSteps',value:data});
+    await db.put('settings',{key:KEYS.SKIPPED_STEPS,value:data});
     const btn=step.querySelector('.skip-btn span:last-child');
     if(btn) btn.textContent='تخطّى';
     showToast('↩ أُعيد التمرين','var(--blue)');
@@ -329,7 +329,7 @@ async function toggleSkipStep(stepId){
     // تطبيق التخطّي
     step.classList.add('skipped');
     data[stepId]={date:today,skippedAt:new Date().toISOString()};
-    await db.put('settings',{key:'skippedSteps',value:data});
+    await db.put('settings',{key:KEYS.SKIPPED_STEPS,value:data});
     const btn=step.querySelector('.skip-btn span:last-child');
     if(btn) btn.textContent='تراجع';
     showToast('↷ تم تخطّي التمرين اليوم','var(--org)');
@@ -339,7 +339,7 @@ async function toggleSkipStep(stepId){
 
 // V7 — استعد حالات التخطّي (تنتهي تلقائياً بعد منتصف الليل)
 async function loadSkippedSteps(){
-  const rec=await db.get('settings','skippedSteps');
+  const rec=await db.get('settings',KEYS.SKIPPED_STEPS);
   const data=(rec&&rec.value)||{};
   const today=new Date().toISOString().split('T')[0];
   const cleaned={};
@@ -356,13 +356,13 @@ async function loadSkippedSteps(){
   }
   // امسح التخطّيات القديمة من قاعدة البيانات
   if(Object.keys(cleaned).length!==Object.keys(data).length){
-    await db.put('settings',{key:'skippedSteps',value:cleaned});
+    await db.put('settings',{key:KEYS.SKIPPED_STEPS,value:cleaned});
   }
 }
 
 // V7 — يحسب عدد التمارين المتخطّاة اليوم (للإحصائيات)
 async function getSkippedTodayCount(){
-  const rec=await db.get('settings','skippedSteps');
+  const rec=await db.get('settings',KEYS.SKIPPED_STEPS);
   const data=(rec&&rec.value)||{};
   const today=new Date().toISOString().split('T')[0];
   return Object.values(data).filter(v=>v.date===today).length;
@@ -658,27 +658,27 @@ async function getLastSetFor(exerciseName){
 
 // تخزين الاستبدالات في settings store
 async function saveSubstitution(stepId,original,substitute,dayType){
-  const all=await db.get('settings','substitutions');
+  const all=await db.get('settings',KEYS.SUBS_ACTIVE);
   const data=(all&&all.value)||{};
   data[stepId]={original,substitute,date:new Date().toISOString(),dayType};
-  await db.put('settings',{key:'substitutions',value:data});
+  await db.put('settings',{key:KEYS.SUBS_ACTIVE,value:data});
 }
 
 async function removeSubstitution(stepId){
-  const all=await db.get('settings','substitutions');
+  const all=await db.get('settings',KEYS.SUBS_ACTIVE);
   const data=(all&&all.value)||{};
   delete data[stepId];
-  await db.put('settings',{key:'substitutions',value:data});
+  await db.put('settings',{key:KEYS.SUBS_ACTIVE,value:data});
 }
 
 // استعد الاستبدالات عند تحميل الصفحة
 async function loadSubstitutions(){
   // 1) تفضيلات دائمة (موجودة في كل خطوة لها نفس الـoriginal)
-  const prefsRec=await db.get('settings','substitutionPrefs');
+  const prefsRec=await db.get('settings',KEYS.SUBS_PREFS);
   const prefs=(prefsRec&&prefsRec.value)||{};
 
   // 2) استبدالات لكل-ستيب
-  const subsRec=await db.get('settings','substitutions');
+  const subsRec=await db.get('settings',KEYS.SUBS_ACTIVE);
   const subs=(subsRec&&subsRec.value)||{};
 
   // طبّق التفضيلات الدائمة أولاً (لو ما في per-step override)
@@ -723,9 +723,9 @@ async function applySubstitutionUI(step,original,substitute){
 
 // اقتراح ذكي: لو المستخدم استبدل نفس التمرين بنفس البديل ≥ ٣ مرات → اقترح permanent
 async function checkSmartSuggestion(original){
-  const subsRec=await db.get('settings','substitutions');
+  const subsRec=await db.get('settings',KEYS.SUBS_ACTIVE);
   const subs=(subsRec&&subsRec.value)||{};
-  const histRec=await db.get('settings','substitutionHistory');
+  const histRec=await db.get('settings',KEYS.SUBS_HISTORY);
   const hist=(histRec&&histRec.value)||[];
 
   // count substitute occurrences for this original
@@ -739,7 +739,7 @@ async function checkSmartSuggestion(original){
   });
 
   // لا تقترح لو فيه pref دائم بالفعل
-  const prefsRec=await db.get('settings','substitutionPrefs');
+  const prefsRec=await db.get('settings',KEYS.SUBS_PREFS);
   const prefs=(prefsRec&&prefsRec.value)||{};
   if(prefs[original]) return null;
 
@@ -750,10 +750,10 @@ async function checkSmartSuggestion(original){
 
 // جعل الاستبدال دائماً
 async function makePermanent(original,substitute,btn){
-  const prefsRec=await db.get('settings','substitutionPrefs');
+  const prefsRec=await db.get('settings',KEYS.SUBS_PREFS);
   const prefs=(prefsRec&&prefsRec.value)||{};
   prefs[original]=substitute;
-  await db.put('settings',{key:'substitutionPrefs',value:prefs});
+  await db.put('settings',{key:KEYS.SUBS_PREFS,value:prefs});
 
   // طبّق على كل الـsteps المطابقة
   for(const step of document.querySelectorAll('.step:not(.rest):not(.warmup)')){
@@ -770,10 +770,10 @@ async function makePermanent(original,substitute,btn){
 
 // سجل تاريخ الاستبدالات (لميزة الاقتراح الذكي)
 async function logSubstitutionHistory(original,substitute){
-  const histRec=await db.get('settings','substitutionHistory');
+  const histRec=await db.get('settings',KEYS.SUBS_HISTORY);
   const hist=(histRec&&histRec.value)||[];
   hist.push({original,substitute,date:new Date().toISOString()});
   // احتفظ بآخر ٢٠٠ فقط
   if(hist.length>200) hist.splice(0,hist.length-200);
-  await db.put('settings',{key:'substitutionHistory',value:hist});
+  await db.put('settings',{key:KEYS.SUBS_HISTORY,value:hist});
 }

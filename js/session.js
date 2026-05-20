@@ -302,9 +302,9 @@ let sessionTimerId=null;
 
 async function loadCurrentSession(){
   // V7 (#17) — استعد حالة minimize
-  const m=await db.get('settings','sessionMinimized');
+  const m=await db.get('settings',KEYS.SESSION_MINIMIZED);
   SESSION_MINIMIZED=!!(m && m.value);
-  const s=await db.get('settings','currentSession');
+  const s=await db.get('settings',KEYS.CURRENT_SESSION);
   if(s && s.value){
     currentSession=s.value;
     updateSessionUI();
@@ -331,11 +331,11 @@ async function onStartSession(dayType){
     setsCount:0,totalVolume:0,prCount:0,
     prList:[],notes:''
   };
-  await db.put('settings',{key:'currentSession',value:currentSession});
+  await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
   // V7 #15 — احفظ تاريخ أول جلسة لو ما محفوظ بعد
-  const first=await db.get('settings','firstWorkoutDate');
+  const first=await db.get('settings',KEYS.FIRST_WORKOUT);
   if(!first || !first.value){
-    await db.put('settings',{key:'firstWorkoutDate',value:nowISO});
+    await db.put('settings',{key:KEYS.FIRST_WORKOUT,value:nowISO});
   }
   updateSessionUI();
   startSessionTicker();
@@ -360,6 +360,63 @@ function startSessionTicker(){
   };
   tick();
   sessionTimerId=setInterval(tick,1000);
+  startHeartbeat(); // V7 #36 — heartbeat كل ٣٠ ث
+}
+
+// V7 (#36) — Heartbeat: يحفظ lastActiveAt كل ٣٠ ث أثناء الجلسة
+// عند الفتح بعد انقطاع، يساعد في تحديد آخر نشاط فعلي
+let heartbeatId=null;
+function startHeartbeat(){
+  stopHeartbeat();
+  heartbeatId=setInterval(async()=>{
+    if(currentSession){
+      try{await db.put('settings',{key:KEYS.LAST_ACTIVE_AT,value:new Date().toISOString()})}catch(e){}
+    }
+  },30000);
+  // إشارة فورية عند البدء
+  if(currentSession){
+    db.put('settings',{key:KEYS.LAST_ACTIVE_AT,value:new Date().toISOString()}).catch(()=>{});
+  }
+}
+function stopHeartbeat(){
+  if(heartbeatId){clearInterval(heartbeatId);heartbeatId=null}
+}
+
+// V7 (#36) — فحص جلسة معلّقة (مثلاً الجوال انطفأ في المنتصف)
+async function checkSessionRecovery(){
+  if(!currentSession) return;
+  const last=await db.get('settings',KEYS.LAST_ACTIVE_AT);
+  if(!last || !last.value) return;
+  const lastTime=new Date(last.value).getTime();
+  const diffMs=Date.now()-lastTime;
+  const diffH=diffMs/3600000;
+  if(diffH<4) return; // أقل من ٤ ساعات: طبيعي
+  // أكثر من ٤ ساعات → اقترح إنهاء الجلسة على آخر نشاط
+  const hoursTxt=diffH>=24?`${Math.floor(diffH/24)} يوم`:`${Math.floor(diffH)} ساعة`;
+  const choice=confirm(`الجلسة (${currentSession.dayType}) معلّقة منذ ${hoursTxt}.\n\nأنهِها على آخر نشاط مسجّل؟\n(إلغاء = استمر في الجلسة)`);
+  if(choice){
+    // أنهِ الجلسة وضع endTime = lastActiveAt
+    const savedEndTime=last.value;
+    const duration=Math.round((new Date(savedEndTime)-new Date(currentSession.startTime))/1000);
+    const workout={
+      id:currentSession.id,
+      date:currentSession.date,
+      dayType:currentSession.dayType,
+      startTime:currentSession.startTime,
+      endTime:savedEndTime,duration:duration,
+      totalVolume:currentSession.totalVolume,
+      setsCount:currentSession.setsCount,
+      prCount:currentSession.prCount,
+      notes:'مستعادة تلقائياً من heartbeat'
+    };
+    await db.put('workouts',workout);
+    currentSession=null;
+    await db.put('settings',{key:KEYS.CURRENT_SESSION,value:null});
+    if(sessionTimerId){clearInterval(sessionTimerId);sessionTimerId=null}
+    stopHeartbeat();
+    updateSessionUI();
+    showToast(`✓ تم إنهاء الجلسة على آخر نشاط (مدة: ${fmtDuration(duration)})`,'var(--blue)',5000);
+  }
 }
 
 function updateSessionUI(){
@@ -411,14 +468,14 @@ function updateSessionUI(){
 // يحسب رقم الأسبوع الحالي من تاريخ أول جلسة + يكشف deload (كل ٤ أسابيع)
 async function computeProgramWeek(){
   // ابحث عن firstWorkoutDate في settings أولاً، وإلا احسبه من workouts
-  const cached=await db.get('settings','firstWorkoutDate');
+  const cached=await db.get('settings',KEYS.FIRST_WORKOUT);
   let firstISO=cached&&cached.value;
   if(!firstISO){
     const workouts=await db.getAll('workouts');
     if(!workouts.length) return null;
     const sorted=workouts.sort((a,b)=>a.startTime.localeCompare(b.startTime));
     firstISO=sorted[0].startTime;
-    await db.put('settings',{key:'firstWorkoutDate',value:firstISO});
+    await db.put('settings',{key:KEYS.FIRST_WORKOUT,value:firstISO});
   }
   const first=new Date(firstISO);
   first.setHours(0,0,0,0);
@@ -438,7 +495,7 @@ let SESSION_MINIMIZED=false;
 
 async function toggleSessionMinimize(){
   SESSION_MINIMIZED=!SESSION_MINIMIZED;
-  await db.put('settings',{key:'sessionMinimized',value:SESSION_MINIMIZED});
+  await db.put('settings',{key:KEYS.SESSION_MINIMIZED,value:SESSION_MINIMIZED});
   applySessionMinimizeUI();
 }
 
@@ -493,14 +550,14 @@ async function toggleTheme(){
   const root=document.documentElement;
   const current=root.getAttribute('data-theme')==='light'?'light':'dark';
   const next=current==='light'?'dark':'light';
-  await db.put('settings',{key:'theme',value:next});
+  await db.put('settings',{key:KEYS.THEME,value:next});
   applyTheme(next);
   showToast(next==='light'?'🌞 تم التبديل للوضع المضيء':'🌙 تم التبديل للوضع المظلم','var(--g2)');
 }
 
 async function loadTheme(){
   try{
-    const pref=await db.get('settings','theme');
+    const pref=await db.get('settings',KEYS.THEME);
     if(pref && pref.value){
       applyTheme(pref.value);
     }else{
@@ -520,7 +577,7 @@ async function setupHeroCollapse(){
   if(workouts.length>0){
     hero.classList.add('has-data');
     // اقرأ التفضيل من settings
-    const pref=await db.get('settings','heroCollapsed');
+    const pref=await db.get('settings',KEYS.HERO_COLLAPSED);
     const collapsed=pref?pref.value:true; // بشكل افتراضي: مطوي بعد أول جلسة
     if(collapsed) hero.classList.add('collapsed');
     updateHeroCompactWeek();
@@ -534,7 +591,7 @@ async function toggleHero(){
   if(!hero) return;
   const nowCollapsed=!hero.classList.contains('collapsed');
   hero.classList.toggle('collapsed',nowCollapsed);
-  await db.put('settings',{key:'heroCollapsed',value:nowCollapsed});
+  await db.put('settings',{key:KEYS.HERO_COLLAPSED,value:nowCollapsed});
   if(nowCollapsed) updateHeroCompactWeek();
 }
 
@@ -596,8 +653,9 @@ async function endSession(silent=false){
 
   const finished={...currentSession,duration};
   currentSession=null;
-  await db.put('settings',{key:'currentSession',value:null});
+  await db.put('settings',{key:KEYS.CURRENT_SESSION,value:null});
   if(sessionTimerId){clearInterval(sessionTimerId);sessionTimerId=null}
+  stopHeartbeat(); // V7 #36
   updateSessionUI();
 
   // أزل علامات completed من السيتات
@@ -754,7 +812,7 @@ async function saveSet(btn){
       if(!currentSession.prList) currentSession.prList=[];
       prs.forEach(p=>currentSession.prList.push({...p,exerciseName:exName}));
     }
-    await db.put('settings',{key:'currentSession',value:currentSession});
+    await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
     updateSessionUI();
 
     // Feedback
@@ -822,7 +880,7 @@ async function undoSetSave(ctx){
           if(idx>=0) currentSession.prList.splice(idx,1);
         }
       }
-      await db.put('settings',{key:'currentSession',value:currentSession});
+      await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
       updateSessionUI();
     }
     // ٤. استعد واجهة الستيب

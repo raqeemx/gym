@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BULK MODE — Smoke Tests</title>
+<style>
+  :root{--bg:#050608;--s1:#0B0D11;--s2:#10131A;--tx:#DEE0E6;--tx2:#9CA4B5;--tx3:#7A8093;--g1:#D4A853;--g2:#EDCA7A;--red:#FF5A5F;--grn:#5AE68A;--blue:#5AB4FF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);font-family:'Rubik',sans-serif,system-ui;padding:20px;line-height:1.6;max-width:900px;margin:0 auto}
+  h1{font-size:24px;margin-bottom:8px;color:var(--g2)}
+  .subtitle{color:var(--tx2);font-size:13px;margin-bottom:20px}
+  .summary{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+  .stat{flex:1;min-width:120px;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center}
+  .stat b{display:block;font-size:24px;font-family:'JetBrains Mono',monospace;font-weight:700}
+  .stat span{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px}
+  .stat.pass b{color:var(--grn)}
+  .stat.fail b{color:var(--red)}
+  .stat.total b{color:var(--g1)}
+  .group{background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:14px;overflow:hidden}
+  .group-title{padding:12px 16px;font-weight:700;background:rgba(212,168,83,.06);border-bottom:1px solid rgba(212,168,83,.12);color:var(--g2);font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  .group-title small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx3);font-weight:400}
+  .test{padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;display:flex;align-items:flex-start;gap:10px;font-family:'JetBrains Mono',monospace}
+  .test:last-child{border-bottom:none}
+  .test .icon{flex-shrink:0;width:18px;text-align:center}
+  .test.pass .icon{color:var(--grn)}
+  .test.fail .icon{color:var(--red)}
+  .test.fail{background:rgba(255,90,95,.04)}
+  .test .name{flex:1;color:var(--tx)}
+  .test .msg{color:var(--tx3);font-size:11px;margin-top:3px;display:block}
+  .test.fail .msg{color:var(--red)}
+  .nav{position:fixed;top:14px;left:14px;background:var(--s2);border:1px solid rgba(212,168,83,.2);color:var(--g2);padding:8px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-family:'Rubik',sans-serif}
+  .nav:hover{background:rgba(212,168,83,.1)}
+</style>
+</head>
+<body>
+<a href="index.html" class="nav">← العودة للتطبيق</a>
+
+<h1>🧪 BULK MODE Smoke Tests</h1>
+<div class="subtitle">اختبارات سريعة على الدوال النقيّة (pure functions). تشغّل في المتصفح بدون أدوات خارجية.</div>
+
+<div class="summary" id="summary">
+  <div class="stat total"><b id="totalCount">0</b><span>إجمالي</span></div>
+  <div class="stat pass"><b id="passCount">0</b><span>نجح</span></div>
+  <div class="stat fail"><b id="failCount">0</b><span>فشل</span></div>
+</div>
+
+<div id="results"></div>
+
+<!-- نحمّل ملفات المنطق مباشرة -->
+<script src="js/data.js"></script>
+<script src="js/session.js"></script>
+<script src="js/substitutions.js"></script>
+<script src="js/progress.js"></script>
+
+<script>
+// ============ Test Framework ============
+const TESTS = [];
+const RESULTS = [];
+
+function group(name, fn){
+  const g = {name, tests: []};
+  TESTS.push(g);
+  const original = {add: (t)=>g.tests.push(t)};
+  fn(original);
+}
+
+function test(name, fn){
+  return {name, fn};
+}
+
+function assertEq(actual, expected, msg){
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if(a !== e) throw new Error((msg?msg+'\n':'')+`expected ${e}, got ${a}`);
+}
+
+function assertTrue(cond, msg){
+  if(!cond) throw new Error(msg || 'expected truthy value');
+}
+
+function assertNear(actual, expected, tolerance=0.01, msg){
+  if(Math.abs(actual-expected) > tolerance) throw new Error((msg?msg+'\n':'')+`expected ~${expected}, got ${actual} (tolerance: ${tolerance})`);
+}
+
+// ============ Test Definitions ============
+
+group('EPLEY (1RM estimator)', (g)=>{
+  g.add(test('100kg × 1 = 100kg', ()=>assertNear(EPLEY(100,1), 100*1.033, 0.5)));
+  g.add(test('100kg × 5 ≈ 116.7kg', ()=>assertNear(EPLEY(100,5), 116.666, 0.5)));
+  g.add(test('100kg × 10 ≈ 133.3kg', ()=>assertNear(EPLEY(100,10), 133.333, 0.5)));
+  g.add(test('50kg × 8 ≈ 63.3kg', ()=>assertNear(EPLEY(50,8), 63.333, 0.5)));
+  g.add(test('formula: w*(1+r/30)', ()=>assertEq(EPLEY(60,6), 60*(1+6/30))));
+});
+
+group('arabicToLatinDigits', (g)=>{
+  g.add(test('٠١٢٣٤٥٦٧٨٩ → 0123456789', ()=>assertEq(arabicToLatinDigits('٠١٢٣٤٥٦٧٨٩'), '0123456789')));
+  g.add(test('٨-١٠ تكرار', ()=>assertEq(arabicToLatinDigits('٨-١٠ تكرار'), '8-10 تكرار')));
+  g.add(test('mix text + digits', ()=>assertEq(arabicToLatinDigits('سيت ٣ · ١٥ كجم'), 'سيت 3 · 15 كجم')));
+  g.add(test('empty string', ()=>assertEq(arabicToLatinDigits(''), '')));
+  g.add(test('null safe', ()=>assertEq(arabicToLatinDigits(null), '')));
+  g.add(test('latin unchanged', ()=>assertEq(arabicToLatinDigits('hello 123'), 'hello 123')));
+});
+
+group('normalizeExName', (g)=>{
+  g.add(test('strips بطيء suffix', ()=>assertEq(normalizeExName('Chest Press بطيء'), 'Chest Press')));
+  g.add(test('strips ثقيل suffix', ()=>assertEq(normalizeExName('Shoulder Press ثقيل'), 'Shoulder Press')));
+  g.add(test('strips خفيف suffix', ()=>assertEq(normalizeExName('Leg Press خفيف'), 'Leg Press')));
+  g.add(test('Pulley Bicep Curl → Pulley Curl', ()=>assertEq(normalizeExName('Pulley — Bicep Curl'), 'Pulley Curl')));
+  g.add(test('Pulley Tricep Pushdown → Pulley Pushdown', ()=>assertEq(normalizeExName('Pulley — Tricep Pushdown'), 'Pulley Pushdown')));
+  g.add(test('strips على Leg Press suffix', ()=>assertEq(normalizeExName('Calf Raise على Leg Press'), 'Calf Raise')));
+  g.add(test('strips تسخين suffix', ()=>assertEq(normalizeExName('Chest Press — تسخين'), 'Chest Press')));
+  g.add(test('empty input → empty', ()=>assertEq(normalizeExName(''), '')));
+  g.add(test('null safe', ()=>assertEq(normalizeExName(null), '')));
+});
+
+group('getMuscleGroup', (g)=>{
+  g.add(test('Chest Press → صدر/upper', ()=>{
+    const mg = getMuscleGroup('Chest Press');
+    assertTrue(mg && mg.group==='صدر' && mg.region==='upper');
+  }));
+  g.add(test('Lat Machine → ظهر/upper', ()=>{
+    const mg = getMuscleGroup('Lat Machine');
+    assertTrue(mg && mg.group==='ظهر' && mg.region==='upper');
+  }));
+  g.add(test('Leg Press → أرجل/lower', ()=>{
+    const mg = getMuscleGroup('Leg Press');
+    assertTrue(mg && mg.group==='أرجل' && mg.region==='lower');
+  }));
+  g.add(test('Arm Curl → ذراعين/upper', ()=>{
+    const mg = getMuscleGroup('Arm Curl');
+    assertTrue(mg && mg.group==='ذراعين' && mg.region==='upper');
+  }));
+  g.add(test('unknown exercise → null', ()=>assertEq(getMuscleGroup('Unknown Exercise'), null)));
+  g.add(test('null safe', ()=>assertEq(getMuscleGroup(null), null)));
+});
+
+group('parseRepRange (DOM-based)', (g)=>{
+  function makeStep(infoText){
+    const step = document.createElement('div');
+    step.innerHTML = `<div class="step-info">${infoText}</div>`;
+    return step;
+  }
+  g.add(test('٨-١٠ تكرار → {min:8,max:10}', ()=>{
+    const r = parseRepRange(makeStep('٨-١٠ تكرار · ١٥ كجم'));
+    assertEq(r, {min:8, max:10});
+  }));
+  g.add(test('١٢-١٥ تكرار → {min:12,max:15}', ()=>{
+    const r = parseRepRange(makeStep('١٢-١٥ تكرار'));
+    assertEq(r, {min:12, max:15});
+  }));
+  g.add(test('20 تكرار (latin) → {min:20,max:20}', ()=>{
+    const r = parseRepRange(makeStep('20 تكرار'));
+    assertEq(r, {min:20, max:20});
+  }));
+  g.add(test('no rep info → null', ()=>{
+    const r = parseRepRange(makeStep('بدون أرقام'));
+    assertEq(r, null);
+  }));
+  g.add(test('no .step-info child → null', ()=>{
+    const empty = document.createElement('div');
+    assertEq(parseRepRange(empty), null);
+  }));
+});
+
+group('computeProgression', (g)=>{
+  g.add(test('completed max reps → suggest +2.5kg', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10});
+    assertEq(s.suggestedWeight, 17.5);
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('below min reps → suggest -2.5kg', ()=>{
+    const s = computeProgression({weight:15, reps:6}, {min:8, max:10});
+    assertEq(s.suggestedWeight, 12.5);
+    assertEq(s.kind, 'decrease');
+  }));
+  g.add(test('within range → no suggestion', ()=>{
+    const s = computeProgression({weight:15, reps:9}, {min:8, max:10});
+    assertEq(s, null);
+  }));
+  g.add(test('exact max → suggest increase', ()=>{
+    const s = computeProgression({weight:20, reps:10}, {min:8, max:10});
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('null lastSet → null', ()=>assertEq(computeProgression(null, {min:8,max:10}), null)));
+  g.add(test('null range → null', ()=>assertEq(computeProgression({weight:15,reps:10}, null), null)));
+  g.add(test('decrease never below 0', ()=>{
+    const s = computeProgression({weight:1, reps:2}, {min:8, max:10});
+    assertTrue(s.suggestedWeight >= 0);
+  }));
+});
+
+group('_isoDay / _isoDayShift', (g)=>{
+  g.add(test('_isoDay returns YYYY-MM-DD', ()=>{
+    const d = _isoDay();
+    assertTrue(/^\d{4}-\d{2}-\d{2}$/.test(d), 'format: '+d);
+  }));
+  g.add(test('shift +1 day', ()=>assertEq(_isoDayShift('2026-05-20', 1), '2026-05-21')));
+  g.add(test('shift -1 day', ()=>assertEq(_isoDayShift('2026-05-20', -1), '2026-05-19')));
+  g.add(test('shift +7 days', ()=>assertEq(_isoDayShift('2026-05-20', 7), '2026-05-27')));
+  g.add(test('cross month', ()=>assertEq(_isoDayShift('2026-05-31', 1), '2026-06-01')));
+  g.add(test('cross year', ()=>assertEq(_isoDayShift('2026-12-31', 1), '2027-01-01')));
+});
+
+group('computeStreak', (g)=>{
+  function mkW(dateISO){return {startTime: dateISO+'T10:00:00Z'}}
+  g.add(test('empty → {current:0, best:0}', ()=>assertEq(computeStreak([]), {current:0, best:0})));
+  g.add(test('single workout today → current:1', ()=>{
+    const today = _isoDay();
+    const r = computeStreak([mkW(today)]);
+    assertEq(r.current, 1);
+    assertEq(r.best, 1);
+  }));
+  g.add(test('3 consecutive days → best:3', ()=>{
+    const today = _isoDay();
+    const yest = _isoDayShift(today, -1);
+    const prev2 = _isoDayShift(today, -2);
+    const r = computeStreak([mkW(prev2), mkW(yest), mkW(today)]);
+    assertEq(r.current, 3);
+    assertEq(r.best, 3);
+  }));
+  g.add(test('broken streak picks best', ()=>{
+    // 3 in a row, gap, then 2 in a row (older first)
+    const r = computeStreak([
+      mkW('2026-01-01'), mkW('2026-01-02'), mkW('2026-01-03'),  // best:3
+      mkW('2026-01-10'), mkW('2026-01-11')                       // current:0 (too old)
+    ]);
+    assertEq(r.best, 3);
+  }));
+  g.add(test('two workouts same day count once', ()=>{
+    const today = _isoDay();
+    const r = computeStreak([mkW(today), mkW(today)]);
+    assertEq(r.current, 1);
+  }));
+});
+
+group('dayTypeCounts', (g)=>{
+  g.add(test('empty → []', ()=>assertEq(dayTypeCounts([]), [])));
+  g.add(test('counts and sorts desc', ()=>{
+    const r = dayTypeCounts([
+      {dayType:'UPPER A'}, {dayType:'UPPER A'}, {dayType:'UPPER A'},
+      {dayType:'BACK & WINGS'}, {dayType:'BACK & WINGS'},
+      {dayType:'ARMS A'}
+    ]);
+    assertEq(r[0], ['UPPER A', 3]);
+    assertEq(r[1], ['BACK & WINGS', 2]);
+    assertEq(r[2], ['ARMS A', 1]);
+  }));
+  g.add(test('handles missing dayType', ()=>{
+    const r = dayTypeCounts([{dayType:'UPPER A'}, {}]);
+    assertEq(r.length, 2);
+  }));
+});
+
+group('pctDelta', (g)=>{
+  g.add(test('100 vs 50 → +100%', ()=>{
+    const d = pctDelta(100, 50);
+    assertEq(d.txt, '+100%');
+    assertEq(d.cls, 'up');
+  }));
+  g.add(test('50 vs 100 → -50%', ()=>{
+    const d = pctDelta(50, 100);
+    assertEq(d.txt, '-50%');
+    assertEq(d.cls, 'down');
+  }));
+  g.add(test('equal → 0% flat', ()=>{
+    const d = pctDelta(75, 75);
+    assertEq(d.txt, '0%');
+    assertEq(d.cls, 'flat');
+  }));
+  g.add(test('prev=0 + now>0 → جديد up', ()=>{
+    const d = pctDelta(50, 0);
+    assertEq(d.cls, 'up');
+  }));
+  g.add(test('prev=0 + now=0 → flat', ()=>{
+    const d = pctDelta(0, 0);
+    assertEq(d.cls, 'flat');
+  }));
+});
+
+group('relativeDate', (g)=>{
+  g.add(test('now → اليوم', ()=>assertEq(relativeDate(new Date().toISOString()), 'اليوم')));
+  g.add(test('yesterday → أمس', ()=>{
+    const y = new Date(); y.setDate(y.getDate()-1);
+    assertEq(relativeDate(y.toISOString()), 'أمس');
+  }));
+  g.add(test('3 days ago → قبل 3 أيام', ()=>{
+    const d = new Date(); d.setDate(d.getDate()-3);
+    assertEq(relativeDate(d.toISOString()), 'قبل 3 أيام');
+  }));
+  g.add(test('empty → empty', ()=>assertEq(relativeDate(''), '')));
+});
+
+group('KEYS namespace consistency', (g)=>{
+  g.add(test('all keys have namespace prefix', ()=>{
+    for(const [k,v] of Object.entries(KEYS)){
+      assertTrue(/^(app|session|subs):/.test(v), `${k}=${v} missing prefix`);
+    }
+  }));
+  g.add(test('LEGACY_KEY_MAP covers core keys', ()=>{
+    assertTrue(LEGACY_KEY_MAP['onboarded']);
+    assertTrue(LEGACY_KEY_MAP['currentSession']);
+    assertTrue(LEGACY_KEY_MAP['theme']);
+    assertTrue(LEGACY_KEY_MAP['substitutions']);
+  }));
+});
+
+group('EXERCISE_ALTERNATIVES integrity', (g)=>{
+  g.add(test('catalog is loaded', ()=>assertTrue(typeof EXERCISE_ALTERNATIVES === 'object')));
+  g.add(test('all entries are arrays', ()=>{
+    for(const [name,alts] of Object.entries(EXERCISE_ALTERNATIVES)){
+      assertTrue(Array.isArray(alts), `${name} not an array`);
+    }
+  }));
+  g.add(test('all alts have required fields', ()=>{
+    for(const [name,alts] of Object.entries(EXERCISE_ALTERNATIVES)){
+      for(const alt of alts){
+        assertTrue(typeof alt.name === 'string', `${name}: alt missing name`);
+        assertTrue(typeof alt.reason === 'string', `${name}: alt missing reason`);
+        assertTrue(typeof alt.muscleMatch === 'number', `${name}: alt missing muscleMatch`);
+        assertTrue(alt.muscleMatch>=0 && alt.muscleMatch<=100, `${name}: muscleMatch out of range`);
+      }
+    }
+  }));
+  g.add(test('catalog has core exercises', ()=>{
+    assertTrue(EXERCISE_ALTERNATIVES['Chest Press']);
+    assertTrue(EXERCISE_ALTERNATIVES['Lat Machine']);
+    assertTrue(EXERCISE_ALTERNATIVES['Leg Press']);
+  }));
+});
+
+// ============ Runner ============
+function runTests(){
+  const resultsEl = document.getElementById('results');
+  let totalPass=0, totalFail=0, total=0;
+  for(const g of TESTS){
+    const gEl = document.createElement('div');
+    gEl.className = 'group';
+    let gPass=0, gFail=0;
+    let testsHtml='';
+    for(const t of g.tests){
+      total++;
+      try{
+        t.fn();
+        gPass++; totalPass++;
+        testsHtml += `<div class="test pass"><span class="icon">✓</span><span class="name">${t.name}</span></div>`;
+      }catch(e){
+        gFail++; totalFail++;
+        const msg=(e.message||'').replace(/</g,'&lt;');
+        testsHtml += `<div class="test fail"><span class="icon">✗</span><span class="name">${t.name}<span class="msg">${msg}</span></span></div>`;
+      }
+    }
+    const status = gFail>0 ? `${gFail} فشل / ${g.tests.length}` : `${gPass}/${g.tests.length} ✓`;
+    gEl.innerHTML = `<div class="group-title">${g.name}<small>${status}</small></div>${testsHtml}`;
+    resultsEl.appendChild(gEl);
+  }
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('passCount').textContent = totalPass;
+  document.getElementById('failCount').textContent = totalFail;
+  if(totalFail>0) document.title = `(${totalFail} fail) BULK MODE Tests`;
+  else document.title = `(✓ ${total}) BULK MODE Tests`;
+}
+
+// انتظر حتى تحمّل كل الـ scripts
+window.addEventListener('load', runTests);
+</script>
+</body>
+</html>
