@@ -1082,6 +1082,7 @@
       <button class="prog-tab a" data-pt="prs">🏆 الأرقام القياسية</button>
       <button class="prog-tab" data-pt="charts">📊 الرسوم البيانية</button>
       <button class="prog-tab" data-pt="metrics">📏 قياسات الجسم</button>
+      <button class="prog-tab" data-pt="daily">📅 سجل يومي</button>
       <button class="prog-tab" data-pt="history">📜 سجل الجلسات</button>
     </div>
 
@@ -1126,6 +1127,63 @@
       </div>
       <div class="bm-history-title">📊 سجل القياسات السابقة</div>
       <div id="bmHistoryBody"><div class="chart-loading">جاري التحميل...</div></div>
+    </div>
+
+    <!-- V7.2 — Daily Log (#38, #41) -->
+    <div class="prog-pane" id="ppDaily">
+      <div class="bm-hint">سجّل يومك: ماء، نوم، مكملات، وجبات. الالتزام اليومي = نتائج أفضل.</div>
+      <div class="bm-form" id="dailyLogForm">
+        <div class="bm-row bm-row-date">
+          <label>التاريخ</label>
+          <input type="date" id="dlDate">
+        </div>
+        <!-- Water + Sleep sliders -->
+        <div class="dl-row">
+          <label class="dl-label">💧 الماء <small>(كأس · هدف 8+)</small></label>
+          <div class="dl-counter">
+            <button type="button" class="dl-step" onclick="dlAdjust('water',-1)">−</button>
+            <span class="dl-val" id="dlWaterVal">0</span>
+            <button type="button" class="dl-step" onclick="dlAdjust('water',1)">+</button>
+          </div>
+        </div>
+        <div class="dl-row">
+          <label class="dl-label">😴 النوم <small>(ساعة · هدف 7-8)</small></label>
+          <div class="dl-counter">
+            <button type="button" class="dl-step" onclick="dlAdjust('sleep',-0.5)">−</button>
+            <span class="dl-val" id="dlSleepVal">0</span>
+            <button type="button" class="dl-step" onclick="dlAdjust('sleep',0.5)">+</button>
+          </div>
+        </div>
+        <!-- Supplements -->
+        <div class="dl-section">
+          <div class="dl-section-title">💊 المكملات</div>
+          <div class="dl-chips" id="dlSupplements">
+            <label class="dl-chip"><input type="checkbox" data-supp="creatine"><span>كرياتين</span></label>
+            <label class="dl-chip"><input type="checkbox" data-supp="protein"><span>واي بروتين</span></label>
+            <label class="dl-chip"><input type="checkbox" data-supp="multi"><span>ملتي فيتامين</span></label>
+            <label class="dl-chip"><input type="checkbox" data-supp="vitd"><span>فيتامين D</span></label>
+            <label class="dl-chip"><input type="checkbox" data-supp="omega3"><span>أوميجا 3</span></label>
+          </div>
+        </div>
+        <!-- Meals -->
+        <div class="dl-section">
+          <div class="dl-section-title">🍽️ الوجبات <small>(الهدف 6/يوم)</small></div>
+          <div class="dl-chips" id="dlMeals">
+            <label class="dl-chip"><input type="checkbox" data-meal="0"><span>فطور</span></label>
+            <label class="dl-chip"><input type="checkbox" data-meal="1"><span>غداء</span></label>
+            <label class="dl-chip"><input type="checkbox" data-meal="2"><span>سناك</span></label>
+            <label class="dl-chip"><input type="checkbox" data-meal="3"><span>طاقة (قبل التمرين)</span></label>
+            <label class="dl-chip"><input type="checkbox" data-meal="4"><span>بناء (بعد التمرين)</span></label>
+            <label class="dl-chip"><input type="checkbox" data-meal="5"><span>قبل النوم</span></label>
+          </div>
+        </div>
+        <button class="bm-save" onclick="saveDailyLog()">💾 احفظ يومك</button>
+      </div>
+
+      <div class="dl-stats" id="dlStats"></div>
+
+      <div class="bm-history-title">📊 آخر ١٤ يوم</div>
+      <div id="dlHistoryBody"><div class="chart-loading">جاري التحميل...</div></div>
     </div>
 
     <div class="prog-pane" id="ppHistory">
@@ -1200,6 +1258,7 @@
 <button class="fab" id="fabBtn" title="القائمة" aria-label="قائمة التتبع">📊</button>
 <div class="fab-menu" id="fabMenu">
   <button onclick="openStats()">📈 إحصائياتي</button>
+  <button onclick="openProfile()">👤 ملفي الشخصي</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
   <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
@@ -1218,6 +1277,42 @@
     <div class="stats-actions">
       <button onclick="exportData()">💾 تصدير نسخة احتياطية</button>
       <button class="danger" onclick="clearAllData()">🗑 مسح كل البيانات</button>
+    </div>
+  </div>
+</div>
+
+<!-- V7.2 (#37) — User Profile Modal -->
+<div class="stats-modal" id="profileModal">
+  <div class="stats-content" style="position:relative">
+    <button class="close-modal" onclick="closeProfile()">✕</button>
+    <h2>👤 ملفي الشخصي</h2>
+    <div class="bm-hint">هذه المعلومات شخصية — تساعد في حساب البروتين والسعرات. تُحفظ على جهازك فقط.</div>
+    <div class="bm-form">
+      <div class="bm-grid">
+        <div class="bm-field"><label>الاسم</label><input type="text" id="profName" placeholder="اختياري"></div>
+        <div class="bm-field"><label>العمر <small>(سنة)</small></label><input type="number" inputmode="numeric" id="profAge" placeholder="—"></div>
+        <div class="bm-field"><label>الطول <small>(سم)</small></label><input type="number" inputmode="numeric" id="profHeight" placeholder="—"></div>
+        <div class="bm-field"><label>الوزن الحالي <small>(كجم)</small></label><input type="number" inputmode="decimal" step="0.1" id="profWeight" placeholder="—"></div>
+      </div>
+      <div class="bm-field" style="margin-bottom:12px">
+        <label>الهدف</label>
+        <select id="profGoal" class="prof-select">
+          <option value="bulk">تضخيم (Bulk)</option>
+          <option value="cut">تنشيف (Cut)</option>
+          <option value="recomp">إعادة تركيب (Recomposition)</option>
+          <option value="maintain">حفاظ على الوزن</option>
+        </select>
+      </div>
+      <div class="bm-field" style="margin-bottom:12px">
+        <label>مستوى الخبرة</label>
+        <select id="profExp" class="prof-select">
+          <option value="beginner">مبتدئ (أقل من ٦ أشهر)</option>
+          <option value="intermediate">متوسط (٦ شهر - ٢ سنة)</option>
+          <option value="advanced">متقدم (أكثر من ٢ سنة)</option>
+        </select>
+      </div>
+      <div id="profCalc" class="prof-calc"></div>
+      <button class="bm-save" onclick="saveUserProfile()">💾 احفظ الملف</button>
     </div>
   </div>
 </div>

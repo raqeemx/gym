@@ -305,6 +305,24 @@ group('KEYS namespace consistency', (g)=>{
   }));
 });
 
+group('Schema migration framework (#30)', (g)=>{
+  g.add(test('DB_VERSION >= 3', ()=>assertTrue(DB_VERSION >= 3, 'DB_VERSION='+DB_VERSION)));
+  g.add(test('STORES includes dailyLog', ()=>assertTrue(STORES.indexOf('dailyLog') >= 0)));
+  g.add(test('migrateV0toV1 is a function', ()=>assertTrue(typeof migrateV0toV1 === 'function')));
+  g.add(test('migrateV1toV2 is a function', ()=>assertTrue(typeof migrateV1toV2 === 'function')));
+  g.add(test('migrateV2toV3 is a function', ()=>assertTrue(typeof migrateV2toV3 === 'function')));
+});
+
+group('Settings KEYS (#29)', (g)=>{
+  g.add(test('user profile key exists', ()=>assertEq(KEYS.USER_PROFILE, 'app:user_profile')));
+  g.add(test('last active key exists', ()=>assertEq(KEYS.LAST_ACTIVE_AT, 'session:last_active_at')));
+  g.add(test('all keys unique', ()=>{
+    const values = Object.values(KEYS);
+    const unique = new Set(values);
+    assertEq(values.length, unique.size, 'duplicate key found');
+  }));
+});
+
 group('EXERCISE_ALTERNATIVES integrity', (g)=>{
   g.add(test('catalog is loaded', ()=>assertTrue(typeof EXERCISE_ALTERNATIVES === 'object')));
   g.add(test('all entries are arrays', ()=>{

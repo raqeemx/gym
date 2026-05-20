@@ -51,6 +51,102 @@ document.getElementById('statsModal').addEventListener('click',(e)=>{
 document.getElementById('summaryModal').addEventListener('click',(e)=>{
   if(e.target.id==='summaryModal') closeSummary();
 });
+// V7.2 (#37) — Profile modal outside click
+const _profileModal=document.getElementById('profileModal');
+if(_profileModal){
+  _profileModal.addEventListener('click',(e)=>{
+    if(e.target.id==='profileModal') closeProfile();
+  });
+}
+
+// ============ V7.2 — USER PROFILE (#37) ============
+async function openProfile(){
+  document.body.style.overflow='hidden';
+  // اقرأ الملف الحالي
+  const rec=await db.get('settings',KEYS.USER_PROFILE);
+  const p=(rec&&rec.value)||{};
+  document.getElementById('profName').value=p.name||'';
+  document.getElementById('profAge').value=p.age||'';
+  document.getElementById('profHeight').value=p.height||'';
+  document.getElementById('profWeight').value=p.weight||'';
+  document.getElementById('profGoal').value=p.goal||'bulk';
+  document.getElementById('profExp').value=p.experience||'beginner';
+  updateProfileCalc();
+  // اربط on-input handlers لإعادة الحساب
+  ['profAge','profHeight','profWeight','profGoal','profExp'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && !el.dataset.bound){
+      el.addEventListener('input',updateProfileCalc);
+      el.addEventListener('change',updateProfileCalc);
+      el.dataset.bound='1';
+    }
+  });
+  document.getElementById('profileModal').classList.add('open');
+}
+
+function closeProfile(){
+  document.getElementById('profileModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// يحسب التوصيات الغذائية بناءً على الملف
+function computeNutritionTargets(p){
+  const w=parseFloat(p.weight);const h=parseFloat(p.height);const a=parseInt(p.age);
+  if(!w||!h||!a) return null;
+  // Mifflin-St Jeor (ذكر افتراضياً — نضيف اختيار الجنس مستقبلاً)
+  const bmr=Math.round(10*w + 6.25*h - 5*a + 5);
+  // مستوى النشاط: متوسط (يتمرن ٤-٦ مرات)
+  const tdee=Math.round(bmr*1.55);
+  let calories=tdee;
+  if(p.goal==='bulk') calories=tdee+400;
+  else if(p.goal==='cut') calories=tdee-400;
+  else if(p.goal==='recomp') calories=tdee;
+  // بروتين: ٢ جم/كجم لتضخيم، ٢.٤ لتنشيف
+  const protein=Math.round(p.goal==='cut'?2.4*w:2.0*w);
+  // دهون: ٢٥٪ من السعرات (٩ سعرات/جم)
+  const fat=Math.round((calories*0.25)/9);
+  // كارب: الباقي
+  const carb=Math.round((calories-protein*4-fat*9)/4);
+  return {bmr,tdee,calories,protein,fat,carb};
+}
+
+function updateProfileCalc(){
+  const p={
+    age:document.getElementById('profAge').value,
+    height:document.getElementById('profHeight').value,
+    weight:document.getElementById('profWeight').value,
+    goal:document.getElementById('profGoal').value,
+    experience:document.getElementById('profExp').value
+  };
+  const n=computeNutritionTargets(p);
+  const wrap=document.getElementById('profCalc');
+  if(!n){wrap.innerHTML='<div class="prof-calc-empty">أكمل البيانات أعلاه لاحتساب احتياجك اليومي</div>';return}
+  wrap.innerHTML=`<div class="prof-calc-title">🧮 احتياجك اليومي المحسوب</div>
+    <div class="prof-calc-grid">
+      <div class="prof-calc-item"><span class="pcv">${n.calories}</span><span class="pcl">سعرة</span></div>
+      <div class="prof-calc-item"><span class="pcv">${n.protein}<small>جم</small></span><span class="pcl">بروتين</span></div>
+      <div class="prof-calc-item"><span class="pcv">${n.carb}<small>جم</small></span><span class="pcl">كارب</span></div>
+      <div class="prof-calc-item"><span class="pcv">${n.fat}<small>جم</small></span><span class="pcl">دهون</span></div>
+    </div>
+    <div class="prof-calc-note">BMR: ${n.bmr} · TDEE: ${n.tdee} · الهدف: ${
+      p.goal==='bulk'?'+400 للتضخيم':p.goal==='cut'?'-400 للتنشيف':p.goal==='recomp'?'متعادل':'حفاظ'
+    }</div>`;
+}
+
+async function saveUserProfile(){
+  const p={
+    name:document.getElementById('profName').value.trim(),
+    age:parseInt(document.getElementById('profAge').value)||null,
+    height:parseFloat(document.getElementById('profHeight').value)||null,
+    weight:parseFloat(document.getElementById('profWeight').value)||null,
+    goal:document.getElementById('profGoal').value,
+    experience:document.getElementById('profExp').value,
+    updatedAt:new Date().toISOString()
+  };
+  await db.put('settings',{key:KEYS.USER_PROFILE,value:p});
+  showToast('✓ تم حفظ الملف الشخصي','var(--grn)');
+  closeProfile();
+}
 
 // ============ TODAY HIGHLIGHT (V7) ============
 // تظليل بطاقة اليوم في تبويب التمارين + شبكة الأسبوع في نظرة عامة

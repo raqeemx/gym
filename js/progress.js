@@ -326,7 +326,7 @@ async function openStats(){
       const byEx={};
       ws.forEach(s=>{
         if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
-        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.isPR?' 🏆':''}`);
+        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}`);
       });
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
@@ -349,12 +349,13 @@ function closeStats(){
 // ============ EXPORT / IMPORT ============
 async function exportData(){
   const dump={
-    version:'v5',
+    version:'v7.2',
     exportedAt:new Date().toISOString(),
     workouts:await db.getAll('workouts'),
     sets:await db.getAll('sets'),
     exercises:await db.getAll('exercises'),
     bodyMetrics:await db.getAll('bodyMetrics'),
+    dailyLog:await db.getAll('dailyLog'), // V7.2 #38
     prs:await db.getAll('prs'),
     settings:await db.getAll('settings')
   };
@@ -362,7 +363,7 @@ async function exportData(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`bulkmode_v5_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.download=`bulkmode_backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
   await db.put('settings',{key:KEYS.LAST_EXPORT,value:new Date().toISOString()});
@@ -409,14 +410,15 @@ async function importData(event){
       }
       const setsCount=(imp.sets||[]).length;
       if(!confirm(`استيراد ${setsCount} سيت + ${(imp.workouts||[]).length} جلسة؟ سيُمسح ما هو موجود.`)) return;
-      // امسح كل المتجرات (عدا settings.migration_v1)
-      for(const st of ['workouts','sets','exercises','bodyMetrics','prs','progressPhotos']){
-        await db.clear(st);
+      // امسح كل المتجرات (عدا settings)
+      for(const st of ['workouts','sets','exercises','bodyMetrics','dailyLog','prs','progressPhotos']){
+        try{await db.clear(st)}catch(e){console.warn('clear failed:',st,e)}
       }
       for(const w of (imp.workouts||[])) await db.put('workouts',w);
       for(const s of (imp.sets||[])){const c={...s};delete c.id;await db.add('sets',c)}
       for(const ex of (imp.exercises||[])) await db.put('exercises',ex);
       for(const bm of (imp.bodyMetrics||[])) await db.put('bodyMetrics',bm);
+      for(const dl of (imp.dailyLog||[])) await db.put('dailyLog',dl); // V7.2 #38
       for(const pr of (imp.prs||[])){const c={...pr};delete c.id;await db.add('prs',c)}
       showToast('✓ تم استيراد البيانات بنجاح');
       setTimeout(()=>location.reload(),1000);
@@ -449,6 +451,7 @@ document.querySelectorAll('.prog-tab').forEach(b=>{
     if(b.dataset.pt==='history') renderHistory();
     if(b.dataset.pt==='prs') renderPRs();
     if(b.dataset.pt==='metrics') renderBodyMetrics();
+    if(b.dataset.pt==='daily') renderDailyLog();
   });
 });
 
@@ -460,6 +463,133 @@ async function refreshProgressTab(){
   else if(pt==='charts') renderCharts();
   else if(pt==='history') renderHistory();
   else if(pt==='metrics') renderBodyMetrics();
+  else if(pt==='daily') renderDailyLog();
+}
+
+// ============ V7.2 — DAILY LOG (#38, #41) ============
+let _dlState={water:0,sleep:0,supplements:{},meals:[]};
+
+async function renderDailyLog(){
+  const dateInput=document.getElementById('dlDate');
+  if(dateInput && !dateInput.value) dateInput.value=new Date().toISOString().split('T')[0];
+
+  // اقرأ السجل لهذا اليوم
+  await loadDailyLogForDate(dateInput.value);
+
+  // أعد ربط onchange على التاريخ
+  if(!dateInput.dataset.bound){
+    dateInput.addEventListener('change',()=>loadDailyLogForDate(dateInput.value));
+    dateInput.dataset.bound='1';
+  }
+
+  // اعرض السجل
+  const all=(await db.getAll('dailyLog')).sort((a,b)=>b.date.localeCompare(a.date));
+  renderDailyLogHistory(all.slice(0,14));
+  renderDailyLogStats(all);
+}
+
+async function loadDailyLogForDate(date){
+  const rec=await db.get('dailyLog',date);
+  _dlState={
+    water:rec?(rec.water||0):0,
+    sleep:rec?(rec.sleep||0):0,
+    supplements:rec?(rec.supplements||{}):{},
+    meals:rec?(rec.meals||[false,false,false,false,false,false]):[false,false,false,false,false,false]
+  };
+  document.getElementById('dlWaterVal').textContent=_dlState.water;
+  document.getElementById('dlSleepVal').textContent=_dlState.sleep;
+  document.querySelectorAll('#dlSupplements input').forEach(cb=>{
+    cb.checked=!!_dlState.supplements[cb.dataset.supp];
+  });
+  document.querySelectorAll('#dlMeals input').forEach(cb=>{
+    cb.checked=!!_dlState.meals[parseInt(cb.dataset.meal)];
+  });
+}
+
+function dlAdjust(field,delta){
+  _dlState[field]=Math.max(0,Math.round((_dlState[field]+delta)*10)/10);
+  document.getElementById(field==='water'?'dlWaterVal':'dlSleepVal').textContent=_dlState[field];
+}
+
+async function saveDailyLog(){
+  const date=document.getElementById('dlDate').value;
+  if(!date){showToast('⚠️ أدخل التاريخ','var(--red)');return}
+  // اقرأ المكملات والوجبات من الـ DOM
+  const supplements={};
+  document.querySelectorAll('#dlSupplements input').forEach(cb=>{
+    supplements[cb.dataset.supp]=cb.checked;
+  });
+  const meals=[false,false,false,false,false,false];
+  document.querySelectorAll('#dlMeals input').forEach(cb=>{
+    meals[parseInt(cb.dataset.meal)]=cb.checked;
+  });
+  const rec={
+    date,
+    water:_dlState.water,
+    sleep:_dlState.sleep,
+    supplements,
+    meals,
+    timestamp:new Date().toISOString()
+  };
+  await db.put('dailyLog',rec);
+  showToast('✓ تم حفظ سجل اليوم','var(--grn)');
+  try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+  renderDailyLog();
+}
+
+function renderDailyLogHistory(records){
+  const body=document.getElementById('dlHistoryBody');
+  if(!body) return;
+  if(!records.length){
+    body.innerHTML=`<div class="empty-state"><div class="es-icon">📅</div><div class="es-text">لم تسجّل أي يوم بعد.<br><b>ابدأ من النموذج فوق!</b></div></div>`;
+    return;
+  }
+  body.innerHTML=`<div class="bm-table-wrap"><table class="bm-table dl-table">
+    <thead><tr>
+      <th>التاريخ</th><th>💧</th><th>😴</th><th>💊</th><th>🍽️</th>
+    </tr></thead>
+    <tbody>
+      ${records.map(r=>{
+        const suppCount=Object.values(r.supplements||{}).filter(v=>v).length;
+        const mealCount=(r.meals||[]).filter(v=>v).length;
+        const waterClass=r.water>=8?'dl-good':(r.water>=5?'dl-mid':'dl-low');
+        const sleepClass=r.sleep>=7?'dl-good':(r.sleep>=5?'dl-mid':'dl-low');
+        const mealClass=mealCount>=6?'dl-good':(mealCount>=4?'dl-mid':'dl-low');
+        return `<tr>
+          <td class="bm-date">${fmtDate(r.date)}</td>
+          <td class="${waterClass}">${r.water||0}</td>
+          <td class="${sleepClass}">${r.sleep||0}س</td>
+          <td>${suppCount}/5</td>
+          <td class="${mealClass}">${mealCount}/6</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderDailyLogStats(allRecords){
+  const wrap=document.getElementById('dlStats');
+  if(!wrap) return;
+  // آخر ٧ أيام
+  const today=new Date().toISOString().split('T')[0];
+  const sevenDaysAgo=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
+  const last7=allRecords.filter(r=>r.date>=sevenDaysAgo && r.date<=today);
+  if(!last7.length){wrap.innerHTML='';return}
+  const avgWater=Math.round(last7.reduce((a,r)=>a+(r.water||0),0)/last7.length*10)/10;
+  const avgSleep=Math.round(last7.reduce((a,r)=>a+(r.sleep||0),0)/last7.length*10)/10;
+  // التزام الوجبات (%)
+  const totalMeals=last7.reduce((a,r)=>a+((r.meals||[]).filter(m=>m).length),0);
+  const mealCompliance=Math.round((totalMeals/(last7.length*6))*100);
+  // التزام المكملات (%)
+  const suppKeys=['creatine','protein','multi','vitd','omega3'];
+  const totalSupp=last7.reduce((a,r)=>a+suppKeys.filter(k=>r.supplements&&r.supplements[k]).length,0);
+  const suppCompliance=Math.round((totalSupp/(last7.length*5))*100);
+  wrap.innerHTML=`<div class="dl-stats-row">
+    <div class="dl-stat"><div class="dl-stat-val">${avgWater}</div><div class="dl-stat-lbl">💧 معدل الماء/يوم</div></div>
+    <div class="dl-stat"><div class="dl-stat-val">${avgSleep}س</div><div class="dl-stat-lbl">😴 معدل النوم</div></div>
+    <div class="dl-stat"><div class="dl-stat-val">${mealCompliance}%</div><div class="dl-stat-lbl">🍽️ التزام الوجبات</div></div>
+    <div class="dl-stat"><div class="dl-stat-val">${suppCompliance}%</div><div class="dl-stat-lbl">💊 التزام المكملات</div></div>
+  </div>`;
 }
 
 // ============ V7 — BODY METRICS (#14) ============

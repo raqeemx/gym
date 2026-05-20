@@ -25,6 +25,16 @@ async function injectTrackingInputs(){
       <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${placeholderW}">
       <label>تكرار</label>
       <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
+      <span class="rpe-wrap" title="RPE اختياري — صعوبة السيت من 6 إلى 10">
+        <select class="rpe-input">
+          <option value="">RPE</option>
+          <option value="6">6 (سهل)</option>
+          <option value="7">7 (متوسط)</option>
+          <option value="8">8 (صعب — 2 تكرار احتياط)</option>
+          <option value="9">9 (صعب جداً — 1 تكرار احتياط)</option>
+          <option value="10">10 (الفشل)</option>
+        </select>
+      </span>
       <span class="last" onclick="toggleLastBestView(this);event.stopPropagation()" title="اضغط للتبديل بين آخر جلسة وأفضل أداء">${renderLastBestText(stats)}</span>
       <button class="save-btn" onclick="saveSet(this);event.stopPropagation()">حفظ</button>
     `;
@@ -183,7 +193,7 @@ function applySuggestion(btnEl,weight){
   if(hint) hint.remove();
 }
 
-// V7 (#13) — يولّد HTML لعنصر "آخر مرة"
+// V7 (#13) — يولّد HTML لعنصر "آخر مرة" — V7.2 (#39): يعرض RPE لو موجود
 function renderLastBestText(stats){
   if(!stats || !stats.lastSessionBest){
     return '<span class="last-view-last">سجّل أول مرة</span>';
@@ -191,11 +201,13 @@ function renderLastBestText(stats){
   const ls=stats.lastSessionBest;
   const bt=stats.allTimeBest;
   const rel=relativeDate(ls.timestamp||ls.date);
-  const lastHtml=`<span class="last-view-last">آخر جلسة: <b>${ls.weight}كجم × ${ls.reps}</b><small>${rel}</small></span>`;
+  const lsRpe=ls.rpe?` <span class="rpe-tag">@${ls.rpe}</span>`:'';
+  const btRpe=bt && bt.rpe?` <span class="rpe-tag">@${bt.rpe}</span>`:'';
+  const lastHtml=`<span class="last-view-last">آخر جلسة: <b>${ls.weight}كجم × ${ls.reps}</b>${lsRpe}<small>${rel}</small></span>`;
   const sameAsBest=bt && bt.weight===ls.weight && bt.reps===ls.reps;
   const bestHtml=sameAsBest
     ?`<span class="last-view-best" style="display:none">🏆 أفضل = آخر جلسة</span>`
-    :`<span class="last-view-best" style="display:none">🏆 أفضل: <b>${bt.weight}كجم × ${bt.reps}</b></span>`;
+    :`<span class="last-view-best" style="display:none">🏆 أفضل: <b>${bt.weight}كجم × ${bt.reps}</b>${btRpe}</span>`;
   return lastHtml+bestHtml+'<span class="flip-hint">⇄</span>';
 }
 
@@ -763,8 +775,10 @@ async function saveSet(btn){
   const step=btn.closest('.step');
   const weightInput=trackDiv.querySelector('.weight-input');
   const repsInput=trackDiv.querySelector('.reps-input');
+  const rpeInput=trackDiv.querySelector('.rpe-input'); // V7.2 #39
   const weight=parseFloat(weightInput.value);
   const reps=parseInt(repsInput.value);
+  const rpe=rpeInput && rpeInput.value?parseInt(rpeInput.value):null; // V7.2 #39
   const exName=weightInput.dataset.name;
 
   if(isNaN(weight)||isNaN(reps)||reps<=0){
@@ -786,6 +800,7 @@ async function saveSet(btn){
       workoutId:currentSession.id,
       exerciseName:exName,
       weight:weight,reps:reps,
+      rpe:rpe, // V7.2 #39
       timestamp:now,
       date:now.split('T')[0],
       isPR:false,prType:null

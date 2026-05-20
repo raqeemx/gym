@@ -63,8 +63,8 @@ function showToast(msg,color='var(--grn)',duration=2500,opts={}){
 // ============ INDEXEDDB WRAPPER ============
 // مغلّف مبسّط للوصول لـ IndexedDB بطريقة async/await
 const DB_NAME='bulkmode_db';
-const DB_VERSION=2; // V7 (#30): bumped from 1 — schema migration framework
-const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings'];
+const DB_VERSION=3; // V7.2 (#38): bumped from 2 — added dailyLog store
+const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings','dailyLog'];
 
 // V7 (#29) — Namespaced settings keys (app:, session:, subs:)
 const KEYS={
@@ -84,7 +84,9 @@ const KEYS={
   // substitution-level
   SUBS_ACTIVE:'subs:active',
   SUBS_PREFS:'subs:prefs',
-  SUBS_HISTORY:'subs:history'
+  SUBS_HISTORY:'subs:history',
+  // V7.2 — user profile (#37)
+  USER_PROFILE:'app:user_profile'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة
@@ -141,9 +143,13 @@ function migrateV0toV1(d){
 
 function migrateV1toV2(d){
   // V2: لا تغييرات في schema (مخطّط بنفسه). ترحيل المفاتيح يحصل بعد open في applyDataMigrations()
-  // ضع index على prs.setId لتحسين الأداء عند الحذف (V7 #18 undo)
-  const tx=d.transaction?d.transaction:null;
-  // ملاحظة: لا نقدر نستخدم tx هنا (عبر createObjectStore جديد). فقط أضف الـ indexes إذا الـ store موجود.
+}
+
+// V7.2 (#38) — أضف dailyLog store للماء/النوم/المكملات/الوجبات
+function migrateV2toV3(d){
+  if(!d.objectStoreNames.contains('dailyLog')){
+    d.createObjectStore('dailyLog',{keyPath:'date'});
+  }
 }
 
 const db={
@@ -159,6 +165,7 @@ const db={
         // طبّق الترحيلات بالتسلسل
         if(e.oldVersion<1) migrateV0toV1(d);
         if(e.oldVersion<2) migrateV1toV2(d);
+        if(e.oldVersion<3) migrateV2toV3(d);
       };
     });
   },
