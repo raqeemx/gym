@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V6)
-const CACHE_NAME = 'bulkmode-v6';
+// BULK MODE Service Worker — Offline-first (V7 — modular)
+const CACHE_NAME = 'bulkmode-v7';
 const CHART_JS = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
 const ASSETS = [
   './',
@@ -7,6 +7,12 @@ const ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './css/styles.css',
+  './js/data.js',
+  './js/session.js',
+  './js/progress.js',
+  './js/substitutions.js',
+  './js/app.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 ];
 
