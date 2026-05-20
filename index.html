@@ -273,6 +273,76 @@ h1 em{font-style:normal;background:linear-gradient(135deg,var(--g1) 0%,var(--g2)
 .history-day .h-ex b{color:#fff;font-weight:500}
 .history-day .h-ex span{color:var(--g2);font-family:'JetBrains Mono',monospace;font-size:11px}
 
+/* ===== ONBOARDING OVERLAY ===== */
+.onb-overlay{position:fixed;inset:0;background:rgba(5,6,8,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:10002;display:none;align-items:center;justify-content:center;padding:20px;direction:rtl}
+.onb-overlay.open{display:flex;animation:fadeUp .4s cubic-bezier(.16,1,.3,1)}
+.onb-card{background:linear-gradient(160deg,var(--s1),var(--s2));border:1px solid rgba(212,168,83,.25);border-radius:22px;padding:28px 22px 22px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 1px rgba(212,168,83,.08)}
+.onb-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g1),transparent)}
+
+.onb-progress{display:flex;justify-content:center;gap:8px;margin-bottom:22px}
+.onb-dot{width:28px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);transition:.3s}
+.onb-dot.a{background:linear-gradient(90deg,var(--g1),var(--g2));width:36px}
+.onb-dot.done{background:rgba(212,168,83,.4)}
+
+.onb-slide{display:none;animation:fadeUp .35s cubic-bezier(.16,1,.3,1)}
+.onb-slide.a{display:block}
+
+.onb-icon{font-size:42px;text-align:center;margin-bottom:14px;animation:float 3s ease-in-out infinite}
+.onb-title{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;color:#fff;text-align:center;line-height:1.2;letter-spacing:-.3px;margin-bottom:8px}
+.onb-title em{font-style:normal;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.onb-sub{font-size:13px;color:var(--tx2);text-align:center;line-height:1.65;margin-bottom:18px;font-weight:300}
+
+/* Slide 1 — weekly chart */
+.onb-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:14px}
+.onb-day{aspect-ratio:.8;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 2px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);transition:.2s;position:relative}
+.onb-day .od-wd{font-size:10px;color:var(--tx3);font-family:'Outfit',sans-serif;letter-spacing:.3px;margin-bottom:3px}
+.onb-day .od-tp{font-size:9px;font-weight:700;color:var(--tx2);text-align:center;line-height:1.2;font-family:'JetBrains Mono',monospace}
+.onb-day.upper{background:rgba(255,90,95,.08);border-color:rgba(255,90,95,.18)}
+.onb-day.upper .od-tp{color:var(--red)}
+.onb-day.arms{background:rgba(90,180,255,.08);border-color:rgba(90,180,255,.18)}
+.onb-day.arms .od-tp{color:var(--blue)}
+.onb-day.legs{background:rgba(90,230,138,.08);border-color:rgba(90,230,138,.18)}
+.onb-day.legs .od-tp{color:var(--grn)}
+.onb-day.rest{background:rgba(212,168,83,.04);border-color:rgba(212,168,83,.1)}
+.onb-day.rest .od-tp{color:var(--g2)}
+.onb-day.today{transform:scale(1.08);box-shadow:0 0 0 2px var(--g1),0 8px 22px rgba(212,168,83,.3);background:linear-gradient(145deg,rgba(212,168,83,.18),rgba(212,168,83,.06));border-color:var(--g1);animation:glow 2s infinite}
+.onb-day.today::after{content:'⭐';position:absolute;top:-8px;right:-4px;font-size:14px;animation:pulse 1.6s infinite}
+.onb-today-note{text-align:center;padding:10px 14px;background:rgba(212,168,83,.08);border:1px solid rgba(212,168,83,.18);border-radius:10px;font-size:12px;color:var(--g2);line-height:1.5}
+.onb-today-note b{color:#fff}
+
+/* Slide 2 — how to start steps */
+.onb-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.onb-step{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;transition:.3s}
+.onb-step:hover{border-color:rgba(212,168,83,.3);transform:translateX(-3px)}
+.onb-step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;flex-shrink:0;box-shadow:0 3px 10px rgba(212,168,83,.25)}
+.onb-step-body{flex:1;min-width:0}
+.onb-step-title{font-size:13px;color:var(--tx);font-weight:500;margin-bottom:3px}
+.onb-step-title b{color:var(--g2);font-weight:700}
+.onb-step-info{font-size:11px;color:var(--tx3);line-height:1.5}
+.onb-anim-hint{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(90,230,138,.05);border:1px solid rgba(90,230,138,.15);border-radius:10px;font-size:11.5px;color:var(--grn);line-height:1.5}
+.onb-anim-pulse{width:8px;height:8px;border-radius:50%;background:var(--grn);animation:pulse 1.4s infinite;flex-shrink:0;box-shadow:0 0 8px var(--grn)}
+
+/* Slide 3 — export box */
+.onb-export-box{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.onb-eb-row{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--tx)}
+.onb-eb-key{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.18);font-size:14px;flex-shrink:0}
+.onb-eb-row b{color:var(--g2)}
+.onb-warn{padding:10px 12px;background:rgba(255,90,95,.06);border:1px solid rgba(255,90,95,.18);border-radius:10px;font-size:11.5px;color:var(--tx);line-height:1.6;margin-bottom:10px}
+.onb-warn b{color:var(--red)}
+.onb-reminder-hint{padding:8px 12px;background:rgba(90,180,255,.05);border:1px solid rgba(90,180,255,.15);border-radius:8px;font-size:11px;color:var(--blue);text-align:center}
+
+/* Navigation buttons */
+.onb-nav{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.05)}
+.onb-spacer{flex:1}
+.onb-btn-skip{background:none;border:none;color:var(--tx3);font-family:'Rubik',sans-serif;font-size:12px;padding:8px 12px;cursor:pointer;transition:.2s;border-radius:8px}
+.onb-btn-skip:hover{color:var(--tx);background:rgba(255,255,255,.04)}
+.onb-btn-prev,.onb-btn-next{padding:10px 18px;border:none;border-radius:10px;font-family:'Rubik',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.25s}
+.onb-btn-prev{background:rgba(255,255,255,.04);color:var(--tx);border:1px solid rgba(255,255,255,.08)}
+.onb-btn-prev:hover{background:rgba(255,255,255,.07)}
+.onb-btn-next{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;box-shadow:0 4px 14px rgba(212,168,83,.3)}
+.onb-btn-next:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,168,83,.4)}
+.onb-btn-next.finish{background:linear-gradient(135deg,var(--grn),#4DD380)}
+
 /* ===== Enhanced Stats V2 ===== */
 .stats-hero{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:18px}
 .sh-item{background:linear-gradient(145deg,rgba(212,168,83,.08),rgba(212,168,83,.02));border:1px solid rgba(212,168,83,.15);border-radius:12px;padding:14px 10px;text-align:center;transition:.2s}
@@ -1711,6 +1781,7 @@ body.sess-active .nav{top:50px}
   <button onclick="openStats()">📈 إحصائياتي</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
   <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
+  <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 </div>
 
@@ -1761,6 +1832,86 @@ body.sess-active .nav{top:50px}
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- ONBOARDING OVERLAY (أول فتح للتطبيق) -->
+<div class="onb-overlay" id="onbOverlay" aria-hidden="true">
+  <div class="onb-card">
+    <div class="onb-progress">
+      <span class="onb-dot a" data-s="0"></span>
+      <span class="onb-dot" data-s="1"></span>
+      <span class="onb-dot" data-s="2"></span>
+    </div>
+
+    <!-- شريحة ١: ترحيب + الجدول الأسبوعي مع تظليل اليوم -->
+    <div class="onb-slide a" id="onbS0">
+      <div class="onb-icon">💪</div>
+      <h2 class="onb-title">أهلاً بك في <em>BULK MODE</em></h2>
+      <p class="onb-sub">برنامج تضخيم ١٢ أسبوع — مصمّم خصيصاً لجيمك وأجهزتك.<br>هذا مخططك الأسبوعي:</p>
+      <div class="onb-week" id="onbWeek"></div>
+      <div class="onb-today-note" id="onbTodayNote"></div>
+    </div>
+
+    <!-- شريحة ٢: كيف تبدأ جلسة -->
+    <div class="onb-slide" id="onbS1">
+      <div class="onb-icon">🏁</div>
+      <h2 class="onb-title">كيف تبدأ <em>جلسة</em>؟</h2>
+      <p class="onb-sub">٣ خطوات بسيطة</p>
+      <div class="onb-steps">
+        <div class="onb-step">
+          <div class="onb-step-num">1</div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">افتح تبويب <b>التمارين</b></div>
+            <div class="onb-step-info">من القائمة العلوية</div>
+          </div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-step-num">2</div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">افتح <b>يوم اليوم</b></div>
+            <div class="onb-step-info">انقر بطاقة اليوم لتظهر التمارين</div>
+          </div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-step-num">3</div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">اضغط <b>▶ بدء الجلسة</b></div>
+            <div class="onb-step-info">سجّل كل سيت بوزن وتكرارات → التطبيق يحسب التقدّم تلقائياً</div>
+          </div>
+        </div>
+      </div>
+      <div class="onb-anim-hint">
+        <span class="onb-anim-pulse"></span>
+        كل سيت تسجّله يُحفظ مباشرة — لو فيه رقم قياسي جديد، 🏆 يطلع تلقائياً
+      </div>
+    </div>
+
+    <!-- شريحة ٣: تنبيه التصدير الأسبوعي -->
+    <div class="onb-slide" id="onbS2">
+      <div class="onb-icon">💾</div>
+      <h2 class="onb-title">احفظ <em>تقدّمك</em></h2>
+      <p class="onb-sub">بياناتك محفوظة على جهازك فقط — صدّر نسخة احتياطية كل أسبوع</p>
+      <div class="onb-export-box">
+        <div class="onb-eb-row"><span class="onb-eb-key">📊</span><span>افتح القائمة العائمة (يمين الشاشة)</span></div>
+        <div class="onb-eb-row"><span class="onb-eb-key">💾</span><span>اختر <b>تصدير البيانات</b></span></div>
+        <div class="onb-eb-row"><span class="onb-eb-key">📤</span><span>احفظ الملف في Google Drive أو iCloud</span></div>
+      </div>
+      <div class="onb-warn">
+        ⚠️ <b>مهم:</b> لو حذفت التطبيق أو مسحت بيانات المتصفح بدون تصدير → ستفقد كل تقدّمك (PRs، السيتات، القياسات).
+      </div>
+      <div class="onb-reminder-hint">
+        🔔 سيظهر تذكير تلقائي بعد ٧ أيام من آخر تصدير
+      </div>
+    </div>
+
+    <!-- أزرار التنقل -->
+    <div class="onb-nav">
+      <button class="onb-btn-skip" onclick="skipOnboarding()">تخطّى</button>
+      <div class="onb-spacer"></div>
+      <button class="onb-btn-prev" id="onbPrev" onclick="onbNav(-1)" style="display:none">◀ السابق</button>
+      <button class="onb-btn-next" id="onbNext" onclick="onbNav(1)">التالي ▶</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============ BULK MODE V5 — LEVEL 1 ============
  * IndexedDB + Workout Sessions + Automatic PRs + Smart Rest Timer + Charts
@@ -1800,13 +1951,13 @@ window.addEventListener('scroll',()=>{
 function scrollTop(){window.scrollTo({top:0,behavior:'smooth'})}
 
 // ============ TOAST ============
-function showToast(msg,color='var(--grn)'){
+function showToast(msg,color='var(--grn)',duration=2500){
   const t=document.getElementById('toast');
   t.textContent=msg;
   t.style.borderColor=color;
   t.style.color=color;
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+  setTimeout(()=>t.classList.remove('show'),duration);
 }
 
 // ============ INDEXEDDB WRAPPER ============
@@ -2822,7 +2973,25 @@ async function exportData(){
   a.download=`bulkmode_v5_backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  await db.put('settings',{key:'last_export',value:new Date().toISOString()});
   showToast('💾 تم تصدير النسخة الاحتياطية');
+}
+
+// تذكير دائم بالتصدير الأسبوعي — لو مرّ ٧ أيام بدون تصدير
+async function checkExportReminder(){
+  try{
+    const onb=await db.get('settings','onboarded');
+    if(!onb || !onb.value) return; // قبل الـ onboarding لا نزعجه
+    const sets=await db.getAll('sets');
+    if(sets.length<5) return; // ما يستحق تذكير قبل ٥ سيتات على الأقل
+    const last=await db.get('settings','last_export');
+    const days=last?Math.floor((Date.now()-new Date(last.value).getTime())/86400000):999;
+    if(days>=7){
+      setTimeout(()=>{
+        showToast(`🔔 مرّ ${days===999?'وقت طويل':days+' أيام'} بدون تصدير — احفظ نسخة احتياطية`,'var(--org)',6000);
+      },1500);
+    }
+  }catch(e){}
 }
 
 async function importData(event){
@@ -3744,6 +3913,117 @@ document.getElementById('summaryModal').addEventListener('click',(e)=>{
   if(e.target.id==='summaryModal') closeSummary();
 });
 
+// ============ ONBOARDING (أول فتح) ============
+// خريطة الجدول الأسبوعي الحالية — يجب أن تطابق <wg> في "نظرة عامة"
+const WEEKLY_SCHEDULE=[
+  {wd:'الأحد',short:'أحد',type:'UPPER A',cls:'upper'},
+  {wd:'الاثنين',short:'اثن',type:'BACK & WINGS',cls:'arms'},
+  {wd:'الثلاثاء',short:'ثلا',type:'ARMS A',cls:'arms'},
+  {wd:'الأربعاء',short:'أرب',type:'راحة',cls:'rest'},
+  {wd:'الخميس',short:'خمي',type:'UPPER B',cls:'upper'},
+  {wd:'الجمعة',short:'جمع',type:'LEGS',cls:'legs'},
+  {wd:'السبت',short:'سبت',type:'ARMS B',cls:'arms'}
+];
+
+let ONB_STEP=0;
+
+function renderOnboardingWeek(){
+  const wrap=document.getElementById('onbWeek');
+  const note=document.getElementById('onbTodayNote');
+  if(!wrap) return;
+  const todayIdx=new Date().getDay(); // 0=الأحد ... 6=السبت
+  wrap.innerHTML=WEEKLY_SCHEDULE.map((d,i)=>{
+    const isToday=i===todayIdx;
+    return `<div class="onb-day ${d.cls}${isToday?' today':''}">
+      <div class="od-wd">${d.short}</div>
+      <div class="od-tp">${d.type}</div>
+    </div>`;
+  }).join('');
+  const today=WEEKLY_SCHEDULE[todayIdx];
+  if(today.cls==='rest'){
+    note.innerHTML=`اليوم <b>${today.wd}</b> — يوم راحة. استمتع، جسمك يبني العضل اليوم.`;
+  }else{
+    note.innerHTML=`اليوم <b>${today.wd}</b> — جلستك: <b>${today.type}</b> ⭐`;
+  }
+}
+
+function onbNav(direction){
+  const slides=document.querySelectorAll('.onb-slide');
+  const dots=document.querySelectorAll('.onb-dot');
+  const next=ONB_STEP+direction;
+  if(next<0 || next>=slides.length){
+    if(next>=slides.length) finishOnboarding();
+    return;
+  }
+  slides[ONB_STEP].classList.remove('a');
+  dots[ONB_STEP].classList.remove('a');
+  dots[ONB_STEP].classList.add('done');
+  ONB_STEP=next;
+  slides[ONB_STEP].classList.add('a');
+  dots[ONB_STEP].classList.remove('done');
+  dots[ONB_STEP].classList.add('a');
+  // أزرار التنقل
+  const prev=document.getElementById('onbPrev');
+  const nx=document.getElementById('onbNext');
+  prev.style.display=ONB_STEP===0?'none':'inline-block';
+  if(ONB_STEP===slides.length-1){
+    nx.textContent='ابدأ التضخيم 💪';
+    nx.classList.add('finish');
+  }else{
+    nx.textContent='التالي ▶';
+    nx.classList.remove('finish');
+  }
+}
+
+async function finishOnboarding(){
+  await db.put('settings',{key:'onboarded',value:true,date:new Date().toISOString()});
+  closeOnboarding();
+  showToast('🎉 جاهز! ابدأ من تبويب «التمارين»');
+}
+
+async function skipOnboarding(){
+  await db.put('settings',{key:'onboarded',value:true,date:new Date().toISOString(),skipped:true});
+  closeOnboarding();
+}
+
+function closeOnboarding(){
+  const ov=document.getElementById('onbOverlay');
+  ov.classList.remove('open');
+  ov.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+
+function openOnboarding(){
+  const ov=document.getElementById('onbOverlay');
+  ONB_STEP=0;
+  // ريست الـ slides
+  document.querySelectorAll('.onb-slide').forEach((s,i)=>s.classList.toggle('a',i===0));
+  document.querySelectorAll('.onb-dot').forEach((d,i)=>{
+    d.classList.remove('done');
+    d.classList.toggle('a',i===0);
+  });
+  document.getElementById('onbPrev').style.display='none';
+  const nx=document.getElementById('onbNext');
+  nx.textContent='التالي ▶';
+  nx.classList.remove('finish');
+  renderOnboardingWeek();
+  ov.classList.add('open');
+  ov.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+
+async function checkOnboarding(){
+  try{
+    const flag=await db.get('settings','onboarded');
+    if(!flag || !flag.value){
+      // أول فتح — اعرض الـ onboarding بعد تأخير صغير لتحميل العناصر
+      setTimeout(()=>openOnboarding(),250);
+    }
+  }catch(e){
+    console.warn('Onboarding check failed:',e);
+  }
+}
+
 // ============ INIT ============
 window.addEventListener('DOMContentLoaded',async()=>{
   try{
@@ -3755,6 +4035,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
     injectAltButtons();      // أزرار "⇄ بديل؟" (V6)
     await loadSubstitutions();// استرجع البدائل المحفوظة (V6)
     await loadCurrentSession();
+    await checkOnboarding();  // فحص أول فتح وعرض الـ onboarding (V7)
+    await checkExportReminder(); // تذكير بالتصدير الأسبوعي (V7)
   }catch(e){
     console.error('Init error:',e);
     showToast('⚠️ خطأ في تحميل قاعدة البيانات','var(--red)');
