@@ -190,6 +190,51 @@ group('computeProgression', (g)=>{
   }));
 });
 
+// V7.3 — RPE-based progression tests
+group('RPE-based progression (V7.3)', (g)=>{
+  g.add(test('max reps + RPE 7 → +5kg (سهل)', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, 7);
+    assertEq(s.suggestedWeight, 20);
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('max reps + RPE 8 → +2.5kg (مثالي)', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, 8);
+    assertEq(s.suggestedWeight, 17.5);
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('max reps + RPE 9 → maintain (نفس الوزن)', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, 9);
+    assertEq(s.suggestedWeight, 15);
+    assertEq(s.kind, 'maintain');
+  }));
+  g.add(test('max reps + RPE 10 → -2.5kg (الفشل)', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, 10);
+    assertEq(s.suggestedWeight, 12.5);
+    assertEq(s.kind, 'decrease');
+  }));
+  g.add(test('null RPE → fallback للمنطق القديم (+2.5 عند max)', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, null);
+    assertEq(s.suggestedWeight, 17.5);
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('RPE 6 (سهل جداً) → +5kg', ()=>{
+    const s = computeProgression({weight:20, reps:8}, {min:8, max:10}, 6);
+    assertEq(s.suggestedWeight, 25);
+    assertEq(s.kind, 'increase');
+  }));
+  g.add(test('below max + RPE 9 → maintain (RPE يطغى على نطاق التكرار)', ()=>{
+    // في الوضع القديم بدون RPE، هذا ضمن النطاق (لا اقتراح). مع RPE 9 → maintain.
+    const s = computeProgression({weight:15, reps:9}, {min:8, max:10}, 9);
+    assertTrue(s !== null, 'expected suggestion, got null');
+    assertEq(s.kind, 'maintain');
+  }));
+  g.add(test('invalid RPE (5 < 6) → fallback للمنطق القديم', ()=>{
+    const s = computeProgression({weight:15, reps:10}, {min:8, max:10}, 5);
+    assertEq(s.kind, 'increase'); // old logic: max reps → +2.5
+    assertEq(s.suggestedWeight, 17.5);
+  }));
+});
+
 group('_isoDay / _isoDayShift', (g)=>{
   g.add(test('_isoDay returns YYYY-MM-DD', ()=>{
     const d = _isoDay();

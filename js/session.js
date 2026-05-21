@@ -42,15 +42,18 @@ async function injectTrackingInputs(){
     step.querySelector('.step-body').appendChild(inputDiv);
 
     // V7 (#16) — اقتراح وزن السيت التالي بناءً على آخر أداء + نطاق التكرار
+    // V7.3 — يمرّر RPE آخر سيت لاستخدام المنطق الجديد القائم على RPE
     if(stats && stats.lastSessionBest){
       const range=parseRepRange(step);
-      const suggestion=computeProgression(stats.lastSessionBest,range);
+      const lastRpe=stats.lastSessionBest.rpe!=null?stats.lastSessionBest.rpe:null;
+      const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe);
       if(suggestion) injectProgressionHint(inputDiv,step,suggestion);
     }
   });
 }
 
 // V7 (#13) — يحسب من كل السيتات: أفضل سيت في آخر جلسة + أعلى وزن في الكل
+// V7.3 — السيت يُحفظ كاملاً (بما فيه حقل rpe)، فـ lastSessionBest.rpe يصبح متاحاً للـ computeProgression
 function computeLastBestByExercise(allSets){
   const byEx={};
   for(const s of allSets){
@@ -70,6 +73,7 @@ function computeLastBestByExercise(allSets){
     if(!recentWid) continue;
     const lastSessionSets=info.byWorkout[recentWid];
     // أفضل سيت في آخر جلسة (أعلى وزن، التكرار يفصل التعادل)
+    // الـ object الكامل يُمرَّر — يشمل rpe و note و timestamp
     const lastSessionBest=lastSessionSets.reduce((best,s)=>{
       if(!best) return s;
       if(s.weight>best.weight) return s;
@@ -125,7 +129,9 @@ function normalizeDataDigits(){
 }
 
 // V7 (#16) — استخراج نطاق التكرارات من step-info (مثل "٨-١٠ تكرار" → {min:8,max:10})
-function parseRepRange(stepEl){
+// المعامل الثالث rpeHint اختياري — حالياً غير مستخدم في التحليل (لا RPE في step-info)
+// لكن وُجد لتوحيد التوقيع مع computeProgression حسب طلب V7.3 RPE-aware
+function parseRepRange(stepEl, _rpeHint){
   const info=stepEl.querySelector('.step-info');
   if(!info) return null;
   const txt=arabicToLatinDigits(info.textContent||'');
@@ -137,10 +143,53 @@ function parseRepRange(stepEl){
   return null;
 }
 
-// V7 (#16) — يحسب اقتراح للسيت التالي بناءً على آخر أداء + النطاق
-function computeProgression(lastSet,repRange){
+// V7.3 — اقتراح وزن السيت التالي مع وعي RPE
+// المنطق:
+//   • لو RPE موجود (٦-١٠): يستخدم RPE كإشارة أساسية للتقدّم
+//     - RPE ≤7 (سهل)   → +٥ كجم
+//     - RPE 8 (مثالي)  → +٢.٥ كجم
+//     - RPE 9 (قريب من الفشل) → حافظ على نفس الوزن
+//     - RPE 10 (الفشل) → -٢.٥ كجم
+//   • لو RPE غير موجود: fallback للمنطق القديم بناءً على نطاق التكرار
+//     - reps ≥ max → +٢.٥
+//     - reps < min → -٢.٥
+//     - داخل النطاق → بدون اقتراح
+function computeProgression(lastSet, repRange, lastRpe){
   if(!lastSet || !repRange) return null;
-  // أكمل الحد الأعلى من التكرارات بسهولة → اقترح +٢.٥
+  const rpe=(lastRpe!=null && lastRpe>=6 && lastRpe<=10)?lastRpe:null;
+
+  // 🎯 المسار الجديد: RPE-aware
+  if(rpe!=null){
+    if(rpe<=7){
+      return {
+        suggestedWeight:Math.round((lastSet.weight+5)*10)/10,
+        reason:`RPE ${rpe} (سهل عليك) — جرّب +٥كجم`,
+        kind:'increase'
+      };
+    }
+    if(rpe===8){
+      return {
+        suggestedWeight:Math.round((lastSet.weight+2.5)*10)/10,
+        reason:`RPE 8 (مثالي) — جرّب +٢.٥كجم`,
+        kind:'increase'
+      };
+    }
+    if(rpe===9){
+      return {
+        suggestedWeight:lastSet.weight,
+        reason:`RPE 9 (قريب من الفشل) — حافظ على نفس الوزن وحاول زيادة تكرار`,
+        kind:'maintain'
+      };
+    }
+    // rpe === 10
+    return {
+      suggestedWeight:Math.max(0,Math.round((lastSet.weight-2.5)*10)/10),
+      reason:`RPE 10 (بلغت الفشل) — خفّف ٢.٥كجم للتعافي`,
+      kind:'decrease'
+    };
+  }
+
+  // 🔁 المسار القديم: بدون RPE — يعتمد على نطاق التكرار فقط
   if(lastSet.reps>=repRange.max){
     return {
       suggestedWeight:Math.round((lastSet.weight+2.5)*10)/10,
@@ -148,7 +197,6 @@ function computeProgression(lastSet,repRange){
       kind:'increase'
     };
   }
-  // لو كان آخر سيت تحت الحد الأدنى — اقترح -٢.٥ (تخفيف)
   if(lastSet.reps<repRange.min){
     return {
       suggestedWeight:Math.max(0,Math.round((lastSet.weight-2.5)*10)/10),
@@ -167,7 +215,10 @@ function injectProgressionHint(trackDiv,stepEl,suggestion){
   if(!suggestion) return;
   const hint=document.createElement('div');
   hint.className='prog-hint';
-  const icon=suggestion.kind==='increase'?'📈':'⚠️';
+  // V7.3 — أيقونة حسب نوع الاقتراح (3 أنواع: increase/decrease/maintain)
+  const icon=suggestion.kind==='increase'?'📈'
+            :suggestion.kind==='maintain'?'⏸️'
+            :'⚠️';
   hint.innerHTML=`<span class="ph-icon">${icon}</span><span>${suggestion.reason} → <b>${suggestion.suggestedWeight}كجم</b></span><button class="ph-apply" onclick="applySuggestion(this,${suggestion.suggestedWeight});event.stopPropagation()">تطبيق</button>`;
   trackDiv.appendChild(hint);
   // اقترح كـ placeholder
@@ -281,7 +332,9 @@ function refreshProgressionHintsForExercise(currentStep,exName,stats){
       continue;
     }
     const range=parseRepRange(step);
-    const suggestion=computeProgression(stats.lastSessionBest,range);
+    // V7.3 — RPE-aware
+    const lastRpe=stats.lastSessionBest.rpe!=null?stats.lastSessionBest.rpe:null;
+    const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe);
     injectProgressionHint(trackDiv,step,suggestion);
   }
 }
@@ -775,6 +828,26 @@ async function detectPRs(setRec){
   if(sameW.length){
     const maxR=Math.max(...sameW.map(s=>s.reps));
     if(setRec.reps>maxR) prs.push({type:'reps',value:setRec.reps,label:`تكرار عند ${setRec.weight}كجم — ${setRec.reps}`});
+  }
+
+  // 5. V7.3 — Effort PR (RPE) — نفس الوزن × نفس التكرار لكن بـ RPE أقل
+  // يعكس تحسّن القوة الحقيقية (السيت صار أسهل بنفس الحمل)
+  if(setRec.rpe!=null){
+    const sameWR=prev.filter(s=>
+      s.weight===setRec.weight &&
+      s.reps===setRec.reps &&
+      s.rpe!=null
+    );
+    if(sameWR.length){
+      const minRpe=Math.min(...sameWR.map(s=>s.rpe));
+      if(setRec.rpe<minRpe){
+        prs.push({
+          type:'effort',
+          value:setRec.rpe,
+          label:`جهد أقل — ${setRec.weight}كجم × ${setRec.reps} @RPE ${setRec.rpe} (كان ${minRpe})`
+        });
+      }
+    }
   }
 
   // احفظ كل PR في الـ store

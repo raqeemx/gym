@@ -806,17 +806,22 @@ async function renderPRs(){
     return;
   }
   // group by exercise, then by type → keep best
+  // V7.3 — للـ effort (RPE)، الأقل = الأفضل. لباقي الأنواع، الأعلى = الأفضل.
   const byEx={};
   prs.forEach(p=>{
     if(!byEx[p.exerciseName]) byEx[p.exerciseName]={};
     const cur=byEx[p.exerciseName][p.type];
-    if(!cur || p.value>cur.value) byEx[p.exerciseName][p.type]=p;
+    const isBetter=!cur || (p.type==='effort'?p.value<cur.value:p.value>cur.value);
+    if(isBetter) byEx[p.exerciseName][p.type]=p;
   });
-  const typeLbl={weight:'وزن',volume:'حجم',reps:'تكرار','1rm':'1RM'};
+  // V7.3 — أضيف نوع 'effort' (Effort PR: نفس الوزن×التكرار بـ RPE أقل)
+  const typeLbl={weight:'وزن',volume:'حجم',reps:'تكرار','1rm':'1RM',effort:'جهد @RPE'};
   const items=Object.entries(byEx).sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([ex,types])=>{
     const lastDate=Math.max(...Object.values(types).map(t=>new Date(t.date).getTime()));
     const typesHtml=Object.entries(types).map(([t,p])=>{
-      return `<span>${typeLbl[t]||t}: <b>${p.value}${t==='weight'||t==='1rm'?'كجم':''}</b></span>`;
+      // عرض القيمة حسب النوع
+      const suffix=t==='weight'||t==='1rm'?'كجم':'';
+      return `<span>${typeLbl[t]||t}: <b>${p.value}${suffix}</b></span>`;
     }).join('');
     return `<div class="pr-item">
       <div class="pr-icon">🏆</div>
@@ -896,7 +901,7 @@ const CHART_BASE_OPTS={
   }
 };
 
-let _charts={ex:null,vol:null,bw:null};
+let _charts={ex:null,vol:null,bw:null,rpe:null};
 
 async function renderCharts(){
   const sel=document.getElementById('chartExSel');
@@ -920,6 +925,71 @@ async function renderCharts(){
   if(sel.value) renderExerciseChart(sel.value);
   renderVolumeChart(sets);
   renderBodyWeightChart();
+  await renderRpeTrend(sets); // V7.3 — رسم RPE المتوسط لكل جلسة
+}
+
+// V7.3 — رسم RPE المتوسط لكل جلسة + كشف ارتفاع متراكم (يقترح deload)
+async function renderRpeTrend(setsOrNull){
+  const Chart=window.Chart;
+  const ctx=document.getElementById('chartRpe').getContext('2d');
+  const hintEl=document.getElementById('rpeDeloadHint');
+  if(_charts.rpe) _charts.rpe.destroy();
+
+  const sets=setsOrNull||await db.getAll('sets');
+  // اجمع السيتات التي فيها RPE فقط، حسب workoutId
+  const byWorkout={};
+  sets.forEach(s=>{
+    if(s.rpe==null) return;
+    if(!byWorkout[s.workoutId]) byWorkout[s.workoutId]={rpes:[],time:0};
+    byWorkout[s.workoutId].rpes.push(s.rpe);
+    const t=new Date(s.timestamp).getTime();
+    if(t>byWorkout[s.workoutId].time) byWorkout[s.workoutId].time=t;
+  });
+  // احسب المتوسط لكل جلسة + رتّب زمنياً
+  const workouts=Object.entries(byWorkout).map(([wid,info])=>{
+    const avg=info.rpes.reduce((a,r)=>a+r,0)/info.rpes.length;
+    return {wid,avg:Math.round(avg*10)/10,time:info.time,count:info.rpes.length};
+  }).sort((a,b)=>a.time-b.time);
+
+  if(hintEl) hintEl.style.display='none';
+  if(!workouts.length){
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    return;
+  }
+
+  const labels=workouts.map(w=>new Date(w.time).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}));
+  const data=workouts.map(w=>w.avg);
+
+  // RPE-specific options (Y axis: 6-10)
+  const opts=JSON.parse(JSON.stringify(CHART_BASE_OPTS));
+  opts.scales.y.min=6;
+  opts.scales.y.max=10;
+  opts.scales.y.beginAtZero=false;
+  opts.scales.y.ticks.stepSize=1;
+
+  _charts.rpe=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'متوسط RPE',data,borderColor:'#B08AFF',backgroundColor:'rgba(176,138,255,.15)',tension:.3,fill:true,pointBackgroundColor:'#B08AFF',pointRadius:4,pointHoverRadius:6},
+        // خط مرجعي عند 8.5 (عتبة التنبيه)
+        {label:'عتبة الإرهاق (8.5)',data:labels.map(()=>8.5),borderColor:'rgba(255,90,95,.5)',borderDash:[4,4],pointRadius:0,fill:false,borderWidth:1}
+      ]
+    },
+    options:opts
+  });
+
+  // كشف الإرهاق المتراكم: ٣ جلسات متتالية بمتوسط > 8.5
+  if(workouts.length>=3 && hintEl){
+    const last3=workouts.slice(-3);
+    const allHigh=last3.every(w=>w.avg>8.5);
+    if(allHigh){
+      const avgOfLast3=Math.round((last3.reduce((a,w)=>a+w.avg,0)/3)*10)/10;
+      hintEl.innerHTML=`💡 <b>ارتفاع RPE المتواصل</b> — متوسط آخر ٣ جلسات: <b>${avgOfLast3}</b>. قد تحتاج لـ <b>أسبوع deload</b> (×0.6 على الأوزان) للتعافي وتجنّب الإصابة.`;
+      hintEl.style.display='block';
+    }
+  }
 }
 
 async function renderExerciseChart(name){
