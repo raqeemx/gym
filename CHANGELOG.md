@@ -1,195 +1,247 @@
 # سجل التغييرات (CHANGELOG)
 
 كل التغييرات الملحوظة بين الإصدارات.
+رقم الإصدار الحالي مصدره الوحيد: [`js/version.js`](js/version.js).
+
+---
+
+## [V8.0 — برنامج JSON + إنجازات + صور تقدّم + Smart Deload] — 2026-05-21
+
+أكبر ترقية معمارية: فصل بيانات البرنامج عن HTML، إضافة ميزات شخصية متعددة، وكشف ذكي لحاجة الاستشفاء.
+
+### ✨ جديد
+
+#### بنية البرنامج
+- **PROGRAM_DATA (JSON-driven)** — بيانات الأيام/الـ phases/الستيبات في `js/program-data.js` بدل HTML يدوي. `renderProgram()` يولّد DOM مطابقاً للنسخة القديمة. (UPPER A فقط حالياً — باقي الأيام قادمة)
+- **`step-D<n>-S<n>` IDs** تبقى متطابقة بعد الـ render → البدائل المحفوظة لا تنكسر.
+
+#### Achievements (🎖️ إنجازاتي)
+- ١٦ إنجاز موزع على ٥ فئات: أساسيات، كميات، سلاسل، PRs، PRs لكل جلسة (pr_storm, pr_legend).
+- popup فضي/أزرق بعد PR celebration مباشرة (يحترم 3800ms تأخير).
+- لا spam: لو فُتح ١٠ دفعة، popup واحد فقط، الباقي في صفحة الإنجازات.
+- شريط تقدّم: `5/16 إنجاز` مع نسبة مئوية.
+
+#### Progress Photos (📸 صور التقدّم)
+- صور تُحفظ كـ Blob في IndexedDB — تبقى على الجهاز فقط، لا CDN.
+- ضغط Canvas تلقائي (1080px max، JPEG 0.85) — يوفّر ~70% مساحة.
+- ٥ فئات: أمامي، جانبي، خلفي، أعلى الجسم، أسفل الجسم.
+- معرض responsive (2-4 أعمدة)، fullscreen مع حذف.
+- **مقارنة قبل/بعد** مع تصدير صورة JPEG مدمجة (Canvas) — تواريخ + أوزان + فرق الوزن.
+- Export warning: الصور لا تُضمّن في JSON backup.
+- Schema migration V3→V4: indexes على `date` و `category`.
+
+#### Plate Calculator (🧮 حاسبة بليتات)
+- يقسّم الوزن المستهدف على البليتات (greedy من الأكبر).
+- ٥ خيارات بار (20/15/10/7/0 كجم) + 7 أحجام بليتات (25/20/15/10/5/2.5/1.25).
+- visualization بصرية: شكل بار مع البليتات بألوان IPF القياسية.
+- لو غير قابل بدقة → اقتراح الأقرب أعلى وأسفل (+ visual).
+- يحفظ تفضيلات المستخدم في settings.
+
+#### Smart Deload Detection (🛟 الاستشفاء)
+- `detectDeloadNeed()` يفحص ٤ معايير:
+  1. متوسط RPE > 8.5 في آخر 3 جلسات → urgency: high
+  2. 0 PRs في آخر 3 + تراجع وزن → urgency: high
+  3. مدة الجلسات > 1.5× المتوسط التاريخي → urgency: low
+  4. > 28 يوم منذ آخر deload → urgency: low
+- header banner تحت nav (sticky): «🛟 يبدو أنك تحتاج deload» مع زر «ابدأ Deload»
+- عند التفعيل: `computeProgression` يقترح ×0.6 لكل الأوزان (kind: 'deload')
+- Sunday auto-reset: ينتهي تلقائياً يوم الأحد التالي
+- تبويب «🛟 الاستشفاء» يعرض كل المعايير المُفحوصة بـ ✓/⚠️/➖
+
+#### Workout Reminders (🔔 تذكيرات)
+- ٣ طبقات احتياط:
+  1. **SW setTimeout** (Service Worker — حتى 12 ساعة)
+  2. **Local check** عند فتح التطبيق (يكشف الجلسة المفوّتة بعد ساعة من الموعد)
+  3. **.ics export** — ملف تقويم للأمان النهائي
+- يحترم Notification permission state، لا يسأل بعد رفض صريح
+- تكامل في Profile modal: وقت التمرين + قبل كم دقيقة + toggle تذكير الفوات
+- iOS Safari: يكشف unsupported ويوجّه للـ ICS
+
+#### Version Source of Truth
+- `js/version.js` — `APP_VERSION`, `APP_BUILD`, `APP_NAME`, `APP_TITLE`, `APP_CACHE_NAME`
+- service-worker.js يستخدم `importScripts('./js/version.js')` → CACHE_NAME ديناميكي
+- index.html title + footer يُحدَّثان من JS عند load
+- manifest.json: `"version": "8.0.0"` field
+
+### 🛡️ Schema (DB_VERSION=4)
+- V3→V4: indexes على `progressPhotos.date` و `progressPhotos.category`
+
+### 🛡️ Service Worker
+- نسخة جديدة: `bulkmode-v8-0-0` (ديناميكية من version.js)
+- `SCHEDULE_REMINDER` message handler
+- `notificationclick` يفتح/يركّز نافذة التطبيق
+- Chart.js محلي من `./vendor/` (لا CDN)
+
+---
+
+## [V7.3 — RPE Integration + Notes] — 2026-05-20
+
+استخدام RPE في الاقتراحات + كشف PR جديد + ملاحظات على السيتات والجلسات.
+
+### ✨ جديد
+
+#### RPE-aware Progression
+- `computeProgression(lastSet, repRange, lastRpe)` صار يستخدم RPE كإشارة أولى:
+  - RPE ≤7 → +٥ كجم
+  - RPE 8 → +٢.٥ كجم (الافتراضي)
+  - RPE 9 → حافظ على نفس الوزن (kind: 'maintain')
+  - RPE 10 → -٢.٥ كجم (تخفيف)
+- بدون RPE → fallback للمنطق القديم (max → +٢.٥، below min → -٢.٥)
+
+#### Effort PR
+- نوع جديد من PRs: نفس الوزن × نفس التكرار بـ RPE أقل
+- يعكس تحسّن قوة حقيقي (السيت صار أسهل بنفس الحمل)
+- ظاهر في احتفال PR ومجموعة الـ PRs
+
+#### RPE Trend Chart
+- رسم رابع في تبويب الرسوم — متوسط RPE لكل جلسة عبر الزمن
+- خط مرجعي عند 8.5
+- بنر «ارتفاع RPE المتواصل قد يعني الحاجة لـ deload» لو 3 جلسات متتالية > 8.5
+
+#### Set + Session Notes
+- زر 📝 صغير بجانب «حفظ» في كل ستيب — يفتح prompt لإضافة ملاحظة على السيت
+- ملاحظة الجلسة في showSessionSummary (textarea)
+- يظهران في سجل الجلسات: ملاحظة الجلسة بـ background ذهبي خفيف، ملاحظة السيت بـ tooltip
+- undoSetSave يستعيد الملاحظة كحالة معلّقة للإدخال
+
+#### Body Metrics Validation
+- 6 حقول بحدود hard (مثلاً arm: 15-60 سم، weight: 30-300 كجم)
+- Soft warning عند تغيّر مفاجئ عن آخر قياس
+- كشف شذوذ جماعي: لو 3+ قياسات قفزت دفعة → تحذير عن خطأ في الوحدات (سم/بوصة)
+
+### 🛡️ Service Worker
+- `bulkmode-v7-3`
+
+---
+
+## [V7.2 — الملف الشخصي + السجل اليومي] — 2026-05-19
+
+تخصيص للمستخدم + تتبع متغيرات نمط الحياة المؤثرة على النتيجة.
+
+### ✨ جديد
+
+- (#37) **Profile Modal** + حاسبة ماكروز (Mifflin-St Jeor):
+  - الاسم/العمر/الطول/الوزن
+  - الهدف: تضخيم/تنشيف/recomp/حفاظ
+  - مستوى الخبرة
+  - حساب حيّ: BMR / TDEE / السعرات / البروتين / الكارب / الدهون
+- (#38) **Daily Log** (📅 سجل يومي):
+  - عدّاد الماء (هدف 8 كأس)
+  - عدّاد النوم (هدف 7-8 ساعة)
+  - ٥ مكملات (كرياتين، بروتين، ملتي، فيتامين D، أوميجا 3)
+  - Store جديد: `dailyLog` (Schema migration V2→V3)
+- (#39) **RPE input** (ظاهر، استخدامه في V7.3): قائمة 6-10 لكل سيت، يحفظ في setRec.rpe
+- (#41) **Meal checkboxes**: ٦ وجبات/يوم + التزام شهري
+- **Daily Log Stats**: متوسط آخر 7 أيام مع الالتزام بالنسبة المئوية
+
+### 🛡️ Service Worker
+- `bulkmode-v7-2`
+
+---
+
+## [V7.1 — Chart.js محلي] — 2026-05-19
+
+أمان + سرعة: ربح من إزالة الاعتماد على CDN خارجي.
+
+### ✨ جديد
+- (#31) **Chart.js محلي في `vendor/chart.umd.min.js`** — لا CDN، لا supply-chain risk
+- يعمل أوفلاين من أول تحميل (لم يعد يحتاج فتح أول مرة متصلاً)
+- `loadChart()` يُحمّل من `./vendor/chart.umd.min.js`
+
+### 🛡️ Service Worker
+- إزالة معالجة `cdn.jsdelivr.net`
+- `bulkmode-v7-1`
+
+---
+
+## [V7.0 — جودة + A11y + UX] — 2026-05-18
+
+ترقية شاملة بـ 36 إصلاح/ميزة. تحويل من «MVP» إلى **app احترافي**.
+
+### ✨ جديد
+
+#### Onboarding + Today UX
+- (#8) **Onboarding overlay** عند أول فتح: ٣ شرائح (ترحيب + جدول الأسبوع، كيف تبدأ جلسة، تصدير أسبوعي)
+- (#9) **Today highlight**: بطاقة اليوم تنفتح تلقائياً + شارة ⭐ + إطار ذهبي
+- (#24) **Hero collapse** بعد أول جلسة — يتوفّر مساحة لمحتوى التطبيق
+
+#### Substitutions
+- (#10) **Scope choice** لتطبيق البديل: هذا السيت / كل اليوم / دائماً
+- (#11) **syncPlanBTexts**: مزامنة نصوص Plan B تلقائياً من كتالوج البدائل
+- (#12) **Skip exercise**: زر ↷ تخطّى — يُعطّل الستيب لليوم فقط
+
+#### Tracking
+- (#13) **«آخر مرة» قابلة للتبديل** لعرض «أفضل أداء» (PR)
+- (#16) **Auto-progression**: اقتراح وزن السيت التالي مبني على نطاق التكرار
+- (#17) **Session bar minimize**: تصغير لـ pill عائم
+- (#18) **Toast undo** بعد كل save (5 ث) — يحذف السيت + يعكس PRs
+- (#36) **Session heartbeat** + recovery: لو الجوال انطفأ، يقترح إنهاء الجلسة على آخر activity
+
+#### Body & Progress
+- (#14) **Body Metrics** (📏 قياسات): 6 قياسات + الوزن + مقارنات أسبوعية
+- (#15) **Program Week Tracker**: شارة في session bar `أسبوع 3/12 · شهر 1/3` + deload banner
+
+#### A11y + Performance
+- (#19) **Touch targets ≥44×44** عبر `::before { inset: -10px }`
+- (#20) **Color contrast WCAG AA**: `--tx3` رفع من `#4E5568` إلى `#7A8093`
+- (#21) **Latin digits** للبيانات (سيتات/تكرار/كجم) — العربية للنصوص الطبيعية
+- (#22) **prefers-reduced-motion**: يلغي كل animations + grain للمستخدمين الحساسين
+- (#23) **Focus indicators**: outline ذهبي على `:focus-visible`
+- (#25) **Grain texture**: opacity مخفّف من .35 إلى .18، 0.05 في light mode
+- (#26) **Light/Dark theme switcher**: زر في القائمة العائمة، يتبع `prefers-color-scheme`
+
+#### Architecture + Reliability
+- (#27) **Code split**: من 5210 سطر إلى 5 ملفات (data/session/substitutions/progress/app) + styles.css
+- (#28) **Test page** (`test.html`): 60+ smoke tests على pure functions
+- (#29) **Namespaced KEYS**: `app:onboarded`, `session:current`, `subs:active`, إلخ — مع migration تلقائي للمفاتيح القديمة
+- (#30) **Schema migrations framework**: `migrateV0toV1`, `migrateV1toV2` separate functions
+- (#32) **QuotaExceededError handler**: toast واضح + اقتراح حذف القديم
+- (#33) **SW update notification**: «نسخة جديدة متاحة» مع زر تحديث (SKIP_WAITING)
+- (#34) **PWA install prompt**: beforeinstallprompt + iOS Safari instructions
+- (#35) **AudioContext warmup** على touch/pointer/click (مش click only) — يضمن iOS
+
+### 🛡️ Service Worker
+- `bulkmode-v7-0`
 
 ---
 
 ## [V6 — البدائل الذكية] — 2026-05-11
 
-نظام كامل لاستبدال أي تمرين ببديل ذكي عند ازدحام الجهاز، مع كتالوج شامل وتعلّم تفضيلات المستخدم.
+نظام كامل لاستبدال أي تمرين ببديل ذكي عند ازدحام الجهاز.
 
 ### ✨ جديد
-
-#### 1. كتالوج البدائل (EXERCISE_ALTERNATIVES)
-- ~25 تمريناً × 3-5 بدائل لكل تمرين = **~110+ بديل** مكتمل
-- لكل بديل: اسم، سبب الاختيار، تطابق العضلة (0-100%)، الجهاز المطلوب
-- علامة **⚡ peakFriendly** للبدائل الأقل ازدحاماً في وقت الذروة
-- تطبيع تلقائي لأسماء التمارين المتغيّرة (`Chest Press بطيء` → `Chest Press`، `Pulley — Bicep Curl` → `Pulley Curl`)
-- يشمل: Chest Press, Pectoral Fly, Crossover, Lat Machine, Vertical Traction, Pulley, Low Row, Upper Back, Chin Ups, Shoulder Press, Delts, Reverse Fly, Arm Curl/Extension, Pulley Curl/Pushdown, Dips, Leg Press, Leg Extension, Prone Leg Curl, Abductor, Adductor, Calf Raise, Lower Back, Rotary Torso, Abdominal Crunch, Hanging Leg Raise
-
-#### 2. زر "⇄ بديل؟" تلقائي
-- يُحقَن بجانب كل تمرين قابل للاستبدال (يتجاهل rest/warmup/تمارين بدون بدائل)
-- موقع `top:6px;left:8px` (في RTL = أعلى-يسار visual) — صغير وغير مزعج
-- يتلوّن أزرق عند تفعيل بديل
-
-#### 3. Bottom Sheet Modal احترافي
-- ينزلق من أسفل بانيميشن سلس (`slideUpSheet` 0.35s)
-- يُغلق بـ **٣ طرق:** زر ✕، النقر خارجه، أو **swipe down** (touch events)
-- شريط grabber في الأعلى للإشارة لإمكانية السحب
-- مغلق على body scroll عند الفتح
-- بطاقات بديل فيها:
-  - ترقيم (1, 2, 3...) — حسب الأولوية
-  - شارة ⚡ متاح للبدائل الـ peakFriendly
-  - شريط تطابق العضلة animated من 0 إلى المئوية
-  - السبب والجهاز
-  - زر "استخدم هذا البديل"
-- البديل الحالي يُعلّم بإطار أزرق وزر "✓ البديل الحالي"
-
-#### 4. الذكاء (3 ميزات)
-**أ. تحذير وقت الذروة (6-9 مساءً):**
-- بانر برتقالي في الأعلى
-- إعادة ترتيب البدائل لتظهر الـ peakFriendly أولاً
-
-**ب. اقتراح الاستبدال الدائم:**
-- بعد ٣ مرات استبدال متكررة لنفس الزوج، يظهر بانر بنفسجي
-- "💡 لاحظنا إنك استبدلت X بـ Y ٣ مرات. تبي نخلّيه دائم؟"
-- زر "نعم، استبدل دائماً" يحفظ في `substitutionPrefs`
-- التفضيل الدائم يُطبّق تلقائياً على كل الأيام في المستقبل
-
-**ج. "ما لقيت اللي يناسبك؟":**
-- رابط في أسفل الـ Modal يعرض كل الـ ٢٤ جهاز
-- المستخدم يختار يدوياً أي جهاز كبديل
-
-#### 5. التكامل مع نظام التتبع V5
-- عند تطبيق البديل: يُحدَّث `data-name` و `data-ex` في الـ track-input
-- السيت يُحفظ تحت اسم البديل في IndexedDB
-- "آخر مرة" تجلب سجل البديل من IndexedDB
-- علامة 🔄 بصرية على الـ step بشارة "بديل"
-- زر صغير "↩ استعد X" بجانب الاسم البديل
-- استعادة الأصلي ترجع الـ data-name للقيمة الأصلية (مع variants)
-
-#### 6. التخزين والاسترجاع
-كل البيانات في IndexedDB `settings` store:
-- `substitutions` — استبدالات لكل-ستيب: `{ stepId: {original, substitute, date, dayType} }`
-- `substitutionPrefs` — تفضيلات دائمة: `{ original: substitute }`
-- `substitutionHistory` — تاريخ مرات الاستبدال (capped at 200 entries) للاقتراح الذكي
-- **استرجاع تلقائي** عند فتح التطبيق
-- **يُضمَّن في export/import JSON** تلقائياً (لأنه ضمن settings)
-
-#### 7. IDs مستقرة للـ Steps
-- `ensureStepIds()` يولّد IDs بصيغة `step-D<dayIdx>-S<stepIdx>`
-- مستقرة عبر إعادة التحميل طالما ترتيب اليوم ثابت
-- مطلوبة لربط الاستبدال بالـ DOM بعد reload
+- **EXERCISE_ALTERNATIVES catalog**: ~25 تمرين × 3-5 بدائل = ~110+ بديل
+- زر **⇄ بديل؟** تلقائي بجانب كل تمرين قابل للاستبدال
+- **Bottom Sheet Modal** ينزلق من أسفل بـ swipe-to-dismiss
+- **تحذير وقت الذروة** (6-9م): تعيد ترتيب البدائل حسب peakFriendly
+- **اقتراح ذكي**: بعد 3 مرات استبدال متكررة → يقترح جعل البديل دائماً
+- **"ما لقيت اللي يناسبك؟"**: يعرض كل الـ 24 جهاز كخيار احتياطي
+- **تكامل مع V5 tracking**: السيت يُحفظ تحت اسم البديل
+- **IDs مستقرة للستيبات** (`step-D<n>-S<n>`)
 
 ### 🛡️ Service Worker
-- نسخة جديدة: `bulkmode-v6` (من `v5`)
-
-### 🎨 CSS جديد
-- `.alt-btn` — زر صغير ذهبي بـ position:absolute
-- `.alt-modal` + `.alt-sheet` — Bottom sheet مع grabber
-- `.alt-card` — بطاقة البديل (مع variants: `.peak-friendly`, `.current`)
-- `.alt-match-bar` + `.alt-match-fill` — شريط تطابق متحرّك
-- `.peak-warning` — بانر برتقالي
-- `.smart-suggest` — بانر بنفسجي
-- `.exercise-substituted` — تنسيق الستيب المستبدَل (لون أزرق + شارة 🔄)
-- `.restore-original-btn` — زر استعادة صغير
-- `.alt-all` — شبكة كل الأجهزة (٢ أعمدة)
-
-### 🐛 الحلول الذكية
-- التعامل مع variants (`بطيء`, `ثقيل`, `Pulley — Bicep Curl`) عبر `normalizeExName`
-- swipe-to-dismiss لا يُفعَّل إلا عند `sheet.scrollTop===0` (لا يتعارض مع التمرير الداخلي)
-- البدائل الدائمة لا تُسجَّل في history (تتجنب over-counting في الاقتراحات الذكية)
+- `bulkmode-v6`
 
 ---
 
 ## [V5 — المستوى ١] — 2026-05-11
 
-أعمق ترقية منذ إطلاق التطبيق. تحويل من **برنامج تتبع بسيط** إلى **تطبيق احترافي** يضاهي Hevy و Strong.
+تحويل من برنامج تتبع بسيط إلى تطبيق احترافي.
 
 ### ✨ جديد
-
-#### 1. تخزين IndexedDB
-- استبدال LocalStorage بـ IndexedDB كامل مع schema منظّم
-- **٧ stores:** `workouts`, `sets`, `exercises`, `bodyMetrics`, `prs`, `progressPhotos`, `settings`
-- **Indexes:** على `date`, `dayType`, `workoutId`, `exerciseName`, `type` للاستعلامات السريعة
-- **ترحيل تلقائي:** عند أول تشغيل، تُنقل بيانات LocalStorage القديمة (`bulkmode_tracker_v1`) لـ IndexedDB كجلسات تاريخية تلقائياً
-- Wrapper `db` مبسّط مع `async/await` (`db.add`, `db.put`, `db.get`, `db.getAll`, `db.delete`, `db.clear`)
-
-#### 2. منطق الجلسات (Workout Sessions)
-- زر **"▶ بدء الجلسة"** أعلى كل يوم في تبويب التمارين
-- **شريط جلسة نشطة** في الأعلى يعرض: نوع اليوم، المدة الحيّة، عدد السيتات، عدد الـ PRs
-- كل سيت يُحفظ تحت `workoutId` مع timestamp فعلي
-- **بدء تلقائي** للجلسة عند حفظ أول سيت بدون جلسة نشطة
-- **شاشة ملخص** عند انتهاء الجلسة: المدة، إجمالي الحجم، عدد السيتات، الـ PRs المحطّمة
-- الجلسة الحالية تُحفظ في `settings.currentSession` فتبقى ثابتة حتى مع إغلاق التطبيق
-
-#### 3. الأرقام القياسية (Personal Records)
-كشف تلقائي وفوري لـ **٤ أنواع** من الـ PRs لكل سيت محفوظ:
-- **Weight PR:** أعلى وزن في تمرين (بأي تكرار)
-- **Rep PR:** أعلى تكرار عند وزن معيّن
-- **Volume PR:** أعلى حجم (وزن × تكرار) في سيت واحد
-- **1RM Estimated:** باستخدام معادلة Epley `1RM = w × (1 + r/30)`
-
-**عند تحطيم PR:**
-- احتفال بصري Full-screen (Pop-in animation مع كأس ذهبي 🏆)
-- اهتزاز قوي `[100,50,100,50,200]ms`
-- علامة 🏆 على السيت المنجز
-- يُحفظ كل PR في store منفصل للاستعلامات السريعة
-
-#### 4. مؤقت الراحة الذكي
-- **بدء تلقائي** بعد حفظ كل سيت — مدة مناسبة (٦٠ث للأزواج، ٩٠ث للـ SOLO، استخراج تلقائي من نص الـ rest step)
-- **يعتمد على timestamps** (`Date.now()`) بدل العدّاد العادي — لا يتأثر بخمول التاب
-- **استمرار عند تبديل التابات** عبر Page Visibility API
-- **إشعار صوتي** ثلاثي النقرات عند الانتهاء (Web Audio API — يُفعَّل على iOS عبر AudioContext warmup عند أول لمسة)
-- **إشعار نظام** (Notification API) عند الانتهاء — حتى لو الجوال مغلق
-- **اهتزاز** `[200,100,200]ms`
-- **أزرار جديدة:** ⏭ تخطي · +30s · إيقاف/تشغيل
-- وميض أحمر للأرقام عند آخر ٥ ثوانٍ
-
-#### 5. الرسوم البيانية (Chart.js)
-- **lazy-loaded** من jsdelivr — لا يؤثر على First Contentful Paint
-- يُخزَّن في cache من Service Worker بعد أول تحميل = أوفلاين دائماً
-- **رسم تمرين فردي:** تطوّر الوزن + 1RM المقدّر عبر الزمن (line chart مع dataset مزدوج)
-- **حجم أسبوعي:** Bar chart بالـ ISO weeks
-- **وزن الجسم:** Line chart (يستخدم store `bodyMetrics` — جاهز للمستوى ٢)
-- ستايل متناسق مع الهوية الذهبية/الداكنة
-
-#### 6. تبويب "تقدمي" الجديد 📈
-- يحوي ٣ تبويبات فرعية:
-  - 🏆 **الأرقام القياسية:** قائمة كل PRs مجمّعة لكل تمرين
-  - 📊 **الرسوم البيانية:** ٣ رسوم تفاعلية
-  - 📜 **سجل الجلسات:** ترتيب زمني عكسي، آخر ٣٠ جلسة، مع كل التفاصيل
-- يدعم Empty States ذكية
-
-### 🔧 محسَّن
-
-- **تصدير JSON:** الآن يتضمّن كل stores الـ IndexedDB (نسخة احتياطية شاملة)
-- **استيراد JSON:** يدعم النسخة القديمة (auto-migrate) والجديدة
-- **stats modal:** يقرأ من IndexedDB الآن، يعرض الجلسات بدل السجلات الفردية
-- **مسح كل البيانات:** يُفرغ كل stores الـ IndexedDB + LocalStorage القديم
+- **IndexedDB** كامل: 7 stores + indexes + migration تلقائي من LocalStorage
+- **Workout Sessions**: زر «بدء الجلسة» + شريط نشط + شاشة ملخص
+- **Personal Records تلقائية** (4 أنواع): Weight, Reps, Volume, 1RM (Epley)
+- **Smart Rest Timer**: timestamps-based، يستمر مع خمول التاب، أصوات + اهتزاز + إشعار
+- **Charts** (Chart.js lazy-loaded): تطور التمرين، الحجم الأسبوعي، وزن الجسم
+- **تبويب «تقدمي»** بـ 3 sub-tabs: PRs / Charts / History
+- **Export/Import JSON** شامل لكل stores
 
 ### 🛡️ Service Worker
-- نسخة جديدة: `bulkmode-v5` (يَستبدل `v1`)
-- **Stale-While-Revalidate** لـ Chart.js وخطوط Google — يعمل أوفلاين بعد أول تحميل
-- معالجة خاصة لـ jsdelivr CDN
-- تنظيف caches القديمة عند الترقية
-
-### 🎨 CSS
-- متغيرات الألوان الأساسية لم تتغيّر (الهوية البصرية محفوظة)
-- إضافات جديدة:
-  - `.session-ctrl` + `.session-start-btn` — أزرار بدء الجلسة
-  - `.sess-bar` — الشريط العلوي النشط
-  - `.pr-flash` + `.pr-flash-inner` — احتفال الـ PR
-  - `.summary-modal` + `.summary-grid` + `.summary-stat` — ملخص الجلسة
-  - `.prog-tabs` + `.prog-pane` — تبويبات التقدّم الفرعية
-  - `.chart-wrap` — حاوية الرسوم
-  - `.pr-list` + `.pr-item` — قائمة الأرقام القياسية
-  - `.empty-state` — حالات الفراغ
-
-### 🐛 إصلاحات
-- نقر داخل خانات الإدخال لم يعد يطوي بطاقة اليوم
-- مؤقت الراحة لم يعد يفقد العدّ عند تبديل التابات
-
-### 📋 الميزات القادمة (المستوى ٢)
-- تتبّع وزن الجسم والقياسات
-- ملاحظات لكل سيت وجلسة
-- تقويم تمارين Heatmap
-- اقتراح وزن السيت التالي (Auto-progression)
-- تذكير وزن الجسم الأسبوعي
+- `bulkmode-v5`
 
 ---
 
 ## [V4] — 2026-05-07
 
-- النسخة الأساسية: برنامج ١٢ أسبوع، APS pairs، LocalStorage tracking، مؤقت راحة بسيط
-- ٧ تبويبات: نظرة عامة، أول مرة، التمارين، الأوزان، الأكل، نصائح، دليل شامل
+النسخة الأساسية: برنامج 12 أسبوع، APS pairs، LocalStorage tracking، مؤقت راحة بسيط، 7 تبويبات.

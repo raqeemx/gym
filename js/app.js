@@ -360,6 +360,10 @@ async function checkOnboarding(){
 
 // ============ INIT ============
 window.addEventListener('DOMContentLoaded',async()=>{
+  // V8 — اضبط العنوان ورقم الإصدار من js/version.js (مصدر وحيد)
+  if(typeof APP_TITLE==='string') document.title=APP_TITLE;
+  const vEl=document.getElementById('footerVersion');
+  if(vEl && typeof APP_VERSION==='string') vEl.textContent=`v${APP_VERSION} · ${APP_BUILD||''}`;
   try{
     await db.open();
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced

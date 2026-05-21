@@ -1,5 +1,7 @@
-// BULK MODE Service Worker — Offline-first (V8.4 — workout reminders)
-const CACHE_NAME = 'bulkmode-v8-4';
+// BULK MODE Service Worker — Offline-first
+// CACHE_NAME مُولَّد ديناميكياً من js/version.js (مصدر وحيد للحقيقة)
+importScripts('./js/version.js');
+const CACHE_NAME = APP_CACHE_NAME; // مثلاً: 'bulkmode-v8-0-0'
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +9,7 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './css/styles.css',
+  './js/version.js',
   './js/data.js',
   './js/program-data.js',
   './js/program-render.js',
