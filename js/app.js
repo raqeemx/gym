@@ -88,6 +88,19 @@ async function openProfile(){
       el.dataset.bound='1';
     }
   });
+  // V8 — املأ حقول التذكيرات من الإعدادات المحفوظة
+  if(typeof loadReminderPrefs==='function'){
+    const prefs=await loadReminderPrefs();
+    const remEnabled=document.getElementById('remEnabled');
+    const remTime=document.getElementById('remTime');
+    const remBefore=document.getElementById('remBefore');
+    const remMissed=document.getElementById('remMissed');
+    if(remEnabled) remEnabled.checked=!!prefs.enabled;
+    if(remTime) remTime.value=prefs.workoutTime||'21:30';
+    if(remBefore) remBefore.value=String(prefs.notifyBeforeMinutes||15);
+    if(remMissed) remMissed.checked=prefs.missedSessionEnabled!==false;
+    if(typeof updateReminderStatusDisplay==='function') updateReminderStatusDisplay();
+  }
   document.getElementById('profileModal').classList.add('open');
 }
 
@@ -370,6 +383,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await checkOnboarding();  // فحص أول فتح وعرض الـ onboarding (V7)
     await checkExportReminder(); // تذكير بالتصدير الأسبوعي (V7)
     setupInstallPrompt();      // V7 #34 — التقاط beforeinstallprompt + iOS hint
+    // V8 — تذكيرات التمرين: فحص جلسة مفوّتة + جدول التذكير القادم
+    if(typeof checkMissedSession==='function') checkMissedSession();
+    if(typeof scheduleNextReminder==='function') scheduleNextReminder();
   }catch(e){
     console.error('Init error:',e);
     showToast('⚠️ خطأ في تحميل قاعدة البيانات','var(--red)');

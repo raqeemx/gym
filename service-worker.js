@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V8.3 — plate calculator)
-const CACHE_NAME = 'bulkmode-v8-3';
+// BULK MODE Service Worker — Offline-first (V8.4 — workout reminders)
+const CACHE_NAME = 'bulkmode-v8-4';
 const ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const ASSETS = [
   './js/achievements.js',
   './js/progress-photos.js',
   './js/plate-calc.js',
+  './js/reminders.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
@@ -42,10 +43,59 @@ self.addEventListener('activate', (event) => {
 });
 
 // V7 (#33) — استمع لـ SKIP_WAITING من العميل عشان نطبّق النسخة الجديدة فوراً
+// V8 — استمع لـ SCHEDULE_REMINDER لجدولة تذكير الجلسة عبر setTimeout
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (!event.data) return;
+
+  if (event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
   }
+
+  if (event.data.type === 'SCHEDULE_REMINDER') {
+    const { delayMs, title, body, tag, fireAt } = event.data;
+    // sanity bounds: من 0 لـ 12 ساعة
+    if (typeof delayMs !== 'number' || delayMs <= 0 || delayMs > 12 * 3600 * 1000) return;
+    // تفادي التكرار — لو فيه timeout سابق بنفس tag، أعد ضبطه
+    if (self._reminderTimers && self._reminderTimers[tag]) {
+      clearTimeout(self._reminderTimers[tag]);
+    }
+    if (!self._reminderTimers) self._reminderTimers = {};
+    self._reminderTimers[tag] = setTimeout(() => {
+      delete self._reminderTimers[tag];
+      self.registration.showNotification(title || '⏰ موعد التمرين', {
+        body: body || 'حان وقت التمرين',
+        tag: tag || 'workout-reminder',
+        icon: './icons/icon-192.png',
+        badge: './icons/icon-192.png',
+        requireInteraction: false,
+        vibrate: [200, 100, 200],
+        data: { fireAt: fireAt || Date.now(), source: 'reminder' }
+      }).catch(err => console.warn('showNotification failed:', err));
+    }, delayMs);
+    return;
+  }
+
+  if (event.data.type === 'CANCEL_REMINDER') {
+    const tag = event.data.tag;
+    if (self._reminderTimers && self._reminderTimers[tag]) {
+      clearTimeout(self._reminderTimers[tag]);
+      delete self._reminderTimers[tag];
+    }
+  }
+});
+
+// V8 — نقرة على الإشعار: ركّز على نافذة موجودة أو افتح جديدة
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
+    })
+  );
 });
 
 // Fetch strategy:

@@ -1279,6 +1279,44 @@
       <div id="profCalc" class="prof-calc"></div>
       <button class="bm-save" onclick="saveUserProfile()">💾 احفظ الملف</button>
     </div>
+
+    <!-- V8 — Workout Reminders Section -->
+    <div class="rem-divider"></div>
+    <div class="rem-section">
+      <h3>🔔 التذكيرات</h3>
+      <div class="rem-hint">احصل على تنبيه قبل وقت تمرينك المعتاد. لو نسيت — التطبيق سيذكّرك عند فتحه.</div>
+      <div class="bm-form rem-form">
+        <label class="rem-toggle">
+          <input type="checkbox" id="remEnabled">
+          <span>تفعيل تذكيرات قبل التمرين</span>
+        </label>
+        <div class="bm-grid rem-grid">
+          <div class="bm-field">
+            <label>وقت التمرين المعتاد</label>
+            <input type="time" id="remTime" value="21:30">
+          </div>
+          <div class="bm-field">
+            <label>تذكير قبل</label>
+            <select id="remBefore" class="prof-select">
+              <option value="5">٥ دقائق</option>
+              <option value="15" selected>١٥ دقيقة</option>
+              <option value="30">٣٠ دقيقة</option>
+              <option value="60">ساعة</option>
+            </select>
+          </div>
+        </div>
+        <label class="rem-toggle">
+          <input type="checkbox" id="remMissed">
+          <span>نبّهني عند فوات جلسة (بعد ساعة من الموعد)</span>
+        </label>
+        <div class="rem-status" id="remStatus"></div>
+        <div class="rem-warn">⚠️ التذكيرات تعتمد على دعم المتصفح (iOS Safari محدود). للأمان <b>صدّر للتقويم</b> أيضاً.</div>
+        <div class="rem-actions">
+          <button class="bm-save" onclick="saveReminders()">💾 احفظ التذكيرات</button>
+          <button class="rem-ics-btn" onclick="exportWorkoutICS()">📅 صدّر للتقويم (.ics)</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1403,6 +1441,7 @@
 <script src="js/achievements.js"></script>
 <script src="js/progress-photos.js"></script>
 <script src="js/plate-calc.js"></script>
+<script src="js/reminders.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

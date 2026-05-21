@@ -92,7 +92,9 @@ const KEYS={
   // V8 — plate calculator preferences (bar weight + enabled plates)
   PLATE_CALC_PREFS:'app:plate_calc_prefs',
   // V8 — smart deload state: {active, startedAt, reason, endedAt?, autoEnded?}
-  MANUAL_DELOAD_ACTIVE:'session:manual_deload'
+  MANUAL_DELOAD_ACTIVE:'session:manual_deload',
+  // V8 — workout reminders preferences
+  REMINDER_PREFS:'app:reminder_prefs'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة
