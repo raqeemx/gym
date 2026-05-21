@@ -94,7 +94,9 @@ const KEYS={
   // V8 — smart deload state: {active, startedAt, reason, endedAt?, autoEnded?}
   MANUAL_DELOAD_ACTIVE:'session:manual_deload',
   // V8 — workout reminders preferences
-  REMINDER_PREFS:'app:reminder_prefs'
+  REMINDER_PREFS:'app:reminder_prefs',
+  // V8.3 (3.3) — program editor: per-day full overrides {dayId: dayObject}
+  PROGRAM_OVERRIDES:'app:program_overrides'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

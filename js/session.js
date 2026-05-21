@@ -28,6 +28,7 @@ async function injectTrackingInputs(){
     inputDiv.innerHTML=`
       <label>كجم</label>
       <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${placeholderW}">
+      <button class="plate-calc-btn" type="button" onclick="openPlateCalcFromSet(this);event.stopPropagation()" title="افتح حاسبة البليتات بهذا الوزن">🧮</button>
       <label>تكرار</label>
       <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
       <span class="rpe-wrap" title="RPE اختياري — صعوبة السيت من 6 إلى 10">
@@ -78,6 +79,7 @@ async function injectTrackingInputs(){
       <span class="warmup-badge" title="هذا سيت تسخين — لا يُحتسب في الأرقام القياسية أو الحجم">🔥 تسخين</span>
       <label>كجم</label>
       <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${suggestedW}">
+      <button class="plate-calc-btn" type="button" onclick="openPlateCalcFromSet(this);event.stopPropagation()" title="افتح حاسبة البليتات بهذا الوزن">🧮</button>
       <label>تكرار</label>
       <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
       <button class="save-btn" onclick="saveSet(this);event.stopPropagation()">حفظ</button>
@@ -294,6 +296,30 @@ function promptSetNote(btnEl){
     delete trackDiv.dataset.pendingNote;
     btnEl.classList.remove('has-note');
     btnEl.title='ملاحظة على السيت (اختياري)';
+  }
+}
+
+// V8.3 (3.4) — افتح حاسبة البليتات مع الوزن الحالي/المقترح من سياق السيت
+// الأولوية: قيمة الإدخال > placeholder > آخر سيت محفوظ
+function openPlateCalcFromSet(btnEl){
+  const trackDiv=btnEl.closest('.track-input');
+  if(!trackDiv) return;
+  const wInput=trackDiv.querySelector('.weight-input');
+  if(!wInput) return;
+  let weight=parseFloat(wInput.value);
+  if(!isFinite(weight) || weight<=0){
+    // ابحث في placeholder كاقتراح
+    const ph=wInput.placeholder;
+    const phN=parseFloat(ph);
+    if(isFinite(phN) && phN>0) weight=phN;
+  }
+  const exName=wInput.dataset.name||'';
+  if(typeof openPlateCalc==='function'){
+    openPlateCalc({
+      prefillWeight:isFinite(weight)&&weight>0?weight:null,
+      context:exName,
+      autoCalc:true
+    });
   }
 }
 

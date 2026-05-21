@@ -9,25 +9,43 @@
  * يُنتج نفس IDs السابقة (step-D0-S3, ...) → البدائل المحفوظة لا تنكسر.
  * ============================================================ */
 
-function renderProgram(){
+// V8.3 (3.3) — Cache of effective program (defaults + user overrides)
+// مُحدَّث في renderProgram() ومُستخدَم في openProgramEditor()
+let EFFECTIVE_PROGRAM=null;
+
+async function renderProgram(){
   const container=document.getElementById('programContainer');
   if(!container){console.warn('programContainer not found — skipping renderProgram');return}
   if(typeof PROGRAM_DATA==='undefined'){console.warn('PROGRAM_DATA not loaded');return}
-  container.innerHTML=PROGRAM_DATA.days.map(renderDay).join('\n');
+  // V8.3 (3.3) — ادمج التخصيصات لكل يوم (لو حُفظ override يستبدل اليوم الافتراضي بالكامل)
+  let overrides={};
+  try{
+    if(typeof db!=='undefined' && db.get){
+      const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
+      overrides=(rec&&rec.value)||{};
+    }
+  }catch(e){console.warn('Failed to load program overrides:',e)}
+  const days=PROGRAM_DATA.days.map(d=>overrides[d.id]?{...overrides[d.id],_isCustom:true}:d);
+  EFFECTIVE_PROGRAM={...PROGRAM_DATA,days};
+  container.innerHTML=days.map(renderDay).join('\n');
 }
 
 // ============ يوم كامل (.dy) ============
 function renderDay(day){
-  // يوم راحة بدون phases — header فقط
+  // يوم راحة بدون phases — header فقط (+ ملاحظة اختيارية أسفله)
   if(day.isRest||day.type==='REST'){
     return renderRestDay(day);
   }
   // يوم تدريب عادي — phases مع عدّاد للسيتات
   const counter={n:0};
   const phasesHtml=day.phases.map(p=>renderPhase(p,counter)).join('\n\n');
+  // V8.3 (3.3) — dayIntro اختياري (tip tpu قبل الـ phases)
+  const introHtml=day.dayIntro
+    ?`<div class="tip tpu" style="margin-bottom:14px"><div class="ti">${day.dayIntro.icon||'⭐'}</div><div class="tt">${day.dayIntro.text}</div></div>`
+    :'';
   return `
   <!-- يوم ${day.shortName}: ${day.type} -->
-  <div class="dy" onclick="tg(this)">
+  <div class="dy" onclick="tg(this)" data-day-id="${day.id||''}">
     <div class="dh">
       <div class="db ${day.colorClass}">${day.shortName}</div>
       <div class="di"><div class="dn">${day.label}</div><div class="df">${day.description}</div></div>
@@ -36,7 +54,7 @@ function renderDay(day){
     <div class="dby"><div class="dbi">
 
       ${renderDaySummary(day.stats)}
-
+      ${introHtml}
 ${phasesHtml}
 
       <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt">${day.finishTip}</div></div>
@@ -46,23 +64,28 @@ ${phasesHtml}
 
 // ============ يوم راحة بسيط ============
 function renderRestDay(day){
+  // V8.3 (3.3) — restNote: tip منفصل أسفل بطاقة اليوم
+  const noteHtml=day.restNote
+    ?`\n  <div class="tip t0" style="margin-bottom:16px"><div class="ti">${day.restNote.icon||'🧘'}</div><div class="tt">${day.restNote.text}</div></div>`
+    :'';
   return `
   <!-- يوم ${day.shortName}: راحة -->
-  <div class="dy">
+  <div class="dy" data-day-id="${day.id||''}">
     <div class="dh" style="cursor:default">
       <div class="db ${day.colorClass||'rest'}">${day.shortName}</div>
       <div class="di"><div class="dn">${day.label}</div><div class="df">${day.description}</div></div>
     </div>
-  </div>`;
+  </div>${noteHtml}`;
 }
 
 // ============ ملخّص اليوم ============
 function renderDaySummary(stats){
   if(!stats) return '';
+  const pairsLbl=stats.pairsLabel||'أزواج';
   return `<div class="day-summary">
         <div class="ds-item"><span class="ds-num">${stats.sets}</span><div class="ds-lbl">سيت</div></div>
         <div class="ds-item"><span class="ds-num">${stats.exercises}</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">${stats.pairs}</span><div class="ds-lbl">أزواج</div></div>
+        <div class="ds-item"><span class="ds-num">${stats.pairs}</span><div class="ds-lbl">${pairsLbl}</div></div>
         <div class="ds-item"><span class="ds-num">${stats.minutes}</span><div class="ds-lbl">دقيقة</div></div>
       </div>`;
 }

@@ -136,7 +136,10 @@ function renderPlateVisual(plates, barWeight){
 }
 
 // ============ Modal Open/Close ============
-async function openPlateCalc(){
+// V8.3 (3.4) — opts.prefillWeight: تعبئة تلقائية للوزن المستهدف من سياق التمرين
+// opts.context: نص اختياري يُعرض كهَمزة سياق (مثلاً اسم التمرين)
+// opts.autoCalc: لو true، احسب فوراً بعد التعبئة
+async function openPlateCalc(opts={}){
   const prefs=await loadPCPrefs();
   const modal=document.getElementById('plateCalcModal');
   if(!modal) return;
@@ -154,12 +157,34 @@ async function openPlateCalc(){
 
   document.getElementById('pcBarSelect').innerHTML=barOptionsHtml;
   document.getElementById('pcPlateChips').innerHTML=platesHtml;
-  document.getElementById('pcTarget').value='';
+  const targetInp=document.getElementById('pcTarget');
+  const prefill=(opts && opts.prefillWeight!=null && isFinite(opts.prefillWeight) && opts.prefillWeight>0)
+    ?Number(opts.prefillWeight):null;
+  targetInp.value=prefill!=null?prefill:'';
   document.getElementById('pcResult').innerHTML='';
+
+  // V8.3 (3.4) — اعرض همزة السياق لو موجودة
+  const ctxEl=document.getElementById('pcContext');
+  if(ctxEl){
+    if(opts && opts.context){
+      ctxEl.textContent=`🧮 من: ${opts.context}`;
+      ctxEl.style.display='';
+    }else{
+      ctxEl.textContent='';
+      ctxEl.style.display='none';
+    }
+  }
 
   modal.classList.add('open');
   document.body.style.overflow='hidden';
-  setTimeout(()=>{const inp=document.getElementById('pcTarget');if(inp) inp.focus()},120);
+  setTimeout(()=>{
+    if(targetInp){targetInp.focus();targetInp.select&&targetInp.select()}
+  },120);
+
+  // V8.3 (3.4) — احسب فوراً لو طُلب التحضير المسبق
+  if(prefill!=null && opts.autoCalc!==false){
+    setTimeout(()=>doPlateCalc(),140);
+  }
 }
 
 function closePlateCalc(){

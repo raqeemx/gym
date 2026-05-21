@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -179,454 +179,9 @@
 
   <div class="tip t0" style="margin-bottom:16px"><div class="ti">🚣</div><div class="tt"><strong>قبل كل تمرين:</strong> 5 دقائق تجديف على Skillrow + مجموعة تسخين بنص الوزن على أول جهاز.</div></div>
 
-  <!-- يوم الأحد: UPPER A — يُولَّد من PROGRAM_DATA عبر renderProgram() -->
+  <!-- كل الأيام السبعة تُولَّد ديناميكياً من PROGRAM_DATA عبر renderProgram() -->
+  <!-- V8.3 — التخصيصات (program editor) تُحفظ في KEYS.PROGRAM_OVERRIDES وتُدمج عند التوليد -->
   <div id="programContainer"></div>
-
-  <!-- يوم الاثنين: BACK & WINGS — يوم الضلات الكثيف -->
-  <div class="dy" onclick="tg(this)">
-    <div class="dh">
-      <div class="db pull">اثن</div>
-      <div class="di"><div class="dn">BACK & WINGS — يوم الضلات والظهر الكامل</div><div class="df">٢٤ سيت · ~٦٠ دقيقة · ضلات + ظهر عريض + ضخامة الجناحين V-Taper</div></div>
-      <span class="dt tpl">BACK</span><span class="da">▾</span>
-    </div>
-    <div class="dby"><div class="dbi">
-
-      <div class="day-summary">
-        <div class="ds-item"><span class="ds-num">24</span><div class="ds-lbl">سيت</div></div>
-        <div class="ds-item"><span class="ds-num">7</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
-        <div class="ds-item"><span class="ds-num">~60</span><div class="ds-lbl">دقيقة</div></div>
-      </div>
-
-      <div class="tip tpu" style="margin-bottom:14px"><div class="ti">🦅</div><div class="tt"><strong>الهدف اليوم:</strong> توسيع الظهر والضلات (V-Taper) — هذا الشكل الذي يجعل خصرك يبان أنحف وكتفك أعرض. تركيز كثيف على عضلات الـ Lats عبر تمارين السحب الرأسي والأفقي بتنوع زوايا.</div></div>
-
-      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
-      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق · يسخّن الظهر مباشرة</div></div></div>
-      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Lat Machine — مجموعة تسخين</div><div class="step-info">١٢ تكرار بنصف وزن العمل</div></div></div>
-
-      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Lat Machine ثقيل — باني الضلات الرئيسي</span><span class="pmeta">4 sets</span></div>
-      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Lat Machine — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٥ كجم · اسحب للصدر</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">شغّل عضلة الـ Lat واضغطها</div></div></div>
-      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Lat Machine — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار · انتقل للزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Vertical Traction ↔ Low Row</span><span class="pmeta">4 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🦅</span><div><span class="zone-tag">🟢 ZONE</span>عرض ↕ سمك الظهر · سحب رأسي + سحب أفقي · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Low Row مشغول</b> → استخدم <b>Pulley مع البار من القاعدة</b> (سحب أفقي بالكابل، نفس الفائدة)</div></div>
-
-      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٥ كجم · ظهر علوي عريض</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لـ Low Row</div></div></div>
-      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Low Row — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٥ كجم · سمك الظهر الأوسط</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">ارجع لـ Vertical Traction</div></div></div>
-
-      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Low Row — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Low Row — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Low Row — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Chin Ups (Kneeling) ↔ Pulley (سحب جانبي بذراع واحدة)</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>عزل Lats · Chin Ups بقبضة عكسية + سحب أحادي للضلة · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Kneeling Easy مشغول</b> → استبدله بـ <b>Lat Machine بقبضة عكسية ضيقة</b> (تركيز قوي على Lats السفلية)</div></div>
-
-      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Chin Ups (Kneeling) — سيت ١</div><div class="step-info">٨-١٢ تكرار · أثقل مساعدة ممكنة</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لجهاز Pulley</div></div></div>
-      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Pulley — سحب أحادي للضلة — سيت ١</div><div class="step-info">١٢ تكرار/ذراع · ٥-٧.٥ كجم · مدى حركة كامل</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٢</div><div class="step-info">٨-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Pulley — سحب أحادي — سيت ٢</div><div class="step-info">١٢ تكرار/ذراع</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٣ (الأخير)</div><div class="step-info">٨-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Pulley — سحب أحادي — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار/ذراع · انتهى الزوج B</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Upper Back ↔ Reverse Fly</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>كثافة أعلى الظهر + كتف خلفي · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Upper Back مشغول</b> → استخدم <b>Low Row بقبضة عريضة</b> (يستهدف نفس المنطقة)</div></div>
-
-      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Upper Back — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٠ كجم · اضغط لوحي الكتف</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم · كتف خلفي</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Upper Back — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Upper Back — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step done"><div class="step-num">26</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
-
-      <div class="tip tg" style="margin-top:14px"><div class="ti">🦅</div><div class="tt"><strong>انتهيت من BACK & WINGS</strong> · ٢٦ خطوة · ~٦٠ دقيقة · هذا اليوم الذي يبني الظهر العريض وضلات الجناحين. سيظهر الفرق بعد ٣-٤ أسابيع.</div></div>
-    </div></div>
-  </div>
-
-  <!-- يوم الثلاثاء: ARMS A -->
-  <div class="dy" onclick="tg(this)">
-    <div class="dh">
-      <div class="db pull">ثلا</div>
-      <div class="di"><div class="dn">ARMS A — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٠ سيت · ~٤٥ دقيقة · أسرع يوم</div></div>
-      <span class="dt tpl">ARMS</span><span class="da">▾</span>
-    </div>
-    <div class="dby"><div class="dbi">
-
-      <div class="day-summary">
-        <div class="ds-item"><span class="ds-num">20</span><div class="ds-lbl">سيت</div></div>
-        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
-        <div class="ds-item"><span class="ds-num">~45</span><div class="ds-lbl">دقيقة</div></div>
-      </div>
-
-      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
-      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
-      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Arm Extension — تسخين</div><div class="step-info">١٢ تكرار بنصف الوزن</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Arm Extension ↔ Arm Curl</span><span class="pmeta">4 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الذراعين · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Arm Curl مشغول</b> → استخدم <b>Pulley مع البار القصير من الأسفل</b> (Bicep Curl بالكابل)</div></div>
-
-      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-name">Arm Extension — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ٢٠ كجم · ترايسبس</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">روح لـ Arm Curl</div></div></div>
-      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-name">Arm Curl — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم · بايسبس</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Dips ↔ Chin Ups — نفس الجهاز!</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>Kneeling Easy Chin Dip · فقط غيّر القبضة · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز يخدم الزوجين — احتمال المشكلة صفر</div></div>
-
-      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Dips (Kneeling) — سيت ١</div><div class="step-info">٨-١٢ تكرار · أثقل مساعدة ممكنة</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">من قبضة Dips لقبضة Chin Up</div></div></div>
-      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Chin Ups (Kneeling) — سيت ١</div><div class="step-info">٨-١٢ تكرار · بايسبس مركّب</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Dips — سيت ٢</div><div class="step-info">٨-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٢</div><div class="step-info">٨-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Dips — سيت ٣ (الأخير)</div><div class="step-info">٨-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٣ (الأخير)</div><div class="step-info">٨-١٢ تكرار · انتهى الزوج B</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Abdominal Crunch ↔ Rotary Torso</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة البطن · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الجهازان مشغولان → سوِّ <b>Plank على الأرض ٦٠ ث + Russian Twist بوزن</b></div></div>
-
-      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ١</div><div class="step-info">١٥-٢٠ تكرار · ١٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ١</div><div class="step-info">١٢ تكرار لكل جانب · ١٠ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٢</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٢</div><div class="step-info">١٢ تكرار/جانب</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٣ (الأخير)</div><div class="step-info">١٥-٢٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step done"><div class="step-num">22</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار/جانب · ✓ انتهيت! 🎉</div></div></div>
-
-      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من ARMS A</strong> · ٢٢ خطوة · ~٤٥ دقيقة · أقصر يوم في الأسبوع.</div></div>
-    </div></div>
-  </div>
-
-  <!-- راحة -->
-  <div class="dy">
-    <div class="dh" style="cursor:default">
-      <div class="db rest">أرب</div>
-      <div class="di"><div class="dn">يوم راحة — مو يوم كسل!</div><div class="df">جسمك يبني العضل اليوم مو في الجيم</div></div>
-    </div>
-  </div>
-  <div class="tip t0" style="margin-bottom:16px"><div class="ti">🧘</div><div class="tt"><strong>تفاصيل يوم الراحة:</strong><br>• تمشية خفيفة 20-30 دقيقة<br>• تمدد 10-15 دقيقة للعضلات المتعبة<br>• <b>كل وجباتك كاملة</b> — العضل يُبنى يوم الراحة فلا تقلل أكلك<br>• نام مبكر — حاول 8 ساعات</div></div>
-
-  <!-- يوم الخميس: UPPER B -->
-  <div class="dy" onclick="tg(this)">
-    <div class="dh">
-      <div class="db push">خمي</div>
-      <div class="di"><div class="dn">UPPER B — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٢ سيت · ~٦٠ دقيقة · نبدأ بالأكتاف الثقيلة</div></div>
-      <span class="dt tp">UPPER</span><span class="da">▾</span>
-    </div>
-    <div class="dby"><div class="dbi">
-
-      <div class="day-summary">
-        <div class="ds-item"><span class="ds-num">22</span><div class="ds-lbl">سيت</div></div>
-        <div class="ds-item"><span class="ds-num">6</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">3</span><div class="ds-lbl">أزواج</div></div>
-        <div class="ds-item"><span class="ds-num">~60</span><div class="ds-lbl">دقيقة</div></div>
-      </div>
-
-      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
-      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
-      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Shoulder Press — تسخين</div><div class="step-info">١٢ تكرار بنصف الوزن</div></div></div>
-
-      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Shoulder Press — وزن أثقل من Upper A</span><span class="pmeta">4 sets</span></div>
-      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Shoulder Press ثقيل — سيت ١</div><div class="step-info">٦-٨ تكرار · زد ٢.٥ كجم على وزن Upper A</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">وزن ثقيل = راحة طويلة</div></div></div>
-      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٢</div><div class="step-info">٦-٨ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٣</div><div class="step-info">٦-٨ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ١٢٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">6</div><div class="step-body"><div class="step-name">Shoulder Press — سيت ٤ (الأخير)</div><div class="step-info">٦-٨ تكرار · انتقل للزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Vertical Traction ↔ Chest Press بطيء</span><span class="pmeta">4 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة السحب/الدفع · في Chest Press انزل ببطء ٣ ثوان · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Vertical Traction مشغول</b> → استخدم <b>Lat Machine</b> (سحب عمودي عريض، نفس الفائدة)</div></div>
-
-      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ١</div><div class="step-info">٨-١٠ تكرار · ١٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ١</div><div class="step-info">١٠-١٢ تكرار · انزل ٣ ث ارفع ١ ث</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + رجوع</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٢</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٣</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٣</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Vertical Traction — سيت ٤ (الأخير)</div><div class="step-info">٨-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Chest Press بطيء — سيت ٤ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Pulley (سحب) ↔ Crossover Cables (صدر)</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الكابلات · تنقل سريع جداً · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو <b>Crossover مشغول</b> → استخدم <b>Pectoral Fly</b> بدلاً منه</div></div>
-
-      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Pulley — سحب أفقي — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ١٠ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تنقل</div><div class="step-info">روح لـ Crossover Cables</div></div></div>
-      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ٥ كجم/جانب</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Pulley — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Pulley — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Crossover Cables — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار · انتهى الزوج B</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Reverse Fly ↔ Delts Machine</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الأكتاف · الجهازان متجاوران · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو الزوج مشغول → <b>Upper Back ↔ Pulley بوضع جانبي</b></div></div>
-
-      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Delts Machine — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Reverse Fly — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step done"><div class="step-num">26</div><div class="step-body"><div class="step-name">Delts Machine — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · ✓ انتهيت! 🎉</div></div></div>
-
-      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من UPPER B</strong> · ٢٦ خطوة · ~٦٠ دقيقة</div></div>
-    </div></div>
-  </div>
-
-  <!-- يوم الجمعة: LEGS مختصر — صيانة فقط -->
-  <div class="dy" onclick="tg(this)">
-    <div class="dh">
-      <div class="db legs">جمع</div>
-      <div class="di"><div class="dn">LEGS مختصر — يوم صيانة الأرجل</div><div class="df">١٤ سيت · ~٤٠ دقيقة · أرجل صيانة + بطن (تركيز الأسبوع على العلوي)</div></div>
-      <span class="dt tl">LEGS</span><span class="da">▾</span>
-    </div>
-    <div class="dby"><div class="dbi">
-
-      <div class="day-summary">
-        <div class="ds-item"><span class="ds-num">14</span><div class="ds-lbl">سيت</div></div>
-        <div class="ds-item"><span class="ds-num">5</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">1</span><div class="ds-lbl">زوج</div></div>
-        <div class="ds-item"><span class="ds-num">~40</span><div class="ds-lbl">دقيقة</div></div>
-      </div>
-
-      <div class="tip tpu" style="margin-bottom:14px"><div class="ti">🦵</div><div class="tt"><strong>الفكرة:</strong> أنت تركّز على العلوي. هذا يوم <b>صيانة</b> فقط — يبقي أرجلك قوية ويحافظ على الهرمونات (تستوستيرون + GH) بدون استنزاف. <b>لا تتعب نفسك</b> — كل طاقتك للعلوي.</div></div>
-
-      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
-      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
-      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">Leg Press — تسخين</div><div class="step-info">١٥ تكرار بنصف الوزن</div></div></div>
-
-      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Leg Press — تمرين الأرجل الأساسي</span><span class="pmeta">3 sets</span></div>
-      <div class="step solo-set"><div class="step-num">3</div><div class="step-body"><div class="step-name">Leg Press — سيت ١</div><div class="step-info">١٠-١٢ تكرار · ٥٠ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">4</div><div class="step-body"><div class="step-name">Leg Press — سيت ٢</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٩٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">5</div><div class="step-body"><div class="step-name">Leg Press — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٢ تكرار</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Leg Extension ↔ Prone Leg Curl</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">⭐</span><div><span class="zone-tag">🟢 ZONE</span>كوادز ↕ هامسترنغز · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو أحد الجهازين مشغول → <b>Leg Press بقدم منخفضة (هامسترنغز) ↔ Leg Press بقدم عالية (كوادز)</b></div></div>
-
-      <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-name">Leg Extension — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + انتقال</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ١</div><div class="step-info">١٢-١٥ تكرار · ١٠ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Leg Extension — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Prone Leg Curl — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · انتهى الزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">SOLO</span><span class="pn">Calf Raise + Abdominal Crunch</span><span class="pmeta">3 + 3 sets</span></div>
-
-      <div class="step solo-set"><div class="step-num">12</div><div class="step-body"><div class="step-name">Calf Raise على Leg Press — سيت ١</div><div class="step-info">٢٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٣٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">13</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٢</div><div class="step-info">٢٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٣٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">14</div><div class="step-body"><div class="step-name">Calf Raise — سيت ٣ (الأخير)</div><div class="step-info">٢٠ تكرار</div></div></div>
-
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تنقل لجهاز البطن</div><div class="step-info">—</div></div></div>
-
-      <div class="step solo-set"><div class="step-num">15</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ١</div><div class="step-info">٢٠ تكرار · ١٥ كجم</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step solo-set"><div class="step-num">16</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٢</div><div class="step-info">٢٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step done"><div class="step-num">17</div><div class="step-body"><div class="step-name">Abdominal Crunch — سيت ٣ (الأخير)</div><div class="step-info">٢٠ تكرار · ✓ انتهيت! 🎉</div></div></div>
-
-      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من LEGS مختصر</strong> · ١٧ خطوة · ~٤٠ دقيقة · يوم خفيف عن قصد — وفّر الطاقة ليوم الذراعين غداً.</div></div>
-    </div></div>
-  </div>
-
-  <!-- يوم السبت: ARMS B -->
-  <div class="dy" onclick="tg(this)">
-    <div class="dh">
-      <div class="db pull">سبت</div>
-      <div class="di"><div class="dn">ARMS B — الترتيب الكامل خطوة بخطوة</div><div class="df">٢٢ سيت · ~٥٠ دقيقة · ابدأ بالمركّب الذراعي</div></div>
-      <span class="dt tpl">ARMS</span><span class="da">▾</span>
-    </div>
-    <div class="dby"><div class="dbi">
-
-      <div class="day-summary">
-        <div class="ds-item"><span class="ds-num">22</span><div class="ds-lbl">سيت</div></div>
-        <div class="ds-item"><span class="ds-num">8</span><div class="ds-lbl">تمارين</div></div>
-        <div class="ds-item"><span class="ds-num">4</span><div class="ds-lbl">أزواج</div></div>
-        <div class="ds-item"><span class="ds-num">~50</span><div class="ds-lbl">دقيقة</div></div>
-      </div>
-
-      <div class="phase-bar"><span class="pl">إحماء</span><span class="pn">قبل البدء</span></div>
-      <div class="step warmup"><div class="step-num">1</div><div class="step-body"><div class="step-name">Skillrow — تجديف</div><div class="step-info">٥ دقائق</div></div></div>
-      <div class="step warmup"><div class="step-num">2</div><div class="step-body"><div class="step-name">تسخين Kneeling Easy Chin Dip</div><div class="step-info">٥ تكرار Chin Up + ٥ تكرار Dip بمساعدة قصوى</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR A</span><span class="pn">Chin Ups ↔ Dips (نفس الجهاز)</span><span class="pmeta">4 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>Kneeling Easy Chin Dip · فقط غيّر القبضة · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز يخدم الزوجين — احتمال المشكلة صفر</div></div>
-
-      <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-name">Chin Ups — سيت ١</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">من Chin Up لـ Dip</div></div></div>
-      <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-name">Dips — سيت ١</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير القبضة</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٢</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-name">Dips — سيت ٢</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">7</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٣</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">8</div><div class="step-body"><div class="step-name">Dips — سيت ٣</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">9</div><div class="step-body"><div class="step-name">Chin Ups — سيت ٤ (الأخير)</div><div class="step-info">٦-١٠ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">10</div><div class="step-body"><div class="step-name">Dips — سيت ٤ (الأخير)</div><div class="step-info">٦-١٠ تكرار · انتهى الزوج A</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR B</span><span class="pn">Arm Curl ↔ Arm Extension (بطيء)</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🐌</span><div><span class="zone-tag">🟢 ZONE</span>منطقة الذراعين · انزل ببطء عد ٣ ثوان · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو أحدهما مشغول → استخدم <b>Pulley</b> (نفس الفائدة بالكابل)</div></div>
-
-      <div class="step"><div class="step-num">11</div><div class="step-body"><div class="step-name">Arm Curl بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">12</div><div class="step-body"><div class="step-name">Arm Extension بطيء — سيت ١</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">13</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">14</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٢</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">15</div><div class="step-body"><div class="step-name">Arm Curl — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">16</div><div class="step-body"><div class="step-name">Arm Extension — سيت ٣ (الأخير)</div><div class="step-info">١٢-١٥ تكرار · انتهى الزوج B</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR C</span><span class="pn">Pulley Curl ↔ Pulley Pushdown (نفس الكابل)</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🎯</span><div><span class="zone-tag">🟢 ZONE</span>جهاز Pulley · غيّر ارتفاع الكابل فقط · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>نفس الجهاز — احتمال المشكلة صفر · لو Pulley مشغول → استخدم <b>Arm Curl ↔ Arm Extension</b> مرة ثانية</div></div>
-
-      <div class="step"><div class="step-num">17</div><div class="step-body"><div class="step-name">Pulley — Bicep Curl — سيت ١</div><div class="step-info">١٢ تكرار · كابل سفلي · بار قصير</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">انقل الكابل للأعلى</div></div></div>
-      <div class="step"><div class="step-num">18</div><div class="step-body"><div class="step-name">Pulley — Tricep Pushdown — سيت ١</div><div class="step-info">١٢ تكرار · كابل علوي · مقبض</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية + تغيير</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">19</div><div class="step-body"><div class="step-name">Pulley Curl — سيت ٢</div><div class="step-info">١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">20</div><div class="step-body"><div class="step-name">Pulley Pushdown — سيت ٢</div><div class="step-info">١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">21</div><div class="step-body"><div class="step-name">Pulley Curl — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">22</div><div class="step-body"><div class="step-name">Pulley Pushdown — سيت ٣ (الأخير)</div><div class="step-info">١٢ تكرار · انتهى الزوج C</div></div></div>
-
-      <div class="phase-bar"><span class="pl">PAIR D</span><span class="pn">Hanging Leg Raise ↔ Rotary Torso</span><span class="pmeta">3 جولات</span></div>
-      <div class="pair-banner"><span class="pb-icon">🔄</span><div><span class="zone-tag">🟢 ZONE</span>منطقة البطن · راحة <b>٦٠ ثانية</b></div></div>
-      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>لو Hanging Leg Raise مشغول → <b>Abdominal Crunch بدلاً منه</b></div></div>
-
-      <div class="step"><div class="step-num">23</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ١</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">24</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ١</div><div class="step-info">١٢/جانب</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">25</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٢</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step"><div class="step-num">26</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٢</div><div class="step-info">١٢/جانب</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-
-      <div class="step"><div class="step-num">27</div><div class="step-body"><div class="step-name">Hanging Leg Raise — سيت ٣ (الأخير)</div><div class="step-info">١٠-١٥ تكرار</div></div></div>
-      <div class="step rest"><div class="step-num">⏱</div><div class="step-body"><div class="step-name">راحة ٦٠ ثانية</div><div class="step-info">—</div></div></div>
-      <div class="step done"><div class="step-num">28</div><div class="step-body"><div class="step-name">Rotary Torso — سيت ٣ (الأخير)</div><div class="step-info">١٢/جانب · ✓ انتهيت الأسبوع! 🎉</div></div></div>
-
-      <div class="tip tg" style="margin-top:14px"><div class="ti">✅</div><div class="tt"><strong>انتهيت من ARMS B = انتهيت الأسبوع كاملاً!</strong> · ٢٨ خطوة · ~٥٠ دقيقة · يوم الأحد القادم تبدأ UPPER A بأوزان أعلى (لو أكملت كل التكرارات بسهولة).</div></div>
-    </div></div>
-  </div>
 
 </div>
 
@@ -1226,6 +781,7 @@
   <div class="stats-content" style="position:relative">
     <button class="close-modal" onclick="closePlateCalc()">✕</button>
     <h2>🧮 حاسبة بليتات</h2>
+    <div id="pcContext" class="pc-context" style="display:none"></div>
     <div class="bm-hint">أدخل الوزن المستهدف — نقسّمه على البليتات المتاحة لكل جانب من البار.</div>
     <div class="bm-form">
       <div class="bm-field" style="margin-bottom:12px">
@@ -1336,6 +892,20 @@
     <div id="altList"></div>
     <a class="alt-out" onclick="showAllEquipment()">ما لقيت اللي يناسبك؟ شوف كل الأجهزة المتاحة ›</a>
     <div id="altAllWrap" style="display:none"></div>
+  </div>
+</div>
+
+<!-- V8.3 — Program Editor Modal (3.3) -->
+<div class="stats-modal" id="editorModal" aria-hidden="true">
+  <div class="stats-content" style="max-width:640px;position:relative">
+    <button class="close-modal" onclick="closeProgramEditor()">✕</button>
+    <h2 id="editorTitle">✏️ تخصيص</h2>
+    <div id="editorBody"></div>
+    <div class="ed-footer">
+      <button class="ed-btn ed-btn-reset" type="button" onclick="resetEditorDay()">↺ إعادة للافتراضي</button>
+      <button class="ed-btn ed-btn-cancel" type="button" onclick="closeProgramEditor()">إلغاء</button>
+      <button class="ed-btn ed-btn-save" type="button" onclick="saveEditorChanges()">💾 حفظ</button>
+    </div>
   </div>
 </div>
 
@@ -1454,6 +1024,7 @@
 <script src="js/data.js"></script>
 <script src="js/program-data.js"></script>
 <script src="js/program-render.js"></script>
+<script src="js/program-editor.js"></script>
 <script src="js/session.js"></script>
 <script src="js/substitutions.js"></script>
 <script src="js/progress.js"></script>

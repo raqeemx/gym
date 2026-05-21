@@ -369,7 +369,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
     await loadTheme();        // V7 #26 — حمّل الـ theme قبل أي شيء آخر
     await migrateFromLS();
-    renderProgram();          // V8 (#37) — ولّد HTML من PROGRAM_DATA قبل أي injectXXX
+    await renderProgram();    // V8 (#37) — ولّد HTML من PROGRAM_DATA · V8.3 — async (يحمّل التخصيصات)
     ensureStepIds();         // ID مستقر لكل step (V6)
     normalizeDataDigits();    // V7 #21 — توحيد الأرقام (لاتينية للبيانات)
     injectSessionControls();
@@ -377,6 +377,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     injectAltButtons();      // أزرار "⇄ بديل؟" (V6)
     injectSkipButtons();      // أزرار "↷ تخطّى" (V7 — #12)
     injectFormNoteButtons();  // V8.3 — أزرار "ℹ️" لشرح طريقة الأداء (3.2)
+    injectEditorButtons();    // V8.3 — أزرار "✏️ تخصيص" لتعديل اليوم (3.3)
     syncPlanBTexts();         // مزامنة نصوص Plan B من الكتالوج (V7 — #11)
     await loadSubstitutions();// استرجع البدائل المحفوظة (V6)
     await loadSkippedSteps(); // استرجع حالات التخطّي اليوم (V7 — #12)

@@ -13,6 +13,7 @@ const ASSETS = [
   './js/data.js',
   './js/program-data.js',
   './js/program-render.js',
+  './js/program-editor.js',
   './js/session.js',
   './js/progress.js',
   './js/substitutions.js',
