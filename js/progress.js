@@ -467,6 +467,7 @@ document.querySelectorAll('.prog-tab').forEach(b=>{
     if(b.dataset.pt==='daily') renderDailyLog();
     if(b.dataset.pt==='achievements') renderAchievements(); // V8
     if(b.dataset.pt==='photos') renderProgressPhotos(); // V8 — progress photos
+    if(b.dataset.pt==='recovery') renderRecovery(); // V8 — smart deload
   });
 });
 
@@ -481,6 +482,88 @@ async function refreshProgressTab(){
   else if(pt==='daily') renderDailyLog();
   else if(pt==='achievements') renderAchievements(); // V8
   else if(pt==='photos') renderProgressPhotos(); // V8
+  else if(pt==='recovery') renderRecovery(); // V8
+}
+
+// ============ V8 — Recovery / Smart Deload tab ============
+async function renderRecovery(){
+  const body=document.getElementById('recoveryBody');
+  if(!body) return;
+  body.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+
+  const deloadRec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+  const isActive=!!(deloadRec && deloadRec.value && deloadRec.value.active);
+  const detection=await detectDeloadNeed();
+
+  // ===== حالة الـ deload الحالية =====
+  let stateHtml='';
+  if(isActive){
+    const startedISO=deloadRec.value.startedAt;
+    const startedDate=new Date(startedISO);
+    const sd=new Date(startedDate);sd.setHours(0,0,0,0);
+    const day=sd.getDay();
+    const daysToAdd=day===0?7:(7-day);
+    const endBoundary=new Date(sd);endBoundary.setDate(endBoundary.getDate()+daysToAdd);
+    const daysLeft=Math.max(0,Math.ceil((endBoundary-Date.now())/86400000));
+    stateHtml=`<div class="recovery-card recovery-active">
+      <div class="recovery-state-icon">🛟</div>
+      <div class="recovery-state-title">وضع Deload نشط</div>
+      <div class="recovery-state-sub">بدأ ${fmtDate(startedISO)} · ينتهي تلقائياً بعد ${daysLeft} يوم (الأحد)</div>
+      <div class="recovery-state-effect">📉 كل اقتراحات الأوزان مضروبة <b>×0.6</b> للتعافي</div>
+      <button class="recovery-btn recovery-stop" onclick="endManualDeload().then(()=>renderRecovery())">⏹ إيقاف الـ Deload</button>
+    </div>`;
+  }else if(detection.needed){
+    const urgencyClass=detection.urgency==='high'?'recovery-need-high':'recovery-need-low';
+    const urgencyIcon=detection.urgency==='high'?'🚨':'💡';
+    stateHtml=`<div class="recovery-card ${urgencyClass}">
+      <div class="recovery-state-icon">${urgencyIcon}</div>
+      <div class="recovery-state-title">${detection.urgency==='high'?'يبدو أنك تحتاج Deload':'اقتراح: ربما تحتاج Deload'}</div>
+      <div class="recovery-state-sub">${detection.reason}</div>
+      <button class="recovery-btn recovery-start" onclick="startManualDeload('user-via-recovery').then(()=>renderRecovery())">🛟 ابدأ Deload الآن</button>
+    </div>`;
+  }else{
+    stateHtml=`<div class="recovery-card recovery-ok">
+      <div class="recovery-state-icon">✅</div>
+      <div class="recovery-state-title">لا حاجة لـ Deload الآن</div>
+      <div class="recovery-state-sub">${detection.reason}</div>
+      <button class="recovery-btn recovery-manual" onclick="if(confirm('تفعيل deload يدوياً رغم عدم الحاجة؟')) startManualDeload('manual-override').then(()=>renderRecovery())">تفعيل يدوي</button>
+    </div>`;
+  }
+
+  // ===== المعايير المُفحوصة =====
+  let criteriaHtml='';
+  if(detection.criteria && detection.criteria.length){
+    criteriaHtml=`<div class="recovery-section-title">🔍 المعايير المُفحوصة</div>
+      <div class="recovery-criteria">
+        ${detection.criteria.map(c=>{
+          const statusIcon=c.skipped?'➖':(c.passed?'⚠️':'✓');
+          const cls=c.skipped?'crit-skipped':(c.passed?'crit-fail':'crit-pass');
+          const note=c.note?`<div class="crit-note">${c.note}</div>`:'';
+          return `<div class="crit-row ${cls}">
+            <div class="crit-icon">${statusIcon}</div>
+            <div class="crit-body">
+              <div class="crit-label">${c.label}</div>
+              <div class="crit-detail">القيمة: <b>${c.value}</b> · العتبة: ${c.threshold}</div>
+              ${note}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // ===== شرح =====
+  const explainHtml=`<div class="recovery-section-title">📚 ما هو الـ Deload؟</div>
+    <div class="recovery-explain">
+      <p><b>Deload</b> = أسبوع راحة نشطة بأوزان مخفّضة (×0.6) لإعادة التعافي بعد فترة تدريب مكثّفة.</p>
+      <ul class="recovery-list">
+        <li>تقلّل الإصابات وتجنّب الـ overtraining</li>
+        <li>تسمح للجهاز العصبي والمفاصل بالتعافي</li>
+        <li>تعود بعدها بأوزان أعلى وأداء أفضل</li>
+      </ul>
+      <div class="recovery-note">📅 افتراضياً ينتهي الـ deload يوم الأحد (بداية الأسبوع التالي). يمكنك إيقافه يدوياً في أي وقت.</div>
+    </div>`;
+
+  body.innerHTML=stateHtml+criteriaHtml+explainHtml;
 }
 
 // ============ V8 — Achievements page ============

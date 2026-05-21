@@ -6,6 +6,8 @@ async function injectTrackingInputs(){
   // V7 (#13) — احسب: lastSessionBest (أفضل سيت من آخر جلسة) + allTimeBest (أعلى وزن في الكل)
   const allSets=await db.getAll('sets');
   const statsByName=computeLastBestByExercise(allSets);
+  // V8 — اقرأ حالة deload مرّة واحدة لكل الـ steps
+  const deloadActive=await isDeloadActive();
 
   steps.forEach(step=>{
     const exName=getExerciseName(step);
@@ -43,10 +45,11 @@ async function injectTrackingInputs(){
 
     // V7 (#16) — اقتراح وزن السيت التالي بناءً على آخر أداء + نطاق التكرار
     // V7.3 — يمرّر RPE آخر سيت لاستخدام المنطق الجديد القائم على RPE
+    // V8 — يمرّر حالة deload (إذا نشطة → اقتراح ×0.6)
     if(stats && stats.lastSessionBest){
       const range=parseRepRange(step);
       const lastRpe=stats.lastSessionBest.rpe!=null?stats.lastSessionBest.rpe:null;
-      const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe);
+      const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe,deloadActive);
       if(suggestion) injectProgressionHint(inputDiv,step,suggestion);
     }
   });
@@ -144,7 +147,9 @@ function parseRepRange(stepEl, _rpeHint){
 }
 
 // V7.3 — اقتراح وزن السيت التالي مع وعي RPE
+// V8 — يضاف الآن معامل deloadActive (boolean): لو نشط، يقترح وزن × 0.6 للتعافي
 // المنطق:
+//   • لو deloadActive: weight × 0.6 (يطغى على كل القواعد الأخرى)
 //   • لو RPE موجود (٦-١٠): يستخدم RPE كإشارة أساسية للتقدّم
 //     - RPE ≤7 (سهل)   → +٥ كجم
 //     - RPE 8 (مثالي)  → +٢.٥ كجم
@@ -154,8 +159,19 @@ function parseRepRange(stepEl, _rpeHint){
 //     - reps ≥ max → +٢.٥
 //     - reps < min → -٢.٥
 //     - داخل النطاق → بدون اقتراح
-function computeProgression(lastSet, repRange, lastRpe){
+function computeProgression(lastSet, repRange, lastRpe, deloadActive){
   if(!lastSet || !repRange) return null;
+
+  // 🛟 V8: Deload mode يطغى على أي اقتراح آخر
+  if(deloadActive){
+    const w=Math.max(0,Math.round((lastSet.weight*0.6)*10)/10);
+    return {
+      suggestedWeight:w,
+      reason:`🛟 وضع Deload — اضرب ×0.6 للتعافي`,
+      kind:'deload'
+    };
+  }
+
   const rpe=(lastRpe!=null && lastRpe>=6 && lastRpe<=10)?lastRpe:null;
 
   // 🎯 المسار الجديد: RPE-aware
@@ -215,9 +231,10 @@ function injectProgressionHint(trackDiv,stepEl,suggestion){
   if(!suggestion) return;
   const hint=document.createElement('div');
   hint.className='prog-hint';
-  // V7.3 — أيقونة حسب نوع الاقتراح (3 أنواع: increase/decrease/maintain)
+  // V7.3 — أيقونة حسب نوع الاقتراح (V8 أضيف 'deload')
   const icon=suggestion.kind==='increase'?'📈'
             :suggestion.kind==='maintain'?'⏸️'
+            :suggestion.kind==='deload'?'🛟'
             :'⚠️';
   hint.innerHTML=`<span class="ph-icon">${icon}</span><span>${suggestion.reason} → <b>${suggestion.suggestedWeight}كجم</b></span><button class="ph-apply" onclick="applySuggestion(this,${suggestion.suggestedWeight});event.stopPropagation()">تطبيق</button>`;
   trackDiv.appendChild(hint);
@@ -306,14 +323,16 @@ async function refreshLastBestDisplay(trackDiv,exName,newSet){
   lastEl.classList.remove('show-best');
   // V7 (#16) — حدّث اقتراح السيت التالي بناءً على هذا السيت الجديد + اقترح في الستيبات الأشقّاء
   const step=trackDiv.closest('.step');
-  refreshProgressionHintsForExercise(step,exName,stats);
+  await refreshProgressionHintsForExercise(step,exName,stats); // V8 — async now
 }
 
 // V7 (#16) — يحدّث اقتراح التقدّم للستيب الحالي + الستيبات التالية لنفس التمرين في نفس اليوم
-function refreshProgressionHintsForExercise(currentStep,exName,stats){
+// V8 — async الآن (يقرأ حالة deload)
+async function refreshProgressionHintsForExercise(currentStep,exName,stats){
   if(!currentStep || !stats || !stats.lastSessionBest) return;
   const dy=currentStep.closest('.dy');
   if(!dy) return;
+  const deloadActive=await isDeloadActive(); // V8
   // اجمع كل الستيبات في نفس اليوم لنفس التمرين (ابتداءً من الستيب الحالي وما بعده)
   const allSteps=Array.from(dy.querySelectorAll('.step:not(.rest):not(.warmup)'));
   const startIdx=allSteps.indexOf(currentStep);
@@ -332,9 +351,9 @@ function refreshProgressionHintsForExercise(currentStep,exName,stats){
       continue;
     }
     const range=parseRepRange(step);
-    // V7.3 — RPE-aware
+    // V7.3 — RPE-aware · V8 — deload-aware
     const lastRpe=stats.lastSessionBest.rpe!=null?stats.lastSessionBest.rpe:null;
-    const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe);
+    const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe,deloadActive);
     injectProgressionHint(trackDiv,step,suggestion);
   }
 }
@@ -714,6 +733,227 @@ async function updateWeekUI(){
   const banner=document.getElementById('deloadBanner');
   if(banner){
     banner.style.display=(info && info.isDeload)?'flex':'none';
+  }
+  // V8 — header banner (smart deload detection)
+  await updateDeloadHeaderBanner();
+}
+
+// ============ V8 — Smart Deload Detection ============
+// كاش حالة الـ deload لتفادي استعلامات DB متكررة في render واحد
+let _deloadCache=null;
+function invalidateDeloadCache(){_deloadCache=null}
+
+async function isDeloadActive(){
+  if(_deloadCache!==null) return _deloadCache;
+  try{
+    const rec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+    _deloadCache=!!(rec && rec.value && rec.value.active);
+  }catch(e){_deloadCache=false}
+  return _deloadCache;
+}
+
+// انهِ تلقائياً عند بداية الأحد التالي بعد البدء
+async function maybeAutoEndDeload(){
+  const rec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+  if(!rec || !rec.value || !rec.value.active) return false;
+  const startedAt=new Date(rec.value.startedAt);
+  startedAt.setHours(0,0,0,0);
+  const day=startedAt.getDay(); // 0=Sun
+  const daysToAdd=day===0?7:(7-day); // Sun→7days, Mon-Sat→to coming Sunday
+  const endBoundary=new Date(startedAt);
+  endBoundary.setDate(endBoundary.getDate()+daysToAdd);
+  if(Date.now()>=endBoundary.getTime()){
+    rec.value.active=false;
+    rec.value.endedAt=new Date().toISOString();
+    rec.value.autoEnded=true;
+    await db.put('settings',{key:KEYS.MANUAL_DELOAD_ACTIVE,value:rec.value});
+    invalidateDeloadCache();
+    if(typeof showToast==='function') showToast('✅ انتهى أسبوع الـ Deload — العودة للأوزان العادية','var(--grn)',5000);
+    return true;
+  }
+  return false;
+}
+
+// كشف الحاجة لـ deload بناءً على RPE/PRs/duration/زمن
+// يرجّع: {needed, reason, urgency, criteria, currentlyInDeload}
+async function detectDeloadNeed(){
+  const out={needed:false, urgency:'low', reason:'', criteria:[]};
+  // إذا حالياً في deload، لا حاجة لمزيد من الفحص
+  const deloadRec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+  if(deloadRec && deloadRec.value && deloadRec.value.active){
+    return {...out, currentlyInDeload:true, reason:'حالياً في deload'};
+  }
+
+  const workouts=await db.getAll('workouts');
+  if(workouts.length<3){
+    return {...out, reason:'تحتاج 3 جلسات على الأقل للفحص'};
+  }
+  const sorted=[...workouts].sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+  const last3=sorted.slice(0,3);
+  const earlier=sorted.slice(3);
+
+  // اجمع سيتات آخر 3 جلسات + كل التاريخ
+  const last3SetsBy=[];
+  for(const w of last3){
+    const ws=await db.getAll('sets','workoutId',w.id);
+    last3SetsBy.push({workout:w, sets:ws});
+  }
+
+  // ===== Criterion 1: RPE > 8.5 في آخر 3 جلسات =====
+  const wAvgRpe=last3SetsBy.map(({sets})=>{
+    const withRpe=sets.filter(s=>s.rpe!=null);
+    if(!withRpe.length) return null;
+    return withRpe.reduce((a,s)=>a+s.rpe,0)/withRpe.length;
+  });
+  const allHaveRpe=wAvgRpe.every(r=>r!==null);
+  if(allHaveRpe){
+    const meanRpe=wAvgRpe.reduce((a,r)=>a+r,0)/wAvgRpe.length;
+    const passed=meanRpe>8.5;
+    out.criteria.push({
+      id:'rpe', label:`متوسط RPE آخر 3 جلسات`, value:meanRpe.toFixed(1), threshold:'8.5', passed
+    });
+    if(passed){
+      return {...out, needed:true, urgency:'high',
+        reason:`RPE مرتفع متواصل — متوسط ${meanRpe.toFixed(1)}/10`};
+    }
+  }else{
+    out.criteria.push({id:'rpe', label:'متوسط RPE', value:'—', threshold:'8.5', passed:false, skipped:true,
+      note:'لم تستخدم RPE في كل الجلسات'});
+  }
+
+  // ===== Criterion 2: 0 PRs في آخر 3 + تراجع أوزان =====
+  const totalPRsLast3=last3.reduce((a,w)=>a+(w.prCount||0),0);
+  out.criteria.push({
+    id:'prs', label:'PRs في آخر 3 جلسات', value:totalPRsLast3, threshold:'> 0',
+    passed:totalPRsLast3===0
+  });
+  if(totalPRsLast3===0){
+    const allHist=await db.getAll('sets');
+    const histMaxByEx={};
+    allHist.forEach(s=>{
+      if(!histMaxByEx[s.exerciseName] || s.weight>histMaxByEx[s.exerciseName]) histMaxByEx[s.exerciseName]=s.weight;
+    });
+    const last3MaxByEx={};
+    last3SetsBy.forEach(({sets})=>sets.forEach(s=>{
+      if(!last3MaxByEx[s.exerciseName] || s.weight>last3MaxByEx[s.exerciseName]) last3MaxByEx[s.exerciseName]=s.weight;
+    }));
+    const regressed=Object.entries(last3MaxByEx).filter(([ex,w])=>w<(histMaxByEx[ex]||0));
+    if(regressed.length>=1){
+      return {...out, needed:true, urgency:'high',
+        reason:`أداء يتراجع — ${regressed.length} تمرين بأوزان أقل + لا PRs`};
+    }
+  }
+
+  // ===== Criterion 3: مدة آخر 3 > 1.5× المتوسط التاريخي =====
+  if(earlier.length>=3){
+    const earlierAvg=earlier.reduce((a,w)=>a+(w.duration||0),0)/earlier.length;
+    const last3Avg=last3.reduce((a,w)=>a+(w.duration||0),0)/3;
+    const ratio=earlierAvg>0?last3Avg/earlierAvg:1;
+    const passed=earlierAvg>0 && ratio>1.5;
+    out.criteria.push({
+      id:'duration', label:'مدة الجلسات (مقارنة بالتاريخ)',
+      value:`${Math.round(last3Avg/60)}د vs ${Math.round(earlierAvg/60)}د (×${ratio.toFixed(2)})`,
+      threshold:'×1.5', passed
+    });
+    if(passed){
+      return {...out, needed:true, urgency:'low',
+        reason:`الجلسات تطول (${Math.round(last3Avg/60)}د vs متوسط ${Math.round(earlierAvg/60)}د) — تعب متراكم`};
+    }
+  }
+
+  // ===== Criterion 4: > 28 يوم منذ آخر deload =====
+  let lastDeloadDate=null;
+  if(deloadRec && deloadRec.value && deloadRec.value.endedAt){
+    lastDeloadDate=new Date(deloadRec.value.endedAt);
+  }
+  const firstWrec=await db.get('settings',KEYS.FIRST_WORKOUT);
+  const reference=lastDeloadDate || (firstWrec?new Date(firstWrec.value):new Date(sorted[sorted.length-1].startTime));
+  const daysSince=Math.floor((Date.now()-reference.getTime())/86400000);
+  const passed4=daysSince>28;
+  out.criteria.push({
+    id:'days', label:lastDeloadDate?'أيام منذ آخر deload':'أيام منذ بدء البرنامج',
+    value:`${daysSince} يوم`, threshold:'28', passed:passed4
+  });
+  if(passed4){
+    return {...out, needed:true, urgency:'low',
+      reason:`مرّ ${Math.floor(daysSince/7)} أسابيع منذ آخر deload — جدول مكتمل`};
+  }
+
+  return {...out, reason:'الأداء جيد — لا حاجة لـ deload الآن'};
+}
+
+// ============ V8 — Activate/Deactivate Manual Deload ============
+async function startManualDeload(reason){
+  await db.put('settings',{key:KEYS.MANUAL_DELOAD_ACTIVE,value:{
+    active:true,
+    startedAt:new Date().toISOString(),
+    reason:reason||'manual'
+  }});
+  invalidateDeloadCache();
+  showToast('🛟 وضع Deload مُفعَّل — اضرب ×0.6 على أوزانك هذا الأسبوع','var(--blue)',5000);
+  await updateWeekUI();
+  await refreshAllProgressionHints();
+}
+
+async function endManualDeload(){
+  const rec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+  const v=(rec&&rec.value)||{};
+  v.active=false;
+  v.endedAt=new Date().toISOString();
+  v.autoEnded=false;
+  await db.put('settings',{key:KEYS.MANUAL_DELOAD_ACTIVE,value:v});
+  invalidateDeloadCache();
+  showToast('✓ تم إيقاف وضع Deload','var(--grn)');
+  await updateWeekUI();
+  await refreshAllProgressionHints();
+}
+
+// V8 — يحدّث كل اقتراحات progression الظاهرة (بعد تغيّر deload state)
+async function refreshAllProgressionHints(){
+  const allSets=await db.getAll('sets');
+  const statsByName=computeLastBestByExercise(allSets);
+  const deloadActive=await isDeloadActive();
+  document.querySelectorAll('.track-input').forEach(trackDiv=>{
+    const step=trackDiv.closest('.step');
+    if(!step) return;
+    if(step.classList.contains('completed')||step.classList.contains('skipped')) return;
+    const wInput=trackDiv.querySelector('.weight-input');
+    const exName=wInput&&wInput.dataset.name;
+    if(!exName) return;
+    const stats=statsByName[exName];
+    if(!stats||!stats.lastSessionBest) return;
+    const range=parseRepRange(step);
+    const lastRpe=stats.lastSessionBest.rpe!=null?stats.lastSessionBest.rpe:null;
+    const suggestion=computeProgression(stats.lastSessionBest,range,lastRpe,deloadActive);
+    injectProgressionHint(trackDiv,step,suggestion);
+  });
+}
+
+// V8 — Header banner: يعرض حالة deload (نشط/مقترح/مخفي)
+async function updateDeloadHeaderBanner(){
+  await maybeAutoEndDeload(); // يفحص الـ Sunday reset أولاً
+  invalidateDeloadCache();    // بعد الـ auto-end نعيد القراءة من DB
+  const banner=document.getElementById('deloadHeaderBanner');
+  if(!banner) return;
+  const deloadRec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+  const active=deloadRec && deloadRec.value && deloadRec.value.active;
+
+  if(active){
+    banner.className='deload-header-banner show deload-active';
+    banner.innerHTML=`<span class="dhb-text">🛟 وضع <b>Deload</b> نشط — أوزانك المقترحة ×0.6</span>
+      <button class="dhb-btn" onclick="endManualDeload()">إيقاف</button>`;
+    return;
+  }
+
+  // فحص الكشف الذكي — اعرض البنر فقط لو urgency 'high'
+  const detection=await detectDeloadNeed();
+  if(detection.needed && detection.urgency==='high'){
+    banner.className='deload-header-banner show deload-suggest';
+    banner.innerHTML=`<span class="dhb-text">🛟 <b>يبدو أنك تحتاج deload</b> — ${detection.reason}</span>
+      <button class="dhb-btn" onclick="startManualDeload('smart-detect')">ابدأ Deload</button>`;
+  }else{
+    banner.className='deload-header-banner';
+    banner.innerHTML='';
   }
 }
 
