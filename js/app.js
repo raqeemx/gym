@@ -58,6 +58,13 @@ if(_profileModal){
     if(e.target.id==='profileModal') closeProfile();
   });
 }
+// V8 — Plate Calculator modal outside click
+const _plateCalcModal=document.getElementById('plateCalcModal');
+if(_plateCalcModal){
+  _plateCalcModal.addEventListener('click',(e)=>{
+    if(e.target.id==='plateCalcModal') closePlateCalc();
+  });
+}
 
 // ============ V7.2 — USER PROFILE (#37) ============
 async function openProfile(){

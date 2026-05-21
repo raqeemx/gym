@@ -1189,6 +1189,7 @@
 <div class="fab-menu" id="fabMenu">
   <button onclick="openStats()">📈 إحصائياتي</button>
   <button onclick="openProfile()">👤 ملفي الشخصي</button>
+  <button onclick="openPlateCalc()">🧮 حاسبة بليتات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
   <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
@@ -1208,6 +1209,31 @@
       <button onclick="exportData()">💾 تصدير نسخة احتياطية</button>
       <button class="danger" onclick="clearAllData()">🗑 مسح كل البيانات</button>
     </div>
+  </div>
+</div>
+
+<!-- V8 — Plate Calculator Modal -->
+<div class="stats-modal" id="plateCalcModal">
+  <div class="stats-content" style="position:relative">
+    <button class="close-modal" onclick="closePlateCalc()">✕</button>
+    <h2>🧮 حاسبة بليتات</h2>
+    <div class="bm-hint">أدخل الوزن المستهدف — نقسّمه على البليتات المتاحة لكل جانب من البار.</div>
+    <div class="bm-form">
+      <div class="bm-field" style="margin-bottom:12px">
+        <label>الوزن المستهدف <small>(كجم)</small></label>
+        <input type="number" inputmode="decimal" step="0.5" id="pcTarget" placeholder="مثلاً 80">
+      </div>
+      <div class="bm-field" style="margin-bottom:12px">
+        <label>نوع البار</label>
+        <select id="pcBarSelect" class="prof-select"></select>
+      </div>
+      <div class="bm-field" style="margin-bottom:12px">
+        <label>البليتات المتاحة <small>(فعّل ما تملك)</small></label>
+        <div id="pcPlateChips" class="pc-plate-chips"></div>
+      </div>
+      <button class="bm-save" onclick="doPlateCalc()">احسب 🧮</button>
+    </div>
+    <div id="pcResult" class="pc-result-wrap"></div>
   </div>
 </div>
 
@@ -1367,6 +1393,7 @@
 <script src="js/progress.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/progress-photos.js"></script>
+<script src="js/plate-calc.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

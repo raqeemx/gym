@@ -721,6 +721,47 @@ body.sess-active .nav{top:50px}
 .pp-cmp-delta.pp-w-flat{color:var(--tx2);background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.08)}
 .pp-compare-actions{display:flex;justify-content:center}
 
+/* ============ V8 — Plate Calculator ============ */
+
+/* Plate chips (checkboxes في الإعدادات) */
+.pc-plate-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pc-plate-chip{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pc-plate-chip input{position:absolute;opacity:0;pointer-events:none}
+.pc-plate-chip span{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);color:var(--tx2);font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;padding:8px 12px;border-radius:8px;transition:.2s;min-height:36px}
+.pc-plate-chip:hover span{background:rgba(212,168,83,.07);color:var(--tx);border-color:rgba(212,168,83,.25)}
+.pc-plate-chip input:checked + span{background:linear-gradient(135deg,rgba(212,168,83,.18),rgba(212,168,83,.05));color:var(--g2);border-color:var(--g1);font-weight:800}
+
+/* Result wrapper */
+.pc-result-wrap{margin-top:16px}
+.pc-error{padding:12px 14px;background:rgba(255,90,95,.08);border:1px solid rgba(255,90,95,.3);border-right:3px solid var(--red);border-radius:10px;color:var(--tx);font-size:12.5px;line-height:1.6}
+.pc-warn{padding:12px 14px;background:rgba(255,184,90,.08);border:1px solid rgba(255,184,90,.3);border-right:3px solid var(--org);border-radius:10px;color:var(--tx);font-size:12.5px;margin-bottom:12px;line-height:1.6}
+.pc-warn b{color:var(--org)}
+
+.pc-success{background:linear-gradient(145deg,rgba(90,230,138,.08),rgba(90,230,138,.02));border:1px solid rgba(90,230,138,.25);border-radius:12px;padding:14px;margin-bottom:12px}
+.pc-success-line{font-size:13px;color:var(--tx);margin-bottom:8px;line-height:1.6}
+.pc-success-line b{color:var(--grn)}
+.pc-formula{font-family:'JetBrains Mono',monospace;font-size:14px;color:#fff;background:rgba(0,0,0,.3);padding:10px 14px;border-radius:8px;text-align:center;margin-bottom:12px;direction:ltr}
+.pc-formula b{color:var(--grn);font-size:16px}
+.pc-total{font-size:11.5px;color:var(--tx2);text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace}
+.pc-total b{color:var(--g2)}
+
+/* Alternative suggestions (above/below) */
+.pc-alt{background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;margin-bottom:10px}
+.pc-alt-below{border-right:3px solid var(--blue)}
+.pc-alt-above{border-right:3px solid var(--grn)}
+.pc-alt-head{font-size:12.5px;color:var(--tx);margin-bottom:8px;font-family:'Outfit',sans-serif;font-weight:700}
+.pc-alt-head b{color:#fff;font-size:14px;font-family:'JetBrains Mono',monospace}
+.pc-alt-below .pc-alt-head{color:var(--blue)}
+.pc-alt-above .pc-alt-head{color:var(--grn)}
+
+/* Bar visualization */
+.pc-bar{display:flex;align-items:center;justify-content:center;gap:0;margin:14px auto;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.5));padding:18px 8px;border-radius:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;min-height:120px;border:1px solid rgba(255,255,255,.05)}
+.pc-bar-side{display:flex;align-items:center;gap:2px;min-width:0;flex-shrink:0}
+.pc-bar-side.empty{font-family:'JetBrains Mono',monospace;color:var(--tx3);font-size:12px;padding:0 14px}
+.pc-bar-rod{height:8px;background:linear-gradient(180deg,#C0C5CE,#7A8093);border-radius:2px;flex:0 0 80px;min-width:80px;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.2)}
+.pc-bar-label{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx3);white-space:nowrap}
+.pc-plate{display:flex;align-items:center;justify-content:center;width:18px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);border:1px solid rgba(0,0,0,.2);text-shadow:0 1px 1px rgba(0,0,0,.2)}
+
 /* PR indicators on completed steps */
 .step.has-pr{position:relative}
 .step.has-pr::before{content:'🏆';position:absolute;top:-6px;right:-2px;font-size:16px;z-index:2;animation:float 2s infinite;filter:drop-shadow(0 2px 4px rgba(212,168,83,.4))}

@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V8.2 — progress photos)
-const CACHE_NAME = 'bulkmode-v8-2';
+// BULK MODE Service Worker — Offline-first (V8.3 — plate calculator)
+const CACHE_NAME = 'bulkmode-v8-3';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/substitutions.js',
   './js/achievements.js',
   './js/progress-photos.js',
+  './js/plate-calc.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'

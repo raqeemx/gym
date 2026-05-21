@@ -88,7 +88,9 @@ const KEYS={
   // V7.2 — user profile (#37)
   USER_PROFILE:'app:user_profile',
   // V8 — achievements
-  ACHIEVEMENTS:'app:achievements_unlocked'
+  ACHIEVEMENTS:'app:achievements_unlocked',
+  // V8 — plate calculator preferences (bar weight + enabled plates)
+  PLATE_CALC_PREFS:'app:plate_calc_prefs'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة
