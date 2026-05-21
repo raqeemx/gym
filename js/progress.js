@@ -684,6 +684,39 @@ function renderBodyMetricsHistory(records){
   </table></div>`;
 }
 
+// V7.3 — حدود التحقق لكل حقل قياس (نطاقات منطقية للجسم البشري البالغ)
+// تعديل هذه القيم سهل — كلها constants في مكان واحد
+const METRIC_LIMITS={
+  arm:       {min:15, max:60,  softDelta:5,  label:'الذراع',  unit:'سم'},
+  chest:     {min:60, max:180, softDelta:10, label:'الصدر',   unit:'سم'},
+  shoulder:  {min:80, max:200, softDelta:10, label:'الكتف',   unit:'سم'},
+  thigh:     {min:30, max:100, softDelta:5,  label:'الفخذ',   unit:'سم'},
+  waist:     {min:50, max:200, softDelta:5,  label:'الخصر',   unit:'سم'},
+  bodyWeight:{min:30, max:300, softDelta:5,  label:'الوزن',   unit:'كجم'}
+};
+
+// V7.3 — يتحقّق من قيمة قياس واحد ضد الحدود الصلبة والتغيّر النسبي
+// يُرجع {ok, hard?, soft?}:
+//   - hard: رسالة خطأ، الحفظ يُرفَض
+//   - soft: رسالة تحذير، تحتاج تأكيد
+function validateMetric(field, value, lastValue){
+  const L=METRIC_LIMITS[field];
+  if(!L) return {ok:true};
+  if(value==null) return {ok:true}; // الحقل فاضي، نتجاوز
+  // Hard limit: خارج النطاق المعقول
+  if(value<L.min || value>L.max){
+    return {ok:false, hard:`⚠️ قياس ${L.label} يجب أن يكون بين ${L.min} و ${L.max} ${L.unit}`};
+  }
+  // Soft warning: تغيّر مفاجئ عن آخر قياس
+  if(lastValue!=null){
+    const delta=Math.abs(value-lastValue);
+    if(delta>L.softDelta){
+      return {ok:true, soft:`قياس ${L.label} تغيّر من ${lastValue} إلى ${value} ${L.unit} (فرق ${Math.round(delta*10)/10}). هل أنت متأكد؟`};
+    }
+  }
+  return {ok:true};
+}
+
 async function saveBodyMetrics(){
   const date=document.getElementById('bmDate').value;
   if(!date){showToast('⚠️ أدخل التاريخ','var(--red)');return}
@@ -702,8 +735,49 @@ async function saveBodyMetrics(){
     timestamp:new Date().toISOString()
   };
   // تحقّق من وجود قيمة واحدة على الأقل
-  const hasAny=['arm','chest','shoulder','thigh','waist','bodyWeight'].some(k=>rec[k]!=null);
+  const fields=['arm','chest','shoulder','thigh','waist','bodyWeight'];
+  const hasAny=fields.some(k=>rec[k]!=null);
   if(!hasAny){showToast('⚠️ أدخل قياساً واحداً على الأقل','var(--red)');return}
+
+  // V7.3 — اجلب آخر قياس قبل هذا التاريخ (للمقارنة في soft warnings)
+  const all=(await db.getAll('bodyMetrics')).sort((a,b)=>b.date.localeCompare(a.date));
+  const last=all.find(r=>r.date<date)||null;
+
+  // ١. تحقّق صلب على كل حقل — أي خرق يوقف الحفظ فوراً
+  for(const f of fields){
+    if(rec[f]==null) continue;
+    const isNum=typeof rec[f]==='number' && !isNaN(rec[f]) && isFinite(rec[f]);
+    if(!isNum){
+      showToast(`⚠️ قيمة ${METRIC_LIMITS[f].label} غير صالحة`,'var(--red)');
+      return;
+    }
+    const lastV=last?last[f]:null;
+    const v=validateMetric(f,rec[f],lastV);
+    if(v.hard){showToast(v.hard,'var(--red)',4000);return}
+  }
+
+  // ٢. اجمع كل التحذيرات الناعمة
+  const softWarnings=[];
+  for(const f of fields){
+    if(rec[f]==null) continue;
+    const lastV=last?last[f]:null;
+    const v=validateMetric(f,rec[f],lastV);
+    if(v.soft) softWarnings.push({field:f,msg:v.soft});
+  }
+
+  // ٣. كشف الشذوذ الجماعي (احتمال خطأ في الوحدات: سم vs بوصة، كجم vs رطل)
+  // لو ٣ حقول أو أكثر قفزت دفعة واحدة → اسأل عن الوحدات
+  if(softWarnings.length>=3){
+    const ok=confirm(`⚠️ ${softWarnings.length} قياسات تغيّرت بشكل كبير دفعة واحدة.\n\nاحتمال خطأ في الوحدات — تأكّد أنك تستخدم:\n• السنتيمتر (وليس البوصة)\n• الكيلوغرام (وليس الرطل)\n\nاضغط "موافق" للمتابعة، أو "إلغاء" للرجوع وتعديل القيم.`);
+    if(!ok) return;
+  }else{
+    // ٤. لو القفزات أقل من ٣، اطلب تأكيد لكل واحدة على حدة
+    for(const w of softWarnings){
+      if(!confirm(w.msg)) return;
+    }
+  }
+
+  // ٥. الحفظ
   await db.put('bodyMetrics',rec);
   showToast('✓ تم حفظ القياسات','var(--grn)');
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
