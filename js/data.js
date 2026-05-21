@@ -86,7 +86,9 @@ const KEYS={
   SUBS_PREFS:'subs:prefs',
   SUBS_HISTORY:'subs:history',
   // V7.2 — user profile (#37)
-  USER_PROFILE:'app:user_profile'
+  USER_PROFILE:'app:user_profile',
+  // V8 — achievements
+  ACHIEVEMENTS:'app:achievements_unlocked'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

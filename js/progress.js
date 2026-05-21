@@ -455,6 +455,7 @@ document.querySelectorAll('.prog-tab').forEach(b=>{
     if(b.dataset.pt==='prs') renderPRs();
     if(b.dataset.pt==='metrics') renderBodyMetrics();
     if(b.dataset.pt==='daily') renderDailyLog();
+    if(b.dataset.pt==='achievements') renderAchievements(); // V8
   });
 });
 
@@ -467,6 +468,63 @@ async function refreshProgressTab(){
   else if(pt==='history') renderHistory();
   else if(pt==='metrics') renderBodyMetrics();
   else if(pt==='daily') renderDailyLog();
+  else if(pt==='achievements') renderAchievements(); // V8
+}
+
+// ============ V8 — Achievements page ============
+async function renderAchievements(){
+  const body=document.getElementById('achBody');
+  if(!body) return;
+  body.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+
+  // اقرأ الحالة + احسب التقدّم نحو الإنجازات غير المفتوحة
+  const rec=await db.get('settings',KEYS.ACHIEVEMENTS);
+  const unlocked=(rec&&rec.value)||{};
+  const stats=(typeof computeAchievementStats==='function')?await computeAchievementStats():null;
+
+  const total=ACHIEVEMENTS.length;
+  const unlockedCount=ACHIEVEMENTS.filter(a=>unlocked[a.id]).length;
+  const pct=Math.round((unlockedCount/total)*100);
+
+  // فصل المفتوحة عن المقفلة (المفتوحة أولاً، الأحدث في الأعلى)
+  const opened=ACHIEVEMENTS
+    .filter(a=>unlocked[a.id])
+    .sort((a,b)=>new Date(unlocked[b.id].unlockedAt)-new Date(unlocked[a.id].unlockedAt));
+  const locked=ACHIEVEMENTS.filter(a=>!unlocked[a.id]);
+
+  const cardHtml=(ach,isUnlocked)=>{
+    if(isUnlocked){
+      const u=unlocked[ach.id];
+      return `<div class="ach-card ach-unlocked">
+        <div class="ach-icon">${ach.icon}</div>
+        <div class="ach-title">${ach.title}</div>
+        <div class="ach-desc">${ach.desc}</div>
+        <div class="ach-date">✓ ${fmtDate(u.unlockedAt)}</div>
+      </div>`;
+    }
+    return `<div class="ach-card ach-locked">
+      <div class="ach-icon">🔒</div>
+      <div class="ach-title">${ach.title}</div>
+      <div class="ach-desc">${ach.desc}</div>
+      <div class="ach-date">— لم يُفتح بعد —</div>
+    </div>`;
+  };
+
+  body.innerHTML=`
+    <div class="ach-progress-bar">
+      <div class="ach-progress-head">
+        <span class="ach-progress-num">${unlockedCount}</span>
+        <span class="ach-progress-sep">/</span>
+        <span class="ach-progress-total">${total}</span>
+        <span class="ach-progress-lbl">إنجاز</span>
+      </div>
+      <div class="ach-progress-track"><div class="ach-progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    ${opened.length?`<div class="ach-section-title">✨ مفتوحة (${opened.length})</div>
+      <div class="ach-grid">${opened.map(a=>cardHtml(a,true)).join('')}</div>`:''}
+    ${locked.length?`<div class="ach-section-title">🔒 مقفلة (${locked.length})</div>
+      <div class="ach-grid">${locked.map(a=>cardHtml(a,false)).join('')}</div>`:''}
+  `;
 }
 
 // ============ V7.2 — DAILY LOG (#38, #41) ============

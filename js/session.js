@@ -760,9 +760,11 @@ async function endSession(silent=false){
 
 // V7.3 — يحتفظ بـ ID آخر workout مغلق لتحديث الملاحظات عند closeSummary
 let _lastFinishedWorkoutId=null;
+let _lastFinishedSession=null; // V8 — للـ checkAchievements مع pr_storm/legend
 
 function showSessionSummary(s){
   _lastFinishedWorkoutId=s.id; // V7.3
+  _lastFinishedSession=s;       // V8
   document.getElementById('summaryDay').textContent=s.dayType;
   const prsHtml=(s.prList&&s.prList.length)?
     `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${p.exerciseName} — ${p.label}: <b>${p.value}</b></div>`).join('')}</div>`
@@ -796,8 +798,14 @@ async function closeSummary(){
     }catch(e){console.warn('Failed to save session note:',e)}
   }
   _lastFinishedWorkoutId=null;
+  // V8 — التقط مرجع الجلسة قبل التصفير، ثم افحص الإنجازات بعد الإغلاق
+  const finishedForAch=_lastFinishedSession;
+  _lastFinishedSession=null;
   document.getElementById('summaryModal').classList.remove('open');
   document.body.style.overflow='';
+  if(finishedForAch && typeof checkAchievements==='function'){
+    setTimeout(()=>checkAchievements({lastSession:finishedForAch,delay:200}),400);
+  }
 }
 
 // ============ PR DETECTION ============
@@ -976,6 +984,11 @@ async function saveSet(btn){
       action:{label:'تراجع',handler:()=>undoSetSave(undoCtx)}
     });
     try{navigator.vibrate&&navigator.vibrate(prs.length?[80,40,80]:50)}catch(e){}
+
+    // V8 — فحص الإنجازات بعد كل سيت (يؤخّر popup الإنجاز لو PR celebration شغّال)
+    if(typeof checkAchievements==='function'){
+      checkAchievements({lastSession:currentSession,afterPR:prs.length>0});
+    }
 
     // ابدأ مؤقت الراحة تلقائياً
     const restDur=getRestDuration(step);
