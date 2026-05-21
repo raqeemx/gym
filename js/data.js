@@ -272,8 +272,18 @@ async function migrateFromLS(){
 function getExerciseName(stepEl){
   const nameEl=stepEl.querySelector('.step-name');
   if(!nameEl) return null;
-  let name=nameEl.textContent.trim();
-  name=name.replace(/\s*—\s*سيت.*$/,'').replace(/\s*-\s*سيت.*$/,'').replace(/\s*\(.*?\)\s*$/,'').trim();
+  // V8.3 — اعتمد على النص النصي فقط (يتجاهل زر "ℹ️ form-note-btn" المحقون)
+  let name='';
+  for(const node of nameEl.childNodes){
+    if(node.nodeType===3) name+=node.nodeValue;
+  }
+  name=(name||nameEl.textContent).trim();
+  name=name
+    .replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'')  // V8.3 — استبعد لاحقة "— مجموعة تسخين"
+    .replace(/\s*—\s*سيت.*$/,'')
+    .replace(/\s*-\s*سيت.*$/,'')
+    .replace(/\s*\(.*?\)\s*$/,'')
+    .trim();
   return name;
 }
 

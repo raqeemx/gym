@@ -376,6 +376,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await injectTrackingInputs();
     injectAltButtons();      // أزرار "⇄ بديل؟" (V6)
     injectSkipButtons();      // أزرار "↷ تخطّى" (V7 — #12)
+    injectFormNoteButtons();  // V8.3 — أزرار "ℹ️" لشرح طريقة الأداء (3.2)
     syncPlanBTexts();         // مزامنة نصوص Plan B من الكتالوج (V7 — #11)
     await loadSubstitutions();// استرجع البدائل المحفوظة (V6)
     await loadSkippedSteps(); // استرجع حالات التخطّي اليوم (V7 — #12)

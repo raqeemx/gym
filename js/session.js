@@ -1,7 +1,10 @@
 // ============ INJECT TRACKING INPUTS (async) ============
 // حقن خانات الإدخال داخل كل تمرين، مع جلب آخر سيت من IndexedDB
+// V8.3 — يشمل الآن ستيبات التسخين المرتبطة بتمرين (.warmup.trackable-warmup)
 async function injectTrackingInputs(){
-  const steps=document.querySelectorAll('.step:not(.rest):not(.warmup):not(.done)');
+  // الستيبات التدريبية + ستيبات التسخين القابلة للتتبع
+  const workSteps=document.querySelectorAll('.step:not(.rest):not(.warmup):not(.done)');
+  const warmupSteps=document.querySelectorAll('.step.warmup.trackable-warmup:not(.done)');
 
   // V7 (#13) — احسب: lastSessionBest (أفضل سيت من آخر جلسة) + allTimeBest (أعلى وزن في الكل)
   const allSets=await db.getAll('sets');
@@ -9,7 +12,7 @@ async function injectTrackingInputs(){
   // V8 — اقرأ حالة deload مرّة واحدة لكل الـ steps
   const deloadActive=await isDeloadActive();
 
-  steps.forEach(step=>{
+  workSteps.forEach(step=>{
     const exName=getExerciseName(step);
     if(!exName) return;
     if(step.querySelector('.track-input')) return;
@@ -53,6 +56,34 @@ async function injectTrackingInputs(){
       if(suggestion) injectProgressionHint(inputDiv,step,suggestion);
     }
   });
+
+  // V8.3 — حقن خانات إدخال مبسّطة لستيبات التسخين القابلة للتتبع
+  // (لا RPE، لا اقتراح تقدّم، لا ملاحظة — التسخين بسيط)
+  warmupSteps.forEach(step=>{
+    const exName=getExerciseName(step);
+    if(!exName) return;
+    if(step.querySelector('.track-input')) return;
+
+    const inputDiv=document.createElement('div');
+    inputDiv.className='track-input warmup-track';
+    inputDiv.dataset.isWarmup='1';
+
+    const exKey=exName.replace(/\s+/g,'_');
+    const stats=statsByName[exName];
+    // اقتراح: نصف وزن آخر سيت عمل لنفس التمرين
+    const suggestedW=stats?Math.max(0,Math.round((stats.lastSessionBest.weight/2)*2)/2):'';
+    const placeholderR=stats?stats.lastSessionBest.reps:12;
+
+    inputDiv.innerHTML=`
+      <span class="warmup-badge" title="هذا سيت تسخين — لا يُحتسب في الأرقام القياسية أو الحجم">🔥 تسخين</span>
+      <label>كجم</label>
+      <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${suggestedW}">
+      <label>تكرار</label>
+      <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
+      <button class="save-btn" onclick="saveSet(this);event.stopPropagation()">حفظ</button>
+    `;
+    step.querySelector('.step-body').appendChild(inputDiv);
+  });
 }
 
 // V7 (#13) — يحسب من كل السيتات: أفضل سيت في آخر جلسة + أعلى وزن في الكل
@@ -60,6 +91,7 @@ async function injectTrackingInputs(){
 function computeLastBestByExercise(allSets){
   const byEx={};
   for(const s of allSets){
+    if(s.isWarmup) continue; // V8.3 — تجاهل سيتات التسخين في حساب "آخر/أفضل"
     if(!byEx[s.exerciseName]) byEx[s.exerciseName]={byWorkout:{}};
     const e=byEx[s.exerciseName];
     if(!e.byWorkout[s.workoutId]) e.byWorkout[s.workoutId]=[];
@@ -1053,8 +1085,11 @@ async function closeSummary(){
 const EPLEY=(w,r)=>w*(1+r/30);
 
 async function detectPRs(setRec){
+  // V8.3 — سيتات التسخين لا تُحتسب في الأرقام القياسية
+  if(setRec.isWarmup) return [];
   const all=await db.getAll('sets','exerciseName',setRec.exerciseName);
-  const prev=all.filter(s=>s.id!==setRec.id);
+  // V8.3 — استبعد سيتات التسخين من مقارنة السجلات
+  const prev=all.filter(s=>s.id!==setRec.id && !s.isWarmup);
   const prs=[];
 
   // 1. Weight PR — أعلى وزن في التمرين
@@ -1141,6 +1176,7 @@ async function saveSet(btn){
   const rpe=rpeInput && rpeInput.value?parseInt(rpeInput.value):null; // V7.2 #39
   const note=(trackDiv.dataset.pendingNote||'').trim()||null; // V7.3 — ملاحظة السيت
   const exName=weightInput.dataset.name;
+  const isWarmup=trackDiv.dataset.isWarmup==='1'; // V8.3 — سيت تسخين؟
 
   if(isNaN(weight)||isNaN(reps)||reps<=0){
     showToast('⚠️ أدخل وزن وتكرارات صحيحة','var(--red)');
@@ -1163,6 +1199,7 @@ async function saveSet(btn){
       weight:weight,reps:reps,
       rpe:rpe, // V7.2 #39
       note:note, // V7.3 — ملاحظة اختيارية على السيت
+      isWarmup:isWarmup, // V8.3 — علامة سيت التسخين
       timestamp:now,
       date:now.split('T')[0],
       isPR:false,prType:null
@@ -1170,9 +1207,9 @@ async function saveSet(btn){
     const setId=await db.add('sets',setRec);
     setRec.id=setId;
 
-    // حدّث إجماليات الجلسة
+    // حدّث إجماليات الجلسة (V8.3 — سيتات التسخين تُحتسب في setsCount لكن لا تضاف للحجم)
     currentSession.setsCount++;
-    currentSession.totalVolume+=weight*reps;
+    if(!isWarmup) currentSession.totalVolume+=weight*reps;
 
     // سجل الاستبدال في التاريخ (لميزة الاقتراح الذكي)
     if(step.dataset.substitute && step.dataset.original){
@@ -1217,9 +1254,12 @@ async function saveSet(btn){
       celebratePR(prs,exName);
     }
     // V7 (#18) — toast مع زر تراجع (٥ ثواني)، حتى مع PR
+    // V8.3 — أيقونة مختلفة لسيت التسخين
     const baseMsg=prs.length
       ?`🏆 ${exName}: ${weight}كجم × ${reps} · ${prs.length} رقم قياسي`
-      :`✓ ${exName}: ${weight}كجم × ${reps}`;
+      :isWarmup
+        ?`🔥 تسخين ${exName}: ${weight}كجم × ${reps}`
+        :`✓ ${exName}: ${weight}كجم × ${reps}`;
     showToast(baseMsg,prs.length?'var(--g2)':'var(--grn)',5000,{
       action:{label:'تراجع',handler:()=>undoSetSave(undoCtx)}
     });
@@ -1253,10 +1293,12 @@ async function undoSetSave(ctx){
         if(pr.setId===ctx.setId) await db.delete('prs',pr.id);
       }
     }
-    // ٣. اعكس عدّادات الجلسة
+    // ٣. اعكس عدّادات الجلسة (V8.3 — لا تخصم حجم سيت التسخين لأنه لم يُضاف أصلاً)
     if(currentSession){
       currentSession.setsCount=Math.max(0,currentSession.setsCount-1);
-      currentSession.totalVolume=Math.max(0,currentSession.totalVolume-ctx.setRec.weight*ctx.setRec.reps);
+      if(!ctx.setRec.isWarmup){
+        currentSession.totalVolume=Math.max(0,currentSession.totalVolume-ctx.setRec.weight*ctx.setRec.reps);
+      }
       currentSession.prCount=Math.max(0,currentSession.prCount-ctx.prCount);
       // أزل PRs من قائمة الجلسة (آخر prCount عناصر مضافة لهذا التمرين)
       if(ctx.prCount>0 && currentSession.prList){

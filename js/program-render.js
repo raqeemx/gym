@@ -106,7 +106,12 @@ function renderStep(step,counter){
   // ستيب تدريبي — عدّاد متسلسل
   counter.n++;
   const classes=['step'];
-  if(step.type==='warmup') classes.push('warmup');
+  if(step.type==='warmup'){
+    classes.push('warmup');
+    // V8.3 — التسخين بنصف وزن العمل لتمرين معيّن = ستيب قابل للتتبع
+    // الكاردِيو (Skillrow) أو إحماء عام يبقى غير قابل للتتبع
+    if(/مجموعة\s+تسخين/.test(step.name)) classes.push('trackable-warmup');
+  }
   else if(step.type==='solo-set') classes.push('solo-set');
   // ستيب 'set' عادي بدون class إضافي
   if(step.last) classes.push('done');
@@ -116,4 +121,65 @@ function renderStep(step,counter){
          `<div class="step-name">${step.name}</div>`+
          `<div class="step-info">${step.info}</div>`+
          `</div></div>`;
+}
+
+/* ============================================================
+ * V8.3 — Exercise Form Notes (3.2)
+ * ============================================================
+ * زر ℹ️ بجانب اسم التمرين يفتح modal بشرح مختصر للأداء الصحيح.
+ * يعتمد على EXERCISE_FORM_NOTES من program-data.js.
+ * ============================================================ */
+function injectFormNoteButtons(){
+  if(typeof EXERCISE_FORM_NOTES==='undefined') return;
+  document.querySelectorAll('.step:not(.rest)').forEach(step=>{
+    if(step.querySelector('.form-note-btn')) return;
+    const stepBody=step.querySelector('.step-body');
+    const nameEl=step.querySelector('.step-name');
+    if(!stepBody || !nameEl) return;
+    const raw=getExerciseName(step);
+    if(!raw) return;
+    const norm=(typeof normalizeExName==='function')?normalizeExName(raw):raw;
+    if(!EXERCISE_FORM_NOTES[norm]) return;
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='form-note-btn';
+    btn.setAttribute('aria-label','عرض طريقة الأداء');
+    btn.title='شرح طريقة الأداء';
+    btn.textContent='ℹ️';
+    btn.dataset.exName=norm;
+    btn.onclick=(e)=>{e.stopPropagation();openFormNoteModal(norm)};
+    // ضع الزر بين الاسم والمعلومات — كسيد عنصر مستقل (يبقى بعد الاستبدالات)
+    stepBody.insertBefore(btn,nameEl.nextSibling);
+    stepBody.classList.add('has-form-note');
+  });
+}
+
+function openFormNoteModal(exName){
+  const note=EXERCISE_FORM_NOTES&&EXERCISE_FORM_NOTES[exName];
+  if(!note) return;
+  const modal=document.getElementById('formNoteModal');
+  if(!modal) return;
+  document.getElementById('formNoteTitle').textContent=note.title||exName;
+  document.getElementById('formNoteBody').innerHTML=note.formNote||'';
+  const gifWrap=document.getElementById('formNoteGifWrap');
+  const gifEl=document.getElementById('formNoteGif');
+  if(note.gif){
+    gifEl.src=note.gif;
+    gifEl.alt=note.title||exName;
+    gifWrap.style.display='';
+  }else{
+    gifEl.removeAttribute('src');
+    gifWrap.style.display='none';
+  }
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+
+function closeFormNoteModal(){
+  const modal=document.getElementById('formNoteModal');
+  if(!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
 }

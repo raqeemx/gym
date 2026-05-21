@@ -256,6 +256,7 @@ function normalizeExName(name){
     .replace(/^Pulley\s*[—-]\s*Tricep Pushdown$/,'Pulley Pushdown')
     .replace(/^Pulley\s*[—-]\s*سحب أفقي$/,'Pulley')
     .replace(/\s*على Leg Press\s*$/,'')
+    .replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'')  // V8.3 — warmup set
     .replace(/\s*[—-]\s*تسخين\s*$/,'');
   return n;
 }

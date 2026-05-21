@@ -34,12 +34,14 @@ function computeStreak(workouts){
 }
 
 // يحسب الإحصائيات لنطاق زمني (n days back from now)
+// V8.3 — سيتات التسخين تُحتسب في عدد السيتات لكن تُستبعد من الحجم/PRs
 function statsForRange(sets,workouts,daysBack){
   const cutoff=_daysAgo(daysBack).getTime();
   const inRangeSets=sets.filter(s=>new Date(s.timestamp).getTime()>=cutoff);
   const inRangeW=workouts.filter(w=>new Date(w.startTime).getTime()>=cutoff);
-  const volume=inRangeSets.reduce((a,s)=>a+s.weight*s.reps,0);
-  const prCount=inRangeSets.filter(s=>s.isPR).length;
+  const workSets=inRangeSets.filter(s=>!s.isWarmup);
+  const volume=workSets.reduce((a,s)=>a+s.weight*s.reps,0);
+  const prCount=workSets.filter(s=>s.isPR).length;
   return {
     sets:inRangeSets.length,
     volume:Math.round(volume),
@@ -58,11 +60,13 @@ function pctDelta(now,prev){
 }
 
 // تقسيم الحجم حسب المجموعة العضلية لنطاق ٢٨ يوم الأخيرة
+// V8.3 — استبعاد سيتات التسخين (لا تمثّل حملاً فعلياً)
 function volumeByMuscle(sets,daysBack=28){
   const cutoff=_daysAgo(daysBack).getTime();
   const buckets={};
   let unknown=0;
   sets.forEach(s=>{
+    if(s.isWarmup) return; // V8.3
     if(new Date(s.timestamp).getTime()<cutoff) return;
     const mg=getMuscleGroup(s.exerciseName);
     if(!mg){unknown+=s.weight*s.reps;return}
@@ -80,9 +84,11 @@ function dayTypeCounts(workouts){
 }
 
 // أعلى ٥ أوزان رفعتها في حياتك
+// V8.3 — لا تشمل سيتات التسخين
 function topLifts(sets,limit=5){
   const byEx={};
   sets.forEach(s=>{
+    if(s.isWarmup) return;
     if(!byEx[s.exerciseName] || s.weight>byEx[s.exerciseName].weight){
       byEx[s.exerciseName]={weight:s.weight,reps:s.reps,date:s.date};
     }
@@ -129,10 +135,11 @@ async function openStats(){
     return;
   }
 
-  // إحصائيات إجمالية
+  // إحصائيات إجمالية (V8.3 — سيتات التسخين مستبعدة من الحجم/التمارين الفريدة)
   const total=sets.length;
-  const uniqueExercises=new Set(sets.map(s=>s.exerciseName)).size;
-  const totalVolume=sets.reduce((a,s)=>a+s.weight*s.reps,0);
+  const workSets=sets.filter(s=>!s.isWarmup);
+  const uniqueExercises=new Set(workSets.map(s=>s.exerciseName)).size;
+  const totalVolume=workSets.reduce((a,s)=>a+s.weight*s.reps,0);
   const sessions=workouts.length;
   const totalDuration=workouts.reduce((a,w)=>a+(w.duration||0),0);
   const totalHours=Math.round(totalDuration/360)/10;
@@ -327,7 +334,8 @@ async function openStats(){
       ws.forEach(s=>{
         if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
         const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
-        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
+        const warmMark=s.isWarmup?'<span class="set-warmup-mark" title="سيت تسخين">🔥</span>':''; // V8.3
+        byEx[s.exerciseName].push(`${warmMark}${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
       });
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`

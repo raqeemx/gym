@@ -44,7 +44,8 @@ async function computeAchievementStats(){
   const sets=await db.getAll('sets');
   const workouts=await db.getAll('workouts');
   const prs=await db.getAll('prs');
-  const totalVolume=sets.reduce((a,s)=>a+(s.weight||0)*(s.reps||0),0);
+  // V8.3 — استبعاد سيتات التسخين من الحجم الإجمالي
+  const totalVolume=sets.reduce((a,s)=>s.isWarmup?a:a+(s.weight||0)*(s.reps||0),0);
   // bestStreak من computeStreak (معرّفة في progress.js — متاحة كـ global)
   let bestStreak=0;
   try{
