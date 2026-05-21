@@ -14,6 +14,11 @@ document.querySelectorAll('.nb[data-t]').forEach(b=>{
     window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
     // إذا فُتح تبويب "تقدمي" حدّث محتواه
     if(b.dataset.t==='7') refreshProgressTab();
+    // V8.3 (3.7) — إذا فُتح تبويب "التقويم" حدّث الشهر
+    if(b.dataset.t==='8' && typeof refreshCalendar==='function'){
+      if(typeof calendarToday==='function' && !_calCursor) calendarToday();
+      else refreshCalendar();
+    }
   });
 });
 

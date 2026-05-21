@@ -31,15 +31,13 @@ async function injectTrackingInputs(){
       <button class="plate-calc-btn" type="button" onclick="openPlateCalcFromSet(this);event.stopPropagation()" title="افتح حاسبة البليتات بهذا الوزن">🧮</button>
       <label>تكرار</label>
       <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
-      <span class="rpe-wrap" title="RPE اختياري — صعوبة السيت من 6 إلى 10">
-        <select class="rpe-input">
-          <option value="">RPE</option>
-          <option value="6">6 (سهل)</option>
-          <option value="7">7 (متوسط)</option>
-          <option value="8">8 (صعب — 2 تكرار احتياط)</option>
-          <option value="9">9 (صعب جداً — 1 تكرار احتياط)</option>
-          <option value="10">10 (الفشل)</option>
-        </select>
+      <span class="rpe-chips" title="RPE اختياري — صعوبة السيت من 6 (سهل) إلى 10 (الفشل)" role="radiogroup" aria-label="RPE">
+        <span class="rpe-lbl">RPE</span>
+        <button type="button" class="rpe-chip" data-rpe="6" onclick="selectRpe(this);event.stopPropagation()" title="٦ — سهل">6</button>
+        <button type="button" class="rpe-chip" data-rpe="7" onclick="selectRpe(this);event.stopPropagation()" title="٧ — متوسط">7</button>
+        <button type="button" class="rpe-chip" data-rpe="8" onclick="selectRpe(this);event.stopPropagation()" title="٨ — صعب · ٢ تكرار احتياط">8</button>
+        <button type="button" class="rpe-chip" data-rpe="9" onclick="selectRpe(this);event.stopPropagation()" title="٩ — قريب من الفشل · ١ احتياط">9</button>
+        <button type="button" class="rpe-chip" data-rpe="10" onclick="selectRpe(this);event.stopPropagation()" title="١٠ — الفشل">10</button>
       </span>
       <span class="last" onclick="toggleLastBestView(this);event.stopPropagation()" title="اضغط للتبديل بين آخر جلسة وأفضل أداء">${renderLastBestText(stats)}</span>
       <button class="set-note-btn" onclick="promptSetNote(this);event.stopPropagation()" title="ملاحظة على السيت (اختياري)">📝</button>
@@ -280,14 +278,69 @@ function injectProgressionHint(trackDiv,stepEl,suggestion){
   }
 }
 
-// V7.3 — فتح prompt لإضافة/تعديل ملاحظة على السيت قبل الحفظ
+// V7.3 — ملاحظة السيت · V8.3 (3.5) — استُبدلت بـ panel داخلية بدل prompt()
+// الزر 📝 يفتح/يطوي textarea أسفل خانات الإدخال — multi-line + يحترم الـ theme
 function promptSetNote(btnEl){
   const trackDiv=btnEl.closest('.track-input');
   if(!trackDiv) return;
+  // ابحث عن panel موجود مسبقاً
+  let panel=trackDiv.querySelector('.set-note-panel');
+  if(panel){
+    // toggle: لو مفتوحة، أغلق (مع حفظ القيمة الحالية)
+    if(panel.classList.contains('open')){
+      const ta=panel.querySelector('.set-note-ta');
+      commitSetNote(trackDiv,btnEl,ta?ta.value:'');
+      panel.classList.remove('open');
+    }else{
+      panel.classList.add('open');
+      const ta=panel.querySelector('.set-note-ta');
+      if(ta){setTimeout(()=>{ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)},100)}
+    }
+    return;
+  }
+  // أنشئ الـ panel أول مرة
   const current=trackDiv.dataset.pendingNote||'';
-  const note=prompt('ملاحظة على هذا السيت (مثلاً: شعرت بألم خفيف، أو وضع الجسم كان ممتاز):', current);
-  if(note===null) return; // المستخدم ألغى
-  const trimmed=note.trim();
+  panel=document.createElement('div');
+  panel.className='set-note-panel open';
+  panel.innerHTML=`
+    <textarea class="set-note-ta" rows="2" placeholder="ملاحظة على هذا السيت (مثلاً: شعرت بألم خفيف، وضع الجسم كان ممتاز)">${escSetNote(current)}</textarea>
+    <div class="set-note-actions">
+      <button type="button" class="snp-clear">🗑 امسح</button>
+      <button type="button" class="snp-save">✓ حفظ</button>
+    </div>
+  `;
+  trackDiv.appendChild(panel);
+  const ta=panel.querySelector('.set-note-ta');
+  panel.querySelector('.snp-save').onclick=(e)=>{
+    e.stopPropagation();
+    commitSetNote(trackDiv,btnEl,ta.value);
+    panel.classList.remove('open');
+  };
+  panel.querySelector('.snp-clear').onclick=(e)=>{
+    e.stopPropagation();
+    ta.value='';
+    commitSetNote(trackDiv,btnEl,'');
+    panel.classList.remove('open');
+  };
+  // اضغط Enter (بدون Shift) لحفظ سريع
+  ta.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter' && !e.shiftKey){
+      e.preventDefault();
+      commitSetNote(trackDiv,btnEl,ta.value);
+      panel.classList.remove('open');
+    }else if(e.key==='Escape'){
+      e.preventDefault();
+      panel.classList.remove('open');
+    }
+  });
+  ta.addEventListener('click',(e)=>e.stopPropagation());
+  setTimeout(()=>{ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)},100);
+}
+
+function escSetNote(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function commitSetNote(trackDiv,btnEl,raw){
+  const trimmed=(raw||'').trim();
   if(trimmed){
     trackDiv.dataset.pendingNote=trimmed;
     btnEl.classList.add('has-note');
@@ -297,6 +350,44 @@ function promptSetNote(btnEl){
     btnEl.classList.remove('has-note');
     btnEl.title='ملاحظة على السيت (اختياري)';
   }
+}
+
+// V8.3 (3.6) — RPE chip selector — استبدل الـ select المدمج بشيبس صغيرة
+// النقر على شيب: لو محدد بالفعل → إلغاء، وإلا → حدّد (يلغي الباقي)
+function selectRpe(chipBtn){
+  const wrap=chipBtn.closest('.rpe-chips');
+  if(!wrap) return;
+  const isActive=chipBtn.classList.contains('active');
+  wrap.querySelectorAll('.rpe-chip').forEach(c=>c.classList.remove('active'));
+  if(!isActive){
+    chipBtn.classList.add('active');
+    wrap.dataset.rpe=chipBtn.dataset.rpe;
+  }else{
+    delete wrap.dataset.rpe;
+  }
+}
+
+// V8.3 (3.6) — استخرج RPE المُختار من شيبس (أو من dataset)
+function getRpeFromChips(trackDiv){
+  if(!trackDiv) return null;
+  const wrap=trackDiv.querySelector('.rpe-chips');
+  if(!wrap) return null;
+  const active=wrap.querySelector('.rpe-chip.active');
+  if(active) return parseInt(active.dataset.rpe,10);
+  if(wrap.dataset.rpe) return parseInt(wrap.dataset.rpe,10);
+  return null;
+}
+
+// V8.3 (3.6) — حدّد شيب RPE برمجياً (للاستعادة في undo)
+function setRpeChip(trackDiv,rpe){
+  if(!trackDiv) return;
+  const wrap=trackDiv.querySelector('.rpe-chips');
+  if(!wrap) return;
+  wrap.querySelectorAll('.rpe-chip').forEach(c=>c.classList.remove('active'));
+  delete wrap.dataset.rpe;
+  if(rpe==null) return;
+  const target=wrap.querySelector(`.rpe-chip[data-rpe="${rpe}"]`);
+  if(target){target.classList.add('active');wrap.dataset.rpe=String(rpe)}
 }
 
 // V8.3 (3.4) — افتح حاسبة البليتات مع الوزن الحالي/المقترح من سياق السيت
@@ -1196,10 +1287,14 @@ async function saveSet(btn){
   const step=btn.closest('.step');
   const weightInput=trackDiv.querySelector('.weight-input');
   const repsInput=trackDiv.querySelector('.reps-input');
-  const rpeInput=trackDiv.querySelector('.rpe-input'); // V7.2 #39
   const weight=parseFloat(weightInput.value);
   const reps=parseInt(repsInput.value);
-  const rpe=rpeInput && rpeInput.value?parseInt(rpeInput.value):null; // V7.2 #39
+  // V8.3 (3.6) — RPE من شيبس (بدل الـ select)؛ fallback للـ select القديم لو موجود
+  let rpe=getRpeFromChips(trackDiv);
+  if(rpe==null){
+    const rpeInput=trackDiv.querySelector('.rpe-input');
+    if(rpeInput && rpeInput.value) rpe=parseInt(rpeInput.value,10);
+  }
   const note=(trackDiv.dataset.pendingNote||'').trim()||null; // V7.3 — ملاحظة السيت
   const exName=weightInput.dataset.name;
   const isWarmup=trackDiv.dataset.isWarmup==='1'; // V8.3 — سيت تسخين؟
@@ -1264,6 +1359,9 @@ async function saveSet(btn){
     delete trackDiv.dataset.pendingNote;
     const noteBtn=trackDiv.querySelector('.set-note-btn');
     if(noteBtn) noteBtn.classList.remove('has-note');
+    // V8.3 (3.5) — احذف panel الملاحظة لو موجود (يُعاد إنشاؤه عند الضغط على 📝 مرة ثانية)
+    const oldPanel=trackDiv.querySelector('.set-note-panel');
+    if(oldPanel) oldPanel.remove();
     // V7 (#13) — أعد بناء عرض "آخر/أفضل" بالهيكل القابل للتبديل
     await refreshLastBestDisplay(trackDiv,exName,setRec);
 
@@ -1343,11 +1441,15 @@ async function undoSetSave(ctx){
     // استعد قيم الإدخال (وزن، تكرار، RPE، ملاحظة) ليقدر المستخدم يعدّل ويعيد الحفظ
     const wIn=ctx.trackDiv.querySelector('.weight-input');
     const rIn=ctx.trackDiv.querySelector('.reps-input');
-    const rpeIn=ctx.trackDiv.querySelector('.rpe-input');
     const noteBtn=ctx.trackDiv.querySelector('.set-note-btn');
     if(wIn) wIn.value=ctx.setRec.weight;
     if(rIn) rIn.value=ctx.setRec.reps;
-    if(rpeIn && ctx.setRec.rpe) rpeIn.value=ctx.setRec.rpe;
+    // V8.3 (3.6) — استعد RPE في شيبس (مع fallback للـ select القديم)
+    if(ctx.setRec.rpe!=null){
+      if(typeof setRpeChip==='function') setRpeChip(ctx.trackDiv,ctx.setRec.rpe);
+      const rpeIn=ctx.trackDiv.querySelector('.rpe-input');
+      if(rpeIn) rpeIn.value=ctx.setRec.rpe;
+    }
     if(ctx.setRec.note){
       ctx.trackDiv.dataset.pendingNote=ctx.setRec.note;
       if(noteBtn){noteBtn.classList.add('has-note');noteBtn.title='الملاحظة: '+ctx.setRec.note}
