@@ -370,7 +370,17 @@ async function exportData(){
   a.click();
   URL.revokeObjectURL(url);
   await db.put('settings',{key:KEYS.LAST_EXPORT,value:new Date().toISOString()});
-  showToast('💾 تم تصدير النسخة الاحتياطية');
+  // V8 — تنبيه عن الصور (لا تُضمّن في JSON بسبب الحجم)
+  try{
+    const photosCount=(await db.getAll('progressPhotos')).length;
+    if(photosCount>0){
+      showToast(`💾 تم التصدير · ⚠️ ${photosCount} صورة لم تُضمّن (احفظها يدوياً من تبويب 📸)`,'var(--org)',7000);
+    }else{
+      showToast('💾 تم تصدير النسخة الاحتياطية');
+    }
+  }catch(e){
+    showToast('💾 تم تصدير النسخة الاحتياطية');
+  }
 }
 
 // تذكير دائم بالتصدير الأسبوعي — لو مرّ ٧ أيام بدون تصدير
@@ -456,6 +466,7 @@ document.querySelectorAll('.prog-tab').forEach(b=>{
     if(b.dataset.pt==='metrics') renderBodyMetrics();
     if(b.dataset.pt==='daily') renderDailyLog();
     if(b.dataset.pt==='achievements') renderAchievements(); // V8
+    if(b.dataset.pt==='photos') renderProgressPhotos(); // V8 — progress photos
   });
 });
 
@@ -469,6 +480,7 @@ async function refreshProgressTab(){
   else if(pt==='metrics') renderBodyMetrics();
   else if(pt==='daily') renderDailyLog();
   else if(pt==='achievements') renderAchievements(); // V8
+  else if(pt==='photos') renderProgressPhotos(); // V8
 }
 
 // ============ V8 — Achievements page ============

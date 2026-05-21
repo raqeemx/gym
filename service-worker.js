@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V8.1 — achievements system)
-const CACHE_NAME = 'bulkmode-v8-1';
+// BULK MODE Service Worker — Offline-first (V8.2 — progress photos)
+const CACHE_NAME = 'bulkmode-v8-2';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   './js/progress.js',
   './js/substitutions.js',
   './js/achievements.js',
+  './js/progress-photos.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'

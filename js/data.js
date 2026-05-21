@@ -63,7 +63,7 @@ function showToast(msg,color='var(--grn)',duration=2500,opts={}){
 // ============ INDEXEDDB WRAPPER ============
 // مغلّف مبسّط للوصول لـ IndexedDB بطريقة async/await
 const DB_NAME='bulkmode_db';
-const DB_VERSION=3; // V7.2 (#38): bumped from 2 — added dailyLog store
+const DB_VERSION=4; // V8 — bumped from 3: progressPhotos indexes (date, category)
 const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings','dailyLog'];
 
 // V7 (#29) — Namespaced settings keys (app:, session:, subs:)
@@ -154,6 +154,16 @@ function migrateV2toV3(d){
   }
 }
 
+// V8 — indexes على progressPhotos (date, category) للاستعلام السريع
+// نحتاج الـ transaction للوصول للـ store الموجود وإضافة indexes جديدة
+function migrateV3toV4(d, tx){
+  if(!d.objectStoreNames.contains('progressPhotos')) return; // أُنشئ في V0→V1
+  if(!tx) return; // الـ transaction مطلوب
+  const store=tx.objectStore('progressPhotos');
+  if(!store.indexNames.contains('date')) store.createIndex('date','date');
+  if(!store.indexNames.contains('category')) store.createIndex('category','category');
+}
+
 const db={
   _h:null,
   async open(){
@@ -164,10 +174,12 @@ const db={
       req.onsuccess=()=>{this._h=req.result;res(this._h)};
       req.onupgradeneeded=(e)=>{
         const d=e.target.result;
+        const tx=e.target.transaction; // مطلوب لتعديل indexes الستورات الموجودة
         // طبّق الترحيلات بالتسلسل
         if(e.oldVersion<1) migrateV0toV1(d);
         if(e.oldVersion<2) migrateV1toV2(d);
         if(e.oldVersion<3) migrateV2toV3(d);
+        if(e.oldVersion<4) migrateV3toV4(d,tx);
       };
     });
   },
