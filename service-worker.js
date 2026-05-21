@@ -1,5 +1,5 @@
-// BULK MODE Service Worker — Offline-first (V7.1 — local Chart.js, no CDN supply-chain risk)
-const CACHE_NAME = 'bulkmode-v7-1';
+// BULK MODE Service Worker — Offline-first (V8 — JSON-driven program data)
+const CACHE_NAME = 'bulkmode-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const ASSETS = [
   './icons/icon-512.png',
   './css/styles.css',
   './js/data.js',
+  './js/program-data.js',
+  './js/program-render.js',
   './js/session.js',
   './js/progress.js',
   './js/substitutions.js',

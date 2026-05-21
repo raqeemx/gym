@@ -345,6 +345,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
     await loadTheme();        // V7 #26 — حمّل الـ theme قبل أي شيء آخر
     await migrateFromLS();
+    renderProgram();          // V8 (#37) — ولّد HTML من PROGRAM_DATA قبل أي injectXXX
     ensureStepIds();         // ID مستقر لكل step (V6)
     normalizeDataDigits();    // V7 #21 — توحيد الأرقام (لاتينية للبيانات)
     injectSessionControls();
