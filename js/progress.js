@@ -326,14 +326,17 @@ async function openStats(){
       const byEx={};
       ws.forEach(s=>{
         if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
-        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}`);
+        const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
+        byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
       });
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
       ).join('');
       const vol=Math.round(w.totalVolume||0).toLocaleString('ar-SA');
+      const noteHtml=w.notes?`<div class="history-note">📝 ${escHTML(w.notes)}</div>`:'';
       return `<div class="history-day">
         <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} · 📊 ${vol}${w.prCount?' · 🏆 '+w.prCount:''}</div>
+        ${noteHtml}
         ${exHtml}
       </div>`;
     }).join('');
@@ -767,17 +770,32 @@ async function renderHistory(){
     const byEx={};
     ws.forEach(s=>{
       if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
-      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.isPR?' 🏆':''}`);
+      const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
+      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
     });
     const exHtml=Object.entries(byEx).map(([ex,arr])=>
       `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
     ).join('');
+    // V7.3 — اعرض ملاحظة الجلسة لو موجودة
+    const noteHtml=w.notes?`<div class="history-note">📝 ${escHTML(w.notes)}</div>`:'';
     items.push(`<div class="history-day">
       <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} سيت · 📊 ${Math.round(w.totalVolume||0)}${w.prCount?' · 🏆 '+w.prCount:''}</div>
+      ${noteHtml}
       ${exHtml}
     </div>`);
   }
   body.innerHTML=items.join('');
+}
+
+// V7.3 — escape HTML للملاحظات (يمنع XSS من نص المستخدم)
+function escHTML(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
 }
 
 // ============ CHART.JS (LAZY) ============

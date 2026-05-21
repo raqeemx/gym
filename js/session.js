@@ -36,6 +36,7 @@ async function injectTrackingInputs(){
         </select>
       </span>
       <span class="last" onclick="toggleLastBestView(this);event.stopPropagation()" title="اضغط للتبديل بين آخر جلسة وأفضل أداء">${renderLastBestText(stats)}</span>
+      <button class="set-note-btn" onclick="promptSetNote(this);event.stopPropagation()" title="ملاحظة على السيت (اختياري)">📝</button>
       <button class="save-btn" onclick="saveSet(this);event.stopPropagation()">حفظ</button>
     `;
     step.querySelector('.step-body').appendChild(inputDiv);
@@ -174,6 +175,25 @@ function injectProgressionHint(trackDiv,stepEl,suggestion){
   if(wInput){
     wInput.placeholder=suggestion.suggestedWeight;
     wInput.classList.add('suggested');
+  }
+}
+
+// V7.3 — فتح prompt لإضافة/تعديل ملاحظة على السيت قبل الحفظ
+function promptSetNote(btnEl){
+  const trackDiv=btnEl.closest('.track-input');
+  if(!trackDiv) return;
+  const current=trackDiv.dataset.pendingNote||'';
+  const note=prompt('ملاحظة على هذا السيت (مثلاً: شعرت بألم خفيف، أو وضع الجسم كان ممتاز):', current);
+  if(note===null) return; // المستخدم ألغى
+  const trimmed=note.trim();
+  if(trimmed){
+    trackDiv.dataset.pendingNote=trimmed;
+    btnEl.classList.add('has-note');
+    btnEl.title='الملاحظة: '+trimmed;
+  }else{
+    delete trackDiv.dataset.pendingNote;
+    btnEl.classList.remove('has-note');
+    btnEl.title='ملاحظة على السيت (اختياري)';
   }
 }
 
@@ -685,11 +705,16 @@ async function endSession(silent=false){
   await setupHeroCollapse();
 }
 
+// V7.3 — يحتفظ بـ ID آخر workout مغلق لتحديث الملاحظات عند closeSummary
+let _lastFinishedWorkoutId=null;
+
 function showSessionSummary(s){
+  _lastFinishedWorkoutId=s.id; // V7.3
   document.getElementById('summaryDay').textContent=s.dayType;
   const prsHtml=(s.prList&&s.prList.length)?
     `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${p.exerciseName} — ${p.label}: <b>${p.value}</b></div>`).join('')}</div>`
     :'';
+  const existingNote=(s.notes||'').replace(/"/g,'&quot;');
   document.getElementById('summaryBody').innerHTML=`
     <div class="summary-grid">
       <div class="summary-stat"><span class="ss-num">${fmtDuration(s.duration)}</span><span class="ss-lbl">مدة الجلسة</span></div>
@@ -698,12 +723,26 @@ function showSessionSummary(s){
       <div class="summary-stat ${s.prCount>0?'gold':''}"><span class="ss-num">${s.prCount}</span><span class="ss-lbl">🏆 أرقام قياسية</span></div>
     </div>
     ${prsHtml}
+    <textarea class="session-note-textarea" id="sessionNoteInput" placeholder="📝 ملاحظة عن الجلسة (اختياري) — كيف كان شعورك؟ ألم؟ ملاحظات على الأوزان؟" rows="2">${existingNote}</textarea>
   `;
   document.getElementById('summaryModal').classList.add('open');
   document.body.style.overflow='hidden';
 }
 
-function closeSummary(){
+// V7.3 — closeSummary صار async ليحفظ الملاحظة في workout.notes
+async function closeSummary(){
+  const ta=document.getElementById('sessionNoteInput');
+  const note=ta?ta.value.trim():'';
+  if(_lastFinishedWorkoutId && note){
+    try{
+      const w=await db.get('workouts',_lastFinishedWorkoutId);
+      if(w){
+        w.notes=note;
+        await db.put('workouts',w);
+      }
+    }catch(e){console.warn('Failed to save session note:',e)}
+  }
+  _lastFinishedWorkoutId=null;
   document.getElementById('summaryModal').classList.remove('open');
   document.body.style.overflow='';
 }
@@ -779,6 +818,7 @@ async function saveSet(btn){
   const weight=parseFloat(weightInput.value);
   const reps=parseInt(repsInput.value);
   const rpe=rpeInput && rpeInput.value?parseInt(rpeInput.value):null; // V7.2 #39
+  const note=(trackDiv.dataset.pendingNote||'').trim()||null; // V7.3 — ملاحظة السيت
   const exName=weightInput.dataset.name;
 
   if(isNaN(weight)||isNaN(reps)||reps<=0){
@@ -801,6 +841,7 @@ async function saveSet(btn){
       exerciseName:exName,
       weight:weight,reps:reps,
       rpe:rpe, // V7.2 #39
+      note:note, // V7.3 — ملاحظة اختيارية على السيت
       timestamp:now,
       date:now.split('T')[0],
       isPR:false,prType:null
@@ -835,6 +876,10 @@ async function saveSet(btn){
     btn.classList.add('saved');
     step.classList.add('completed');
     if(prs.length) step.classList.add('has-pr');
+    // V7.3 — نظّف الملاحظة المعلّقة بعد الحفظ (السيت التالي يبدأ نظيف)
+    delete trackDiv.dataset.pendingNote;
+    const noteBtn=trackDiv.querySelector('.set-note-btn');
+    if(noteBtn) noteBtn.classList.remove('has-note');
     // V7 (#13) — أعد بناء عرض "آخر/أفضل" بالهيكل القابل للتبديل
     await refreshLastBestDisplay(trackDiv,exName,setRec);
 
@@ -898,14 +943,26 @@ async function undoSetSave(ctx){
       await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
       updateSessionUI();
     }
-    // ٤. استعد واجهة الستيب
+    // ٤. استعد واجهة الستيب + بيانات الإدخال (V7.3 — يشمل الملاحظة)
     ctx.step.classList.remove('completed','has-pr');
     if(ctx.btn){ctx.btn.textContent='حفظ';ctx.btn.classList.remove('saved')}
+    // استعد قيم الإدخال (وزن، تكرار، RPE، ملاحظة) ليقدر المستخدم يعدّل ويعيد الحفظ
+    const wIn=ctx.trackDiv.querySelector('.weight-input');
+    const rIn=ctx.trackDiv.querySelector('.reps-input');
+    const rpeIn=ctx.trackDiv.querySelector('.rpe-input');
+    const noteBtn=ctx.trackDiv.querySelector('.set-note-btn');
+    if(wIn) wIn.value=ctx.setRec.weight;
+    if(rIn) rIn.value=ctx.setRec.reps;
+    if(rpeIn && ctx.setRec.rpe) rpeIn.value=ctx.setRec.rpe;
+    if(ctx.setRec.note){
+      ctx.trackDiv.dataset.pendingNote=ctx.setRec.note;
+      if(noteBtn){noteBtn.classList.add('has-note');noteBtn.title='الملاحظة: '+ctx.setRec.note}
+    }
     // ٥. حدّث "آخر/أفضل"
     await refreshLastBestDisplay(ctx.trackDiv,ctx.exName,null);
     // ٦. أوقف مؤقت الراحة لو شغّال
     if(typeof skipT==='function' && REST && REST.active){skipT()}
-    showToast('↩ تم التراجع — حُذف السيت','var(--blue)',2500);
+    showToast('↩ تم التراجع — البيانات في الإدخال','var(--blue)',2500);
     try{navigator.vibrate&&navigator.vibrate([20,40,20])}catch(e){}
   }catch(e){
     console.error('Undo failed:',e);
