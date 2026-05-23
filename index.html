@@ -96,13 +96,13 @@
 <nav class="nav">
   <div class="nav-brand" onclick="scrollTop()">💪 BULK</div>
   <div class="ni">
-    <!-- V8.4 (P2-#3) — Tab order optimized: التمارين default, 6 tabs total. أول مرة موجود في FAB menu. -->
-    <button class="nb a" data-t="1">💪 التمارين</button>
+    <!-- V9.0 (P5) — 5 tabs: الرئيسية default (Dashboard), Workouts, Progress, Calendar, Guide hub.
+         Eating/Tips/FirstTime/Progression أصبحت أقساماً داخل tab "الدليل". -->
+    <button class="nb a" data-t="0">🏠 الرئيسية</button>
+    <button class="nb" data-t="1">💪 التمارين</button>
     <button class="nb" data-t="7">📈 تقدمي</button>
     <button class="nb" data-t="8">📅 التقويم</button>
-    <button class="nb" data-t="3">🍽️ الأكل</button>
-    <button class="nb" data-t="5">📖 نصائح ودليل</button>
-    <button class="nb" data-t="0">🏠 نظرة عامة</button>
+    <button class="nb" data-t="5">📖 الدليل</button>
   </div>
 </nav>
 
@@ -122,24 +122,15 @@
 <!-- V8 — Smart Deload Header Banner (sticky below nav) -->
 <div id="deloadHeaderBanner" class="deload-header-banner"></div>
 
-<!-- ===== TAB 0: نظرة عامة ===== -->
-<div class="sec" id="t0">
+<!-- ===== TAB 0: الرئيسية (Dashboard V9.0) ===== -->
+<div class="sec a" id="t0">
 
-  <div class="card fu fu1">
-    <div class="ch"><div class="ci">⚡</div><div><div class="ct">النظام الجديد V4 — كيف يشتغل؟</div><div class="cs">Antagonist Paired Sets · محسّن لذروة الجيم</div></div></div>
-
-    <div class="tip tg"><div class="ti">🎯</div><div class="tt"><strong>الفكرة الأساسية:</strong> بدل ما تستريح ساكت بين سيتات الظهر، تستغل وقت الراحة بتمرين كتف (عضلة مختلفة). الظهر يرتاح فعلياً ١٦٠ ث (~٢:٤٠ دقيقة) وأنت تشتغل = تنهي تمرينك في ٥٥ دقيقة بدل ٧٥.</div></div>
-
-    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>التحدي الحقيقي — ذروة الجيم:</strong> أنت تتمرن بين ٦-٩م والجيم مزدحم. <b>أكبر مشكلة في APS:</b> تحتاج جهازين فاضيين بنفس اللحظة. الحل في V4:<br><br>✅ <b>كل الأزواج مصممة بأجهزة متجاورة أو نفس الجهاز</b><br>✅ <b>كل زوج له Plan B</b> لو أحد الجهازين مشغول<br>✅ <b>استراتيجية المنشفة:</b> ضع منشفتك على الجهاز الثاني = حجز ضمني محترم</div></div>
-
-    <div class="tip tb"><div class="ti">📊</div><div class="tt"><strong>المعادلة الزمنية لـ V4:</strong><br>• راحة بين تمارين الزوج: <b>٦٠ ثانية موحّدة</b><br>• راحة فعلية للعضلة المستهدفة: <b>٦٠+٤٠+٦٠ = ١٦٠ ث (~٢:٤٠ دقيقة)</b><br>• راحة المركّبات SOLO (Chest Press, Leg Press, Shoulder Press): <b>٩٠-١٢٠ ث</b> غير قابلة للتقصير<br><br><b>المدة الإجمالية: ٥٢-٥٧ دقيقة لكل جلسة.</b></div></div>
-
-    <div class="tip t0"><div class="ti">🔬</div><div class="tt"><strong>هل ١٦٠ ث راحة كافية؟</strong> نعم، علمياً مؤكد. دراسات Schoenfeld 2016 و Grgic 2018 أثبتت إن راحة ٢-٣ دقائق تعطي نفس نمو العضل مثل ٥ دقائق، طالما الـ proximity to failure متماثل. الأهم هو RPE 7-8 في آخر تكرار، مش طول الراحة.</div></div>
-
-    <div class="tip t0"><div class="ti">📋</div><div class="tt"><strong>قراءة البرنامج:</strong><br>• <span style="color:var(--purple)">رقم بنفسجي</span> = سيت SOLO (تمرين منفرد براحة كاملة)<br>• <span style="color:var(--g2)">رقم ذهبي</span> = سيت داخل زوج APS<br>• <span style="color:var(--blue)">⏱ أزرق</span> = استراحة محسوبة بالثانية<br>• <span style="color:var(--blue)">📋 Plan B</span> = البديل لو الجهاز مشغول<br>• <span style="color:var(--grn)">🟢 ZONE</span> = منطقة الأجهزة في الجيم<br><br><b>كل اللي عليك:</b> اتبع الترتيب من ١ لآخر رقم. لا تفكر، لا تخطّط — بس نفّذ.</div></div>
+  <!-- Dashboard: محتوى ديناميكي يُملأ من js/dashboard.js → refreshDashboard() -->
+  <div id="dashboardContainer">
+    <div class="chart-loading">جاري تحميل لوحة التحكم...</div>
   </div>
 
-  <!-- V8.4 (P1-#1) — البيانات تُملأ ديناميكياً من profile (settings:user_profile) -->
+  <!-- ملف المستخدم (يبقى كما هو — يُملأ من ensureUserProfileCard) -->
   <div class="card fu" id="userProfileCard">
     <div class="ch">
       <div class="ci">👤</div>
@@ -149,74 +140,88 @@
     <div style="text-align:center;margin-top:10px"><button type="button" class="bm-save" style="font-size:11px;padding:8px 16px" onclick="openProfile()">✏️ عدّل ملفك الشخصي</button></div>
   </div>
 
+  <!-- V9.0 (P2) — تقسيم الأسبوع: مهم بصرياً، يبقى ظاهراً في الرئيسية -->
   <div class="card fu fu2">
-    <div class="ch"><div class="ci">⚙️</div><div><div class="ct">كيف مقسّم الأسبوع؟ (UPPER PRIORITY)</div><div class="cs">تركيز كثيف على الجذع العلوي · ضلات + صدر + أكتاف + ذراعين</div></div></div>
-    <div class="tip t0"><div class="ti">💡</div><div class="tt"><strong>الفكرة:</strong> ٥ أيام علوي + يوم أرجل واحد قصير (صيانة). كل عضلة علوية تتحفز <b>٣ مرات/أسبوع</b> = تضخيم أقصى وسرعة نمو قصوى.<br>🔴 <strong>UPPER A</strong> = صدر ثقيل + ظهر + أكتاف<br>🔵 <strong>BACK & WINGS</strong> = ظهر/ضلات مكثّف (يوم الجناحين V-Taper)<br>🟠 <strong>ARMS A/B</strong> = بايسبس ↔ ترايسبس + بطن<br>🔴 <strong>UPPER B</strong> = أكتاف ثقيلة + صدر + ظهر<br>🟢 <strong>LEGS مختصر</strong> = أرجل صيانة فقط (٤٠ دقيقة)</div></div>
+    <div class="ch"><div class="ci">📅</div><div><div class="ct">تقسيم الأسبوع</div><div class="cs">٥ أيام علوي + يوم أرجل + يوم راحة</div></div></div>
     <div class="wg">
-      <div class="wc cp"><div class="wd">الأحد</div><div class="wt">UPPER A</div></div>
-      <div class="wc cpl"><div class="wd">الاثنين</div><div class="wt">BACK & WINGS</div></div>
-      <div class="wc cpl"><div class="wd">الثلاثاء</div><div class="wt">ARMS A</div></div>
-      <div class="wc cr"><div class="wd">الأربعاء</div><div class="wt">راحة</div></div>
-      <div class="wc cp"><div class="wd">الخميس</div><div class="wt">UPPER B</div></div>
-      <div class="wc cl"><div class="wd">الجمعة</div><div class="wt">LEGS مختصر</div></div>
-      <div class="wc cpl"><div class="wd">السبت</div><div class="wt">ARMS B</div></div>
-    </div>
-    <div class="tip tg" style="margin-top:8px"><div class="ti">✅</div><div class="tt"><strong>تكرار التحفيز الجديد (تركيز علوي):</strong><br>• <b>الظهر/الضلات:</b> ٣×/أسبوع (Upper A + Back & Wings + Upper B) — أعلى تكرار = نمو أسرع<br>• <b>الصدر:</b> ٣×/أسبوع (Upper A + Upper B + غير مباشر في ARMS عبر Dips)<br>• <b>الأكتاف:</b> ٣×/أسبوع (Upper A + Back & Wings خلفي + Upper B ثقيل)<br>• <b>البايسبس/الترايسبس:</b> ٤×/أسبوع (Arms A+B مباشر + Upper A+B غير مباشر)<br>• <b>الأرجل:</b> ١×/أسبوع صيانة (يوم قصير ٤٠ دقيقة — يكفي لمنع الضعف الهرموني)</div></div>
-    <div class="tip tr" style="margin-top:8px"><div class="ti">⚡</div><div class="tt"><strong>لماذا يوم أرجل واحد فقط؟</strong> هدفك ضخم سريع للجذع العلوي. أيام الأرجل تستهلك طاقة هائلة وتؤخر تعافي العلوي. يوم واحد قصير يكفي لإبقاء الهرمونات شغّالة (تستوستيرون + GH) دون استنزافك.</div></div>
-  </div>
-
-  <div class="card fu fu3">
-    <div class="ch"><div class="ci">📍</div><div><div class="ct">استراتيجية ذروة الجيم (٦-٩م)</div><div class="cs">القيد الأكبر — جهازين فاضيين بنفس اللحظة</div></div></div>
-
-    <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>تحدي الذروة:</strong> في وقتك (٦-٩م) كل الأجهزة مشغولة. فكرة APS تفترض جهازين فاضيين متجاورين — وهذا صعب في الذروة. الحل ثلاث استراتيجيات:</div></div>
-
-    <div class="tip tg"><div class="ti">1️⃣</div><div class="tt"><strong>أزواج Zone-Based:</strong> كل الأزواج في V4 مصممة بأجهزة <b>متجاورة جداً</b> أو نفس الجهاز:<br>• Chin Up + Dip = نفس الجهاز (Kneeling Easy)<br>• Bicep Curl + Tricep Pushdown = نفس الكابل (Pulley)<br>• Abductor + Adductor = نفس الجهاز (تغيير الوسائد)<br>• Leg Extension + Prone Leg Curl = جهازين متجاورين</div></div>
-
-    <div class="tip tg"><div class="ti">2️⃣</div><div class="tt"><strong>قاعدة المنشفة:</strong> قبل بدء الزوج، ضع منشفتك أو زجاجة الماء على الجهاز الثاني. هذا حجز ضمني محترم في كل الجيمات. المنشفة الموجودة = "أنا أستخدم هذا الجهاز".</div></div>
-
-    <div class="tip tg"><div class="ti">3️⃣</div><div class="tt"><strong>Plan B لكل زوج:</strong> لو الجهاز الثاني مشغول رغم الاستراتيجيتين أعلاه، كل زوج في V4 له بديل واضح مكتوب. مثلاً:<br>• <b>Lat Machine ↔ Shoulder Press</b><br>• <b>Plan B:</b> Vertical Traction ↔ Delts Machine</div></div>
-
-    <div class="tip tb"><div class="ti">💡</div><div class="tt"><strong>قاعدة ذهبية:</strong> لو حسيت إنك تضيع وقت تنتظر الجهازين، <b>اقلب الزوج إلى Straight Sets</b> مؤقتاً (سوِّ كل التمرين الأول، ثم كل التمرين الثاني). أفضل من إضاعة ٥ دقائق انتظار.</div></div>
-  </div>
-
-  <div class="card fu fu3">
-    <div class="ch"><div class="ci">🔢</div><div><div class="ct">حساب الراحة الفعلية في V4</div></div></div>
-    <div class="tip tb"><div class="ti">⏱️</div><div class="tt"><strong>زوج Lat Machine ↔ Shoulder Press:</strong><br>• ✅ سيت Lat Machine (٤٠ ث)<br>• ⏸️ راحة ٦٠ ث (٢٠ ث للانتقال + ٤٠ ث جلوس)<br>• ✅ سيت Shoulder Press (٤٠ ث)<br>• ⏸️ راحة ٦٠ ث<br>• ✅ سيت Lat Machine (مرة ثانية)<br><br><b>الـ Lat ارتاح فعلياً: ٦٠+٤٠+٦٠ = ١٦٠ ث ≈ ٢:٤٠ دقيقة ✓</b><br>راحة كافية علمياً لإعادة بناء فوسفوكرياتين العضلة بالكامل (٩٠٪+).</div></div>
-  </div>
-
-  <div class="card fu">
-    <div class="ch"><div class="ci">🏋️</div><div><div class="ct">الأجهزة المتوفرة في الجيم</div><div class="cs">24 جهاز Technogym</div></div></div>
-    <div class="eg">
-      <div class="ei">Chest Press<span class="ec">صدر</span></div>
-      <div class="ei">Pectoral Fly<span class="ec">صدر</span></div>
-      <div class="ei">Shoulder Press<span class="ec">أكتاف</span></div>
-      <div class="ei">Delts Machine<span class="ec">أكتاف جانبية</span></div>
-      <div class="ei">Arm Extension<span class="ec">خلف الذراع</span></div>
-      <div class="ei">Arm Curl<span class="ec">مقدمة الذراع</span></div>
-      <div class="ei">Lat Machine<span class="ec">ظهر عريض</span></div>
-      <div class="ei">Vertical Traction<span class="ec">ظهر</span></div>
-      <div class="ei">Low Row<span class="ec">وسط الظهر</span></div>
-      <div class="ei">Pulley<span class="ec">كابل متعدد</span></div>
-      <div class="ei">Upper Back<span class="ec">أعلى الظهر</span></div>
-      <div class="ei">Reverse Fly<span class="ec">خلف الكتف</span></div>
-      <div class="ei">Leg Press<span class="ec">فخذ أمامي وخلفي</span></div>
-      <div class="ei">Leg Extension<span class="ec">فخذ أمامي</span></div>
-      <div class="ei">Prone Leg Curl<span class="ec">فخذ خلفي</span></div>
-      <div class="ei">Abductor<span class="ec">فتح الأرجل</span></div>
-      <div class="ei">Adductor<span class="ec">ضم الأرجل</span></div>
-      <div class="ei">Lower Back<span class="ec">أسفل الظهر</span></div>
-      <div class="ei">Rotary Torso<span class="ec">خصر</span></div>
-      <div class="ei">Abdominal Crunch<span class="ec">بطن</span></div>
-      <div class="ei">Chin Up / Dip / Leg Raise<span class="ec">تمارين بوزن الجسم</span></div>
-      <div class="ei">Kneeling Easy Chin Dip<span class="ec">عقلة وغمس بمساعدة</span></div>
-      <div class="ei">Crossover Cables<span class="ec">كابل كروس — صدر</span></div>
-      <div class="ei">Skillrow<span class="ec">تجديف للإحماء</span></div>
+      <div class="wc cp" data-day="0"><div class="wd">الأحد</div><div class="wt">UPPER A</div></div>
+      <div class="wc cpl" data-day="1"><div class="wd">الاثنين</div><div class="wt">BACK & WINGS</div></div>
+      <div class="wc cpl" data-day="2"><div class="wd">الثلاثاء</div><div class="wt">ARMS A</div></div>
+      <div class="wc cr" data-day="3"><div class="wd">الأربعاء</div><div class="wt">راحة</div></div>
+      <div class="wc cp" data-day="4"><div class="wd">الخميس</div><div class="wt">UPPER B</div></div>
+      <div class="wc cl" data-day="5"><div class="wd">الجمعة</div><div class="wt">LEGS مختصر</div></div>
+      <div class="wc cpl" data-day="6"><div class="wd">السبت</div><div class="wt">ARMS B</div></div>
     </div>
   </div>
+
+  <!-- V9.0 (P2) — Collapsible: الشرح العلمي القديم (متوفر لمن يريد، مخفي افتراضياً) -->
+  <details class="program-info-details">
+    <summary>
+      <span>📖 اعرف برنامجك بعمق</span>
+      <small>كيف يشتغل APS · ذروة الجيم · المعادلة الزمنية · الأجهزة الـ ٢٤</small>
+    </summary>
+    <div class="program-info-body">
+
+      <div class="card">
+        <div class="ch"><div class="ci">⚡</div><div><div class="ct">النظام الجديد V4 — كيف يشتغل؟</div><div class="cs">Antagonist Paired Sets · محسّن لذروة الجيم</div></div></div>
+        <div class="tip tg"><div class="ti">🎯</div><div class="tt"><strong>الفكرة الأساسية:</strong> بدل ما تستريح ساكت بين سيتات الظهر، تستغل وقت الراحة بتمرين كتف (عضلة مختلفة). الظهر يرتاح فعلياً ١٦٠ ث (~٢:٤٠ دقيقة) وأنت تشتغل = تنهي تمرينك في ٥٥ دقيقة بدل ٧٥.</div></div>
+        <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>التحدي الحقيقي — ذروة الجيم:</strong> أنت تتمرن بين ٦-٩م والجيم مزدحم. <b>أكبر مشكلة في APS:</b> تحتاج جهازين فاضيين بنفس اللحظة. الحل في V4:<br><br>✅ <b>كل الأزواج مصممة بأجهزة متجاورة أو نفس الجهاز</b><br>✅ <b>كل زوج له Plan B</b> لو أحد الجهازين مشغول<br>✅ <b>استراتيجية المنشفة:</b> ضع منشفتك على الجهاز الثاني = حجز ضمني محترم</div></div>
+        <div class="tip tb"><div class="ti">📊</div><div class="tt"><strong>المعادلة الزمنية لـ V4:</strong><br>• راحة بين تمارين الزوج: <b>٦٠ ثانية موحّدة</b><br>• راحة فعلية للعضلة المستهدفة: <b>٦٠+٤٠+٦٠ = ١٦٠ ث (~٢:٤٠ دقيقة)</b><br>• راحة المركّبات SOLO (Chest Press, Leg Press, Shoulder Press): <b>٩٠-١٢٠ ث</b> غير قابلة للتقصير<br><br><b>المدة الإجمالية: ٥٢-٥٧ دقيقة لكل جلسة.</b></div></div>
+        <div class="tip t0"><div class="ti">🔬</div><div class="tt"><strong>هل ١٦٠ ث راحة كافية؟</strong> نعم، علمياً مؤكد. دراسات Schoenfeld 2016 و Grgic 2018 أثبتت إن راحة ٢-٣ دقائق تعطي نفس نمو العضل مثل ٥ دقائق، طالما الـ proximity to failure متماثل. الأهم هو RPE 7-8 في آخر تكرار، مش طول الراحة.</div></div>
+        <div class="tip t0"><div class="ti">📋</div><div class="tt"><strong>قراءة البرنامج:</strong><br>• <span style="color:var(--purple)">رقم بنفسجي</span> = سيت SOLO (تمرين منفرد براحة كاملة)<br>• <span style="color:var(--g2)">رقم ذهبي</span> = سيت داخل زوج APS<br>• <span style="color:var(--blue)">⏱ أزرق</span> = استراحة محسوبة بالثانية<br>• <span style="color:var(--blue)">📋 Plan B</span> = البديل لو الجهاز مشغول<br>• <span style="color:var(--grn)">🟢 ZONE</span> = منطقة الأجهزة في الجيم<br><br><b>كل اللي عليك:</b> اتبع الترتيب من ١ لآخر رقم. لا تفكر، لا تخطّط — بس نفّذ.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ci">⚙️</div><div><div class="ct">لماذا هذا التقسيم؟ (UPPER PRIORITY)</div></div></div>
+        <div class="tip tg"><div class="ti">✅</div><div class="tt"><strong>تكرار التحفيز:</strong><br>• <b>الظهر/الضلات:</b> ٣×/أسبوع (Upper A + Back & Wings + Upper B)<br>• <b>الصدر:</b> ٣×/أسبوع (Upper A + Upper B + غير مباشر في ARMS عبر Dips)<br>• <b>الأكتاف:</b> ٣×/أسبوع<br>• <b>البايسبس/الترايسبس:</b> ٤×/أسبوع (Arms A+B + غير مباشر)<br>• <b>الأرجل:</b> ١×/أسبوع صيانة</div></div>
+        <div class="tip tr"><div class="ti">⚡</div><div class="tt"><strong>لماذا يوم أرجل واحد فقط؟</strong> هدفك ضخم سريع للجذع العلوي. أيام الأرجل تستهلك طاقة هائلة وتؤخر تعافي العلوي. يوم واحد قصير يكفي لإبقاء الهرمونات شغّالة (تستوستيرون + GH).</div></div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ci">📍</div><div><div class="ct">استراتيجية ذروة الجيم (٦-٩م)</div></div></div>
+        <div class="tip tg"><div class="ti">1️⃣</div><div class="tt"><strong>أزواج Zone-Based:</strong> أجهزة متجاورة أو نفس الجهاز (Bicep + Tricep على Pulley · Abductor + Adductor نفس الجهاز · Leg Ext + Curl متجاوران).</div></div>
+        <div class="tip tg"><div class="ti">2️⃣</div><div class="tt"><strong>قاعدة المنشفة:</strong> قبل بدء الزوج، ضع منشفتك على الجهاز الثاني = حجز ضمني محترم.</div></div>
+        <div class="tip tg"><div class="ti">3️⃣</div><div class="tt"><strong>Plan B:</strong> لو الجهاز الثاني مشغول، كل زوج له بديل واضح. زر «⇄ بديل؟» في صفحة التمارين يفتحه فوراً.</div></div>
+        <div class="tip tb"><div class="ti">💡</div><div class="tt"><strong>قاعدة ذهبية:</strong> لو حسيت إنك تضيع وقت تنتظر، اقلب الزوج إلى Straight Sets مؤقتاً.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><div class="ci">🏋️</div><div><div class="ct">٢٤ جهاز Technogym</div></div></div>
+        <div class="eg">
+          <div class="ei">Chest Press<span class="ec">صدر</span></div>
+          <div class="ei">Pectoral Fly<span class="ec">صدر</span></div>
+          <div class="ei">Shoulder Press<span class="ec">أكتاف</span></div>
+          <div class="ei">Delts Machine<span class="ec">أكتاف جانبية</span></div>
+          <div class="ei">Arm Extension<span class="ec">خلف الذراع</span></div>
+          <div class="ei">Arm Curl<span class="ec">مقدمة الذراع</span></div>
+          <div class="ei">Lat Machine<span class="ec">ظهر عريض</span></div>
+          <div class="ei">Vertical Traction<span class="ec">ظهر</span></div>
+          <div class="ei">Low Row<span class="ec">وسط الظهر</span></div>
+          <div class="ei">Pulley<span class="ec">كابل متعدد</span></div>
+          <div class="ei">Upper Back<span class="ec">أعلى الظهر</span></div>
+          <div class="ei">Reverse Fly<span class="ec">خلف الكتف</span></div>
+          <div class="ei">Leg Press<span class="ec">فخذ أمامي وخلفي</span></div>
+          <div class="ei">Leg Extension<span class="ec">فخذ أمامي</span></div>
+          <div class="ei">Prone Leg Curl<span class="ec">فخذ خلفي</span></div>
+          <div class="ei">Abductor<span class="ec">فتح الأرجل</span></div>
+          <div class="ei">Adductor<span class="ec">ضم الأرجل</span></div>
+          <div class="ei">Lower Back<span class="ec">أسفل الظهر</span></div>
+          <div class="ei">Rotary Torso<span class="ec">خصر</span></div>
+          <div class="ei">Abdominal Crunch<span class="ec">بطن</span></div>
+          <div class="ei">Chin Up / Dip / Leg Raise<span class="ec">وزن الجسم</span></div>
+          <div class="ei">Kneeling Easy Chin Dip<span class="ec">عقلة بمساعدة</span></div>
+          <div class="ei">Crossover Cables<span class="ec">كابل كروس</span></div>
+          <div class="ei">Skillrow<span class="ec">تجديف للإحماء</span></div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
 </div>
 
 <!-- ===== TAB 1: التمارين ===== -->
-<div class="sec a" id="t1">
+<div class="sec" id="t1">
 
   <div class="card" style="margin-bottom:12px">
     <div class="ch"><div class="ci">📐</div><div><div class="ct">منطق ترتيب التمارين الجديد</div></div></div>
@@ -422,8 +427,34 @@
   </div>
 </div>
 
-<!-- ===== TAB 5: دليل شامل ===== -->
+<!-- ===== TAB 5: دليل شامل (Hub) ===== -->
 <div class="sec" id="t5">
+
+  <!-- V9.0 (P5) — Guide Hub: ٤ بطاقات تنقّل سريع لتبويبات المحتوى التعليمي المخفية من nav -->
+  <div class="guide-hub">
+    <button class="guide-hub-card" type="button" onclick="switchToTab(3)">
+      <div class="ghc-icon">🍽️</div>
+      <div class="ghc-text"><b>الأكل والتغذية</b><span>٢,٨٠٠ سعرة · ٦ وجبات · قائمة مشتريات</span></div>
+      <div class="ghc-arrow">‹</div>
+    </button>
+    <button class="guide-hub-card" type="button" onclick="switchToTab(2)">
+      <div class="ghc-icon">📈</div>
+      <div class="ghc-text"><b>زيادة الأوزان</b><span>متى تزيد، خطة ٣ أشهر، Drop/Rest-Pause</span></div>
+      <div class="ghc-arrow">‹</div>
+    </button>
+    <button class="guide-hub-card" type="button" onclick="switchToTab(4)">
+      <div class="ghc-icon">💡</div>
+      <div class="ghc-text"><b>نصائح وسلامة</b><span>تجنب الإصابات، التنفس، علامات الإرهاق</span></div>
+      <div class="ghc-arrow">‹</div>
+    </button>
+    <button class="guide-hub-card" type="button" onclick="switchToTab(6)">
+      <div class="ghc-icon">🎯</div>
+      <div class="ghc-text"><b>أول مرة بالجيم</b><span>دليل المبتدئ، الأخطاء الشائعة، شنطة الجيم</span></div>
+      <div class="ghc-arrow">‹</div>
+    </button>
+  </div>
+
+  <div class="guide-hub-divider">📖 محتوى دليل V4 الكامل (بدائل · جداول · قياسات)</div>
 
   <div class="card">
     <div class="ch"><div class="ci">🔄</div><div><div class="ct">بدائل — لو الجهاز مشغول (مهم في نظام APS)</div><div class="cs">في APS تحتاج جهازين فاضيين — احفظ هالبدائل</div></div></div>
@@ -825,15 +856,20 @@
 <!-- Tracking Floating Action Button -->
 <button class="fab" id="fabBtn" title="القائمة" aria-label="قائمة التتبع">📊</button>
 <div class="fab-menu" id="fabMenu">
-  <button onclick="openStats()">📈 إحصائياتي</button>
+  <!-- V9.0 (P5) — تنظيف FAB: عناصر مكررة (الإحصائيات أصبحت في tab تقدمي، أول مرة في tab الدليل) أُزيلت.
+       باقي العناصر مجموعة في ٣ أقسام مرئية بفواصل. -->
+  <div class="fab-group-title">⚙️ الملف</div>
   <button onclick="openProfile()">👤 ملفي الشخصي</button>
   <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
-  <button onclick="openFirstTimeGuide()">🎯 أول مرة بالجيم</button>
+
+  <div class="fab-group-title">🧮 أدوات</div>
   <button onclick="openPlateCalc()">🧮 حاسبة بليتات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
+  <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
+
+  <div class="fab-group-title">💾 البيانات</div>
   <button onclick="exportData()">💾 تصدير البيانات</button>
   <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
-  <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 </div>
 
@@ -1165,6 +1201,7 @@
       <span class="onb-dot a" data-s="0"></span>
       <span class="onb-dot" data-s="1"></span>
       <span class="onb-dot" data-s="2"></span>
+      <span class="onb-dot" data-s="3"></span>
     </div>
 
     <!-- شريحة ١: ترحيب + الجدول الأسبوعي مع تظليل اليوم -->
@@ -1176,7 +1213,55 @@
       <div class="onb-today-note" id="onbTodayNote"></div>
     </div>
 
-    <!-- شريحة ٢: كيف تبدأ جلسة -->
+    <!-- V9.0 (P4) — شريحة تشخيصية: تجمع بيانات أولية لتخصيص الـ Dashboard والسعرات -->
+    <div class="onb-slide" id="onbSDiag">
+      <div class="onb-icon">🎯</div>
+      <h2 class="onb-title">خصّص <em>برنامجك</em></h2>
+      <p class="onb-sub">٤ معلومات سريعة (٣٠ ثانية) — تساعد التطبيق يحسب سعراتك وبروتينك ويتابع تقدّمك.</p>
+      <div class="onb-diag-form">
+        <div class="onb-diag-row">
+          <label>الجنس</label>
+          <div class="onb-diag-chips" data-field="gender">
+            <button type="button" class="odc" data-val="male">♂ ذكر</button>
+            <button type="button" class="odc" data-val="female">♀ أنثى</button>
+          </div>
+        </div>
+        <div class="onb-diag-grid">
+          <div class="onb-diag-field">
+            <label>العمر <small>(سنة)</small></label>
+            <input type="number" inputmode="numeric" min="14" max="80" id="odAge" placeholder="٢٥">
+          </div>
+          <div class="onb-diag-field">
+            <label>الوزن <small>(كجم)</small></label>
+            <input type="number" inputmode="decimal" step="0.1" min="30" max="250" id="odWeight" placeholder="٧٥">
+          </div>
+          <div class="onb-diag-field">
+            <label>الطول <small>(سم)</small></label>
+            <input type="number" inputmode="numeric" min="120" max="220" id="odHeight" placeholder="١٧٥">
+          </div>
+          <div class="onb-diag-field">
+            <label>الخبرة</label>
+            <select id="odExp">
+              <option value="beginner">مبتدئ (أقل من ٦ شهر)</option>
+              <option value="intermediate" selected>متوسط</option>
+              <option value="advanced">متقدم (٢+ سنوات)</option>
+            </select>
+          </div>
+        </div>
+        <div class="onb-diag-row">
+          <label>هدفك الأساسي</label>
+          <div class="onb-diag-chips" data-field="goal">
+            <button type="button" class="odc a" data-val="bulk">تضخيم</button>
+            <button type="button" class="odc" data-val="cut">تنشيف</button>
+            <button type="button" class="odc" data-val="recomp">إعادة تركيب</button>
+            <button type="button" class="odc" data-val="maintain">حفاظ</button>
+          </div>
+        </div>
+      </div>
+      <div class="onb-diag-note">يمكنك تعديل كل شيء لاحقاً من <b>👤 ملفي الشخصي</b>. أو <button type="button" class="onb-diag-skip" onclick="onbNav(1)">تخطّى الآن</button></div>
+    </div>
+
+    <!-- شريحة ٣: كيف تبدأ جلسة -->
     <div class="onb-slide" id="onbS1">
       <div class="onb-icon">🏁</div>
       <h2 class="onb-title">كيف تبدأ <em>جلسة</em>؟</h2>
@@ -1241,8 +1326,10 @@
 <script src="js/version.js"></script>
 <script src="js/data.js"></script>
 <script src="js/program-data.js"></script>
+<script src="js/exercise-media.js"></script>
 <script src="js/program-render.js"></script>
 <script src="js/program-editor.js"></script>
+<script src="js/pr-detection.js"></script>
 <script src="js/session.js"></script>
 <script src="js/gyms.js"></script>
 <script src="js/substitutions.js"></script>
@@ -1255,6 +1342,8 @@
 <script src="js/exercise-history.js"></script>
 <script src="js/smart-recovery.js"></script>
 <script src="js/auto-backup.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/weekly-review.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

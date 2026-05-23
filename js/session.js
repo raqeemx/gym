@@ -1083,6 +1083,9 @@ async function endManualDeload(){
   await refreshAllProgressionHints();
 }
 
+// V9.0 (P8) — PR detection + near-PR hint نُقلتا إلى js/pr-detection.js
+// المتاح global: EPLEY, detectPRs, celebratePR, _invalidateNearPRCache, _getPRStats, _evaluateNearPR
+
 // V8 — يحدّث كل اقتراحات progression الظاهرة (بعد تغيّر deload state)
 async function refreshAllProgressionHints(){
   const allSets=await db.getAll('sets');
@@ -1253,91 +1256,8 @@ async function closeSummary(){
   }
 }
 
-// ============ PR DETECTION ============
-// كشف الأرقام القياسية تلقائياً عند كل سيت محفوظ
-const EPLEY=(w,r)=>w*(1+r/30);
-
-async function detectPRs(setRec){
-  // V8.3 — سيتات التسخين لا تُحتسب في الأرقام القياسية
-  if(setRec.isWarmup) return [];
-  const all=await db.getAll('sets','exerciseName',setRec.exerciseName);
-  // V8.3 — استبعد سيتات التسخين من مقارنة السجلات
-  const prev=all.filter(s=>s.id!==setRec.id && !s.isWarmup);
-  const prs=[];
-
-  // 1. Weight PR — أعلى وزن في التمرين
-  const maxW=prev.length?Math.max(...prev.map(s=>s.weight)):0;
-  if(setRec.weight>maxW) prs.push({type:'weight',value:setRec.weight,label:`أعلى وزن — ${setRec.weight}كجم`});
-
-  // 2. Volume PR — أعلى حجم في سيت واحد
-  const sv=setRec.weight*setRec.reps;
-  const maxV=prev.length?Math.max(...prev.map(s=>s.weight*s.reps)):0;
-  if(sv>maxV) prs.push({type:'volume',value:sv,label:`حجم سيت — ${sv}`});
-
-  // 3. 1RM PR (معادلة Epley)
-  const s1=EPLEY(setRec.weight,setRec.reps);
-  const max1=prev.length?Math.max(...prev.map(s=>EPLEY(s.weight,s.reps))):0;
-  if(s1>max1) prs.push({type:'1rm',value:Math.round(s1*10)/10,label:`1RM مقدّر — ${(Math.round(s1*10)/10)}كجم`});
-
-  // 4. Rep PR — أعلى تكرار عند نفس الوزن
-  const sameW=prev.filter(s=>s.weight===setRec.weight);
-  if(sameW.length){
-    const maxR=Math.max(...sameW.map(s=>s.reps));
-    if(setRec.reps>maxR) prs.push({type:'reps',value:setRec.reps,label:`تكرار عند ${setRec.weight}كجم — ${setRec.reps}`});
-  }
-
-  // 5. V7.3 — Effort PR (RPE) — نفس الوزن × نفس التكرار لكن بـ RPE أقل
-  // يعكس تحسّن القوة الحقيقية (السيت صار أسهل بنفس الحمل)
-  if(setRec.rpe!=null){
-    const sameWR=prev.filter(s=>
-      s.weight===setRec.weight &&
-      s.reps===setRec.reps &&
-      s.rpe!=null
-    );
-    if(sameWR.length){
-      const minRpe=Math.min(...sameWR.map(s=>s.rpe));
-      if(setRec.rpe<minRpe){
-        prs.push({
-          type:'effort',
-          value:setRec.rpe,
-          label:`جهد أقل — ${setRec.weight}كجم × ${setRec.reps} @RPE ${setRec.rpe} (كان ${minRpe})`
-        });
-      }
-    }
-  }
-
-  // احفظ كل PR في الـ store
-  for(const pr of prs){
-    await db.add('prs',{
-      exerciseName:setRec.exerciseName,
-      type:pr.type,value:pr.value,
-      date:setRec.timestamp,setId:setRec.id
-    });
-  }
-  return prs;
-}
-
-function celebratePR(prs,exName){
-  const overlay=document.createElement('div');
-  overlay.className='pr-flash';
-  // V8.4 (P1-#6) — escape exName + pr labels (يأتيان من user-controlled data)
-  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
-  overlay.innerHTML=`
-    <div class="pr-flash-inner">
-      <div class="pr-flash-icon">🏆</div>
-      <div class="pr-flash-title">رقم قياسي جديد!</div>
-      <div class="pr-flash-ex">${E(exName)}</div>
-      <div class="pr-flash-prs">
-        ${prs.map(p=>`<div class="pr-flash-item">${E(p.label)}</div>`).join('')}
-      </div>
-    </div>
-  `;
-  overlay.onclick=()=>{overlay.classList.remove('show');setTimeout(()=>overlay.remove(),400)};
-  document.body.appendChild(overlay);
-  setTimeout(()=>overlay.classList.add('show'),50);
-  try{navigator.vibrate&&navigator.vibrate([100,50,100,50,200])}catch(e){}
-  setTimeout(()=>{overlay.classList.remove('show');setTimeout(()=>overlay.remove(),400)},3000);
-}
+// V9.0 (P8) — EPLEY/detectPRs/celebratePR نُقلت إلى js/pr-detection.js
+// (يُحمَّل قبل session.js — كل الدوال متاحة global في window scope)
 
 // ============ SAVE SET ============
 async function saveSet(btn){
@@ -1405,6 +1325,8 @@ async function saveSet(btn){
       if(!currentSession.prList) currentSession.prList=[];
       prs.forEach(p=>currentSession.prList.push({...p,exerciseName:exName}));
     }
+    // V9.0 (P7) — أبطل cache الـ near-PR لهذا التمرين (الـ stats تغيّرت)
+    if(typeof _invalidateNearPRCache==='function') _invalidateNearPRCache(exName);
     await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
     updateSessionUI();
 

@@ -71,7 +71,12 @@ Public-domain or fair-use sources we recommend:
 
 ## Fallback behavior
 
-The modal handles missing assets gracefully:
-- If the file at `gif` path returns 404, the image area is hidden — only the text instructions remain.
-- If `gif` is `null`, the image area is not rendered at all.
-- See `openFormNoteModal()` in [`js/program-render.js`](../../js/program-render.js) for the exact logic.
+The modal handles missing assets gracefully through a two-tier system (V9.0, P3):
+
+1. **`gif` path returns a real file** → loaded normally (best case).
+2. **`gif` is `null`** → a category-themed animated SVG **placeholder** is generated dynamically by [`js/exercise-media.js`](../../js/exercise-media.js) (`renderPlaceholderDataURI`). Each category (push / pull / legs / core / cardio) has its own color theme + abstract motion shape — no extra files needed.
+3. **`gif` file 404s at runtime** → falls back automatically to the same placeholder rather than showing a broken-image icon.
+
+This means **every exercise in `EXERCISE_FORM_NOTES` now ships with a visual** out of the box. Real GIFs are still recommended for production polish, but coverage is no longer a blocker.
+
+See `openFormNoteModal()` in [`js/program-render.js`](../../js/program-render.js) and `getExerciseMediaSrc()` in [`js/exercise-media.js`](../../js/exercise-media.js) for the exact logic.

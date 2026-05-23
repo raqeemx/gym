@@ -704,6 +704,12 @@ function onbNav(direction){
   const slides=document.querySelectorAll('.onb-slide');
   const dots=document.querySelectorAll('.onb-dot');
   const next=ONB_STEP+direction;
+  // V9.0 (P4) — لو نخرج من شريحة التشخيص للأمام، احفظ القيم
+  const currentSlide=slides[ONB_STEP];
+  if(direction>0 && currentSlide && currentSlide.id==='onbSDiag'){
+    // حفظ صامت — لا يوقف التنقل لو فشل
+    saveDiagnosticProfile().catch(e=>console.warn('Diag save failed:',e));
+  }
   if(next<0 || next>=slides.length){
     if(next>=slides.length) finishOnboarding();
     return;
@@ -777,6 +783,45 @@ async function checkOnboarding(){
   }
 }
 
+// V9.0 (P4) — Diagnostic onboarding helpers
+// chip selection (gender + goal) — يستخدم event delegation داخل onbSDiag
+document.addEventListener('click',(e)=>{
+  const chip=e.target.closest('.onb-diag-chips .odc');
+  if(!chip) return;
+  const group=chip.parentElement;
+  group.querySelectorAll('.odc').forEach(c=>c.classList.remove('a'));
+  chip.classList.add('a');
+});
+
+// يجمع بيانات الـ diagnostic ويحفظها في user_profile (merge مع موجود)
+async function saveDiagnosticProfile(){
+  const get=(id)=>{const el=document.getElementById(id);return el?el.value.trim():''};
+  const chipVal=(field)=>{
+    const wrap=document.querySelector(`.onb-diag-chips[data-field="${field}"] .odc.a`);
+    return wrap?wrap.dataset.val:'';
+  };
+  const profile={
+    gender:chipVal('gender')||undefined,
+    age:Number(get('odAge'))||undefined,
+    weight:Number(get('odWeight'))||undefined,
+    height:Number(get('odHeight'))||undefined,
+    experience:get('odExp')||'intermediate',
+    goal:chipVal('goal')||'bulk',
+    activity:'moderate' // الافتراضي — يعدّله المستخدم لاحقاً
+  };
+  // نظّف undefined حتى لا تُكتب
+  Object.keys(profile).forEach(k=>{if(profile[k]==null||profile[k]==='') delete profile[k]});
+  if(Object.keys(profile).length===0) return; // المستخدم تخطّى — لا تكتب شيئاً
+  try{
+    const existing=await db.get('settings',KEYS.USER_PROFILE);
+    const merged={...(existing&&existing.value||{}),...profile,updatedAt:new Date().toISOString()};
+    await db.put('settings',{key:KEYS.USER_PROFILE,value:merged});
+    // حدّث Dashboard + بطاقة بياناتك لو موجودين
+    if(typeof refreshOverviewProfileCard==='function') refreshOverviewProfileCard();
+    if(typeof refreshDashboard==='function') refreshDashboard();
+  }catch(e){console.warn('saveDiagnosticProfile error:',e)}
+}
+
 // ============ INIT ============
 window.addEventListener('DOMContentLoaded',async()=>{
   // V8 — اضبط العنوان ورقم الإصدار من js/version.js (مصدر وحيد)
@@ -784,8 +829,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const vEl=document.getElementById('footerVersion');
   if(vEl && typeof APP_VERSION==='string') vEl.textContent=`v${APP_VERSION} · ${APP_BUILD||''}`;
   try{
-    // V8.4 (P2-#3) — دمج tabs الإرشادية قبل أوّل render
-    if(typeof mergeGuideTabs==='function') mergeGuideTabs();
+    // V9.0 (P5) — استبدل mergeGuideTabs بـ guide-hub في t5 (تبويبات t2/t3/t4/t6 تبقى مستقلة، وتُفتح من بطاقات الـ hub).
+    // mergeGuideTabs الأصلية كانت تحذف t2/t4 من DOM وتمنع switchToTab(2)/(4) من العمل.
+    // إذا أردنا الرجوع للدمج لاحقاً، نعدّل mergeGuideTabs لتترك t2/t4 في مكانها.
     // V8.4 (P2-#7) — استبدل emoji card-icons بـ SVG icons (consistency)
     if(typeof iconizeSectionHeaders==='function') iconizeSectionHeaders();
     await db.open();
@@ -826,6 +872,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
     if(typeof refreshOverviewProfileCard==='function'){
       refreshOverviewProfileCard(); // V8.4 (P1-#1) — املأ بطاقة "بياناتك" من profile
+    }
+    if(typeof refreshDashboard==='function'){
+      refreshDashboard(); // V9.0 (P2) — املأ Dashboard في tab الرئيسية
+    }
+    if(typeof maybeAutoOpenWeeklyReview==='function'){
+      maybeAutoOpenWeeklyReview(); // V9.0 (P6) — toast يوم السبت لفتح ملخص الأسبوع
     }
     if(typeof maybeShowGymHint==='function'){
       maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة

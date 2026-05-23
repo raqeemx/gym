@@ -199,7 +199,7 @@ npx serve
 **ملاحظة:** Service Worker لا يعمل من `file://`.
 
 ### التطوير في الكود
-- بيانات الأيام في [js/program-data.js](js/program-data.js) (UPPER A فقط حالياً)
+- بيانات الأيام في [js/program-data.js](js/program-data.js) (٧ أيام كاملة: UPPER A/B + BACK & WINGS + ARMS A/B + LEGS + REST)
 - منطق الجلسات + RPE + deload في [js/session.js](js/session.js)
 - شجرة الإنجازات في [js/achievements.js](js/achievements.js)
 - نمط الـ CSS في [css/styles.css](css/styles.css)
@@ -279,7 +279,7 @@ bulkmode/
 - 🧮 **حاسبة بليتات** بصرية
 - 🛟 **Smart Deload Detection** (4 معايير)
 - 🔔 **Workout Reminders** (SW + ICS)
-- 🏗️ **Program JSON refactor** (UPPER A — باقي الأيام قادمة)
+- 🏗️ **Program JSON refactor** (كل ٧ الأيام منقولة إلى `js/program-data.js`)
 - 🎯 **Version source of truth** (`js/version.js`)
 
 ---

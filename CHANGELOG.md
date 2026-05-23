@@ -5,6 +5,70 @@
 
 ---
 
+## [V9.0 — لوحة تحكم + Onboarding تشخيصي + Near-PR + معمارية أنظف] — 2026-05-23
+
+ترقية تجربة المستخدم الكبرى — تنفيذ ٨ أولويات من مراجعة PM/UX شاملة.
+
+### ✨ جديد
+
+#### P2 — Dashboard موحّد (tab 0)
+- **«🏠 الرئيسية»** أصبح الـ landing tab الافتراضي بدل «التمارين».
+- لوحة تحكم ديناميكية ([`js/dashboard.js`](js/dashboard.js)) تعرض بنظرة واحدة:
+  - الجلسة المقترحة لليوم + زر «ابدأ» بارز
+  - شارة Streak الحالي + الأفضل (🔥)
+  - إحصائيات آخر ٧ أيام (سيتات/حجم/PRs/جلسات)
+  - تقدّم البرنامج (الأسبوع X من ١٢ + النسبة)
+  - آخر ٣ PRs مع وقت نسبي
+  - التزام اليوم (ماء/نوم/بروتين/وجبات) مع progress bars
+  - Quick Actions (٤ أزرار)
+- **Empty state** خاص للمستخدم الجديد (٠ جلسات).
+- المحتوى التعليمي القديم (٥ كروت) صار في `<details>` collapsible — متاح لمن يريد، مخفي افتراضياً.
+
+#### P5 — تقليل التبويبات + تنظيف FAB
+- nav من ٦ → **٥ tabs** (🏠 الرئيسية / 💪 التمارين / 📈 تقدمي / 📅 التقويم / 📖 الدليل).
+- tab **«الدليل»** صار hub بـ ٤ بطاقات تنقل لتبويبات المحتوى التعليمي (الأكل · الأوزان · النصائح · أول مرة) — هذه التبويبات بقيت موجودة لكن خارج الـ nav الرئيسي.
+- **FAB** من ٩ أزرار → **٧ أزرار** مجمّعة في ٣ أقسام مرئية (الملف / الأدوات / البيانات) — إزالة المكررات (الإحصائيات + أول مرة).
+- إضافة `switchToTab(id)` ([`js/data.js`](js/data.js)) للتنقل البرمجي.
+
+#### P6 — Weekly Review
+- **Modal تلقائي يوم السبت** ([`js/weekly-review.js`](js/weekly-review.js)) لو فيه ٢+ جلسات هذا الأسبوع.
+- يلخّص: الجلسات/السيتات/الحجم/PRs مع مقارنة % مع الأسبوع السابق، أفضل تمرين، التزام تغذية ٧ أيام، Streak، اقتراح Deload لو RPE عالٍ.
+- زر «📊 ملخص الأسبوع» داخل Dashboard quick actions.
+
+#### P7 — مؤشر «PR قريب»
+- Hint ديناميكي تحت كل `track-input` يكشف بعد كل تغيير وزن/تكرار:
+  - 🏆 **«سيت قياسي!»** لو الإدخال سيحقق PR فعلياً (٥ أنواع: weight/reps/volume/1rm)
+  - ⚡ **«تكرار واحد إضافي = Rep PR»** أو **«+٢.٥ كجم = Weight PR»** لو قريب
+- Debounce ١٥٠ ميلي + cache ٣٠ ثانية بـ exerciseName + invalidate بعد كل save.
+
+#### P4 — Onboarding تشخيصي
+- شريحة جديدة في الـ onboarding تجمع: الجنس · العمر · الوزن · الطول · الخبرة · الهدف.
+- تُحفظ في `KEYS.USER_PROFILE` تلقائياً عند التقدم — تُغذّي حساب السعرات/البروتين والـ Dashboard.
+- اختياري (زر «تخطّى الآن» متاح).
+
+#### P3 — مكتبة Media للتمارين
+- نظام **placeholder ديناميكي** ([`js/exercise-media.js`](js/exercise-media.js)) يولّد SVG مُلوّن متحرّك حسب category (push/pull/legs/core/cardio).
+- كل تمرين في `EXERCISE_FORM_NOTES` صار له visual representation حتى لو ما عنده gif file.
+- Fallback تلقائي للـ placeholder عند فشل تحميل gif.
+
+#### P8 — تجزئة المعمارية
+- استخراج `EPLEY` + `detectPRs` + `celebratePR` + near-PR logic كاملاً من session.js إلى [`js/pr-detection.js`](js/pr-detection.js) — session.js انخفض ٢٠٠+ سطر.
+
+### 🛡️ توافق
+- لا تغييرات في schema. كل البيانات الموجودة تعمل كما هي.
+- `mergeGuideTabs` ألغيت من init (كانت تحذف t2/t4؛ بُدلت بـ guide-hub في t5).
+
+### 📁 ملفات جديدة
+- `js/dashboard.js` (300 سطر) — Dashboard
+- `js/weekly-review.js` (220 سطر) — Weekly Review modal
+- `js/exercise-media.js` (140 سطر) — SVG placeholder system
+- `js/pr-detection.js` (200 سطر) — PR + Near-PR (مستخرج من session.js)
+
+### 🔬 اختبار
+- `test.html` محدث ليحمل `pr-detection.js` قبل `session.js` — اختبارات EPLEY تعمل كما هي.
+
+---
+
 ## [V8.0 — برنامج JSON + إنجازات + صور تقدّم + Smart Deload] — 2026-05-21
 
 أكبر ترقية معمارية: فصل بيانات البرنامج عن HTML، إضافة ميزات شخصية متعددة، وكشف ذكي لحاجة الاستشفاء.
@@ -12,7 +76,7 @@
 ### ✨ جديد
 
 #### بنية البرنامج
-- **PROGRAM_DATA (JSON-driven)** — بيانات الأيام/الـ phases/الستيبات في `js/program-data.js` بدل HTML يدوي. `renderProgram()` يولّد DOM مطابقاً للنسخة القديمة. (UPPER A فقط حالياً — باقي الأيام قادمة)
+- **PROGRAM_DATA (JSON-driven)** — بيانات الأيام/الـ phases/الستيبات في `js/program-data.js` بدل HTML يدوي. `renderProgram()` يولّد DOM مطابقاً للنسخة القديمة. (٧ أيام كاملة منذ V8.3)
 - **`step-D<n>-S<n>` IDs** تبقى متطابقة بعد الـ render → البدائل المحفوظة لا تنكسر.
 
 #### Achievements (🎖️ إنجازاتي)

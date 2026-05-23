@@ -29,28 +29,33 @@ function _restoreTabScroll(tabId){
   }catch(e){}
   return false;
 }
+// V9.0 (P5) — switchToTab: تبديل برمجي للـ tab بدون الحاجة لزر nav موجود.
+// يُستخدم من guide-hub cards و dashboard CTAs للوصول لـ tabs ليس لها زر مباشر (t2/t3/t4/t6).
+function switchToTab(tabId){
+  const id=String(tabId);
+  _saveTabScroll();
+  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('a'));
+  document.querySelectorAll('.sec').forEach(x=>x.classList.remove('a'));
+  // فعّل زر nav المطابق لو موجود (للـ tabs الـ ٥ الأساسية)
+  const btn=document.querySelector('.nb[data-t="'+id+'"]');
+  if(btn) btn.classList.add('a');
+  const sec=document.getElementById('t'+id);
+  if(sec) sec.classList.add('a');
+  const restored=_restoreTabScroll(id);
+  if(!restored){
+    window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+  }
+  if(id==='7' && typeof refreshProgressTab==='function') refreshProgressTab();
+  if(id==='8' && typeof refreshCalendar==='function'){
+    if(typeof calendarToday==='function' && !_calCursor) calendarToday();
+    else refreshCalendar();
+  }
+  // V9.0 (P2) — Dashboard refresh عند فتح الرئيسية
+  if(id==='0' && typeof refreshDashboard==='function') refreshDashboard();
+}
+
 document.querySelectorAll('.nb[data-t]').forEach(b=>{
-  b.addEventListener('click',()=>{
-    // احفظ موقع التبويب الحالي قبل التبديل
-    _saveTabScroll();
-    document.querySelectorAll('.nb').forEach(x=>x.classList.remove('a'));
-    document.querySelectorAll('.sec').forEach(x=>x.classList.remove('a'));
-    b.classList.add('a');
-    const sec=document.getElementById('t'+b.dataset.t);
-    if(sec) sec.classList.add('a');
-    // استعد موقع التبويب الجديد لو كان محفوظاً، وإلا اذهب لرأس الصفحة
-    const restored=_restoreTabScroll(b.dataset.t);
-    if(!restored){
-      window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
-    }
-    // إذا فُتح تبويب "تقدمي" حدّث محتواه
-    if(b.dataset.t==='7') refreshProgressTab();
-    // V8.3 (3.7) — إذا فُتح تبويب "التقويم" حدّث الشهر
-    if(b.dataset.t==='8' && typeof refreshCalendar==='function'){
-      if(typeof calendarToday==='function' && !_calCursor) calendarToday();
-      else refreshCalendar();
-    }
-  });
+  b.addEventListener('click',()=>switchToTab(b.dataset.t));
 });
 // V8.4 (P3-UX-#7) — احفظ الموقع عند مغادرة الصفحة لتعويد بعد reload
 window.addEventListener('beforeunload',_saveTabScroll);

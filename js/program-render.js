@@ -215,16 +215,24 @@ function openFormNoteModal(exName){
   document.getElementById('formNoteBody').innerHTML=note.formNote||'';
   const gifWrap=document.getElementById('formNoteGifWrap');
   const gifEl=document.getElementById('formNoteGif');
-  if(note.gif){
-    // V8.4 — fallback عند فشل التحميل: أخفِ الإطار بدل عرض icon مكسور
+  // V9.0 (P3) — استخدم النظام الموحّد: gif فعلي → SVG placeholder حسب category
+  const mediaSrc=(typeof getExerciseMediaSrc==='function')?getExerciseMediaSrc(exName):(note.gif||null);
+  if(mediaSrc){
+    // إذا كان gif ملف فعلي → fallback يلجأ للـ placeholder عند الفشل
+    const isFile=note.gif && mediaSrc===note.gif;
     gifEl.onerror=()=>{
-      gifWrap.style.display='none';
-      console.warn('Form-note asset failed to load:',note.gif);
+      if(isFile && typeof renderPlaceholderDataURI==='function'){
+        console.warn('Form-note asset failed, switching to placeholder:',note.gif);
+        gifEl.onerror=null;
+        gifEl.src=renderPlaceholderDataURI(note.category||'default',exName);
+      }else{
+        gifWrap.style.display='none';
+      }
     };
     gifEl.onload=()=>{gifWrap.style.display=''};
-    gifEl.src=note.gif;
+    gifEl.src=mediaSrc;
     gifEl.alt=note.title||exName;
-    gifWrap.style.display=''; // اعرض مبدئياً — onerror سيُخفيه لو فشل
+    gifWrap.style.display='';
   }else{
     gifEl.onerror=null;gifEl.onload=null;
     gifEl.removeAttribute('src');
