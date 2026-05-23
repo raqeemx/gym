@@ -604,37 +604,41 @@ async function clearAllData(){
   setTimeout(()=>location.reload(),1000);
 }
 
-// ============ PROGRESS TAB (PRs / Charts / History) ============
+// ============ PROGRESS TAB ============
+// V8.3 (UX-8) — مجموعات مدمجة:
+//   achievements = الإنجازات + PRs
+//   analytics    = الرسوم البيانية + سجل الجلسات
+//   recovery / metrics / daily / photos = منفصلة كما كانت
 document.querySelectorAll('.prog-tab').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('.prog-tab').forEach(x=>x.classList.remove('a'));
     document.querySelectorAll('.prog-pane').forEach(x=>x.classList.remove('a'));
     b.classList.add('a');
-    const pane=document.getElementById('pp'+b.dataset.pt[0].toUpperCase()+b.dataset.pt.slice(1));
+    const pt=b.dataset.pt;
+    const pane=document.getElementById('pp'+pt[0].toUpperCase()+pt.slice(1));
     if(pane) pane.classList.add('a');
-    if(b.dataset.pt==='charts') renderCharts();
-    if(b.dataset.pt==='history') renderHistory();
-    if(b.dataset.pt==='prs') renderPRs();
-    if(b.dataset.pt==='metrics') renderBodyMetrics();
-    if(b.dataset.pt==='daily') renderDailyLog();
-    if(b.dataset.pt==='achievements') renderAchievements(); // V8
-    if(b.dataset.pt==='photos') renderProgressPhotos(); // V8 — progress photos
-    if(b.dataset.pt==='recovery') renderRecovery(); // V8 — smart deload
+    dispatchProgressTab(pt);
   });
 });
+
+function dispatchProgressTab(pt){
+  if(pt==='achievements'){
+    // V8.3 (UX-8) — رنّ الجزأين داخل القسم
+    if(typeof renderAchievements==='function') renderAchievements();
+    if(typeof renderPRs==='function') renderPRs();
+  }else if(pt==='analytics'){
+    if(typeof renderCharts==='function') renderCharts();
+    if(typeof renderHistory==='function') renderHistory();
+  }else if(pt==='metrics') renderBodyMetrics();
+  else if(pt==='daily') renderDailyLog();
+  else if(pt==='photos') renderProgressPhotos();
+  else if(pt==='recovery') renderRecovery();
+}
 
 async function refreshProgressTab(){
   const active=document.querySelector('.prog-tab.a');
   if(!active) return;
-  const pt=active.dataset.pt;
-  if(pt==='prs') renderPRs();
-  else if(pt==='charts') renderCharts();
-  else if(pt==='history') renderHistory();
-  else if(pt==='metrics') renderBodyMetrics();
-  else if(pt==='daily') renderDailyLog();
-  else if(pt==='achievements') renderAchievements(); // V8
-  else if(pt==='photos') renderProgressPhotos(); // V8
-  else if(pt==='recovery') renderRecovery(); // V8
+  dispatchProgressTab(active.dataset.pt);
 }
 
 // ============ V8 — Recovery / Smart Deload tab ============
@@ -1111,8 +1115,9 @@ async function saveBodyMetrics(){
     document.getElementById(id).value='';
   });
   renderBodyMetrics();
-  // حدّث رسم وزن الجسم لو فاتح
-  if(document.getElementById('ppCharts').classList.contains('a')) renderBodyWeightChart();
+  // حدّث رسم وزن الجسم لو فاتح (V8.3 (UX-8) — ppCharts صار جزءاً من ppAnalytics)
+  const analytics=document.getElementById('ppAnalytics');
+  if(analytics && analytics.classList.contains('a')) renderBodyWeightChart();
 }
 
 async function deleteBodyMetric(date){
@@ -1233,7 +1238,9 @@ async function renderCharts(){
   try{
     await loadChart();
   }catch(e){
-    document.getElementById('ppCharts').innerHTML=`<div class="empty-state"><div class="es-icon">📡</div><div class="es-text">${e.message}</div></div>`;
+    // V8.3 (UX-8) — chart-wrap داخل ppAnalytics; اعرض الخطأ في أوّل chart-wrap بدل استبدال القسم كاملاً
+    const firstChart=document.querySelector('#ppAnalytics .chart-wrap');
+    if(firstChart) firstChart.innerHTML=`<div class="empty-state"><div class="es-icon">📡</div><div class="es-text">${e.message}</div></div>`;
     return;
   }
 
