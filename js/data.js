@@ -104,7 +104,12 @@ const KEYS={
   PROGRAM_OVERRIDES:'app:program_overrides',
   // V8.3 (3.13) — File System Access auto-backup
   AUTOBACKUP_HANDLE:'app:autobackup_handle',
-  AUTOBACKUP_PREFS:'app:autobackup_prefs'
+  AUTOBACKUP_PREFS:'app:autobackup_prefs',
+  // V8.3 (UX) — flags
+  SKIP_HINT_SHOWN:'app:skip_hint_shown',
+  FAB_HINT_SHOWN:'app:fab_hint_shown',
+  DELOAD_LAST_REMINDER:'app:deload_last_reminder',
+  BACKUP_REMINDER_SHOWN:'app:backup_reminder_shown'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

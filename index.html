@@ -551,24 +551,26 @@
       </div>
     </div>
 
+    <!-- V8.3 (UX-8) — توحيد ٨ تبويبات إلى ٦: PRs+Achievements ضمن "إنجازاتي"، Charts+History ضمن "تحليلات" -->
     <div class="prog-tabs">
-      <button class="prog-tab a" data-pt="prs">🏆 الأرقام القياسية</button>
-      <button class="prog-tab" data-pt="achievements">🎖️ إنجازاتي</button>
+      <button class="prog-tab a" data-pt="achievements">🎖️ إنجازاتي</button>
+      <button class="prog-tab" data-pt="analytics">📊 تحليلات</button>
       <button class="prog-tab" data-pt="recovery">🛟 الاستشفاء</button>
-      <button class="prog-tab" data-pt="charts">📊 الرسوم البيانية</button>
       <button class="prog-tab" data-pt="metrics">📏 قياسات الجسم</button>
       <button class="prog-tab" data-pt="daily">📅 سجل يومي</button>
       <button class="prog-tab" data-pt="photos">📸 صور التقدّم</button>
-      <button class="prog-tab" data-pt="history">📜 سجل الجلسات</button>
     </div>
 
-    <div class="prog-pane a" id="ppPrs">
-      <div id="prsBody"><div class="chart-loading">جاري التحميل...</div></div>
-    </div>
-
-    <!-- V8 — Achievements -->
-    <div class="prog-pane" id="ppAchievements">
-      <div id="achBody"><div class="chart-loading">جاري التحميل...</div></div>
+    <!-- V8.3 (UX-8) — قسم "إنجازاتي" = الإنجازات + الأرقام القياسية -->
+    <div class="prog-pane a" id="ppAchievements">
+      <div class="pp-subsection">
+        <div class="pp-subhead">🎖️ الإنجازات</div>
+        <div id="achBody"><div class="chart-loading">جاري التحميل...</div></div>
+      </div>
+      <div class="pp-subsection">
+        <div class="pp-subhead">🏆 الأرقام القياسية (PRs)</div>
+        <div id="prsBody"><div class="chart-loading">جاري التحميل...</div></div>
+      </div>
     </div>
 
     <!-- V8 — Recovery / Deload -->
@@ -576,27 +578,35 @@
       <div id="recoveryBody"><div class="chart-loading">جاري التحميل...</div></div>
     </div>
 
-    <div class="prog-pane" id="ppCharts">
-      <div class="chart-wrap">
-        <h3>📊 تقدّم تمرين عبر الزمن</h3>
-        <select id="chartExSel"><option value="">-- اختر تمرين --</option></select>
-        <canvas id="chartEx"></canvas>
+    <!-- V8.3 (UX-8) — قسم "تحليلات" = الرسوم البيانية + سجل الجلسات -->
+    <div class="prog-pane" id="ppAnalytics">
+      <div class="pp-subsection">
+        <div class="pp-subhead">📊 الرسوم البيانية</div>
+        <div class="chart-wrap">
+          <h3>📊 تقدّم تمرين عبر الزمن</h3>
+          <select id="chartExSel"><option value="">-- اختر تمرين --</option></select>
+          <canvas id="chartEx"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>📅 الحجم الأسبوعي الإجمالي</h3>
+          <canvas id="chartVol"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <h3>⚖️ وزن الجسم</h3>
+          <canvas id="chartBW"></canvas>
+          <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--tx3)">سجّل وزنك من تبويب 📏 قياسات الجسم</div>
+        </div>
+        <!-- V7.3 — RPE Trend Chart -->
+        <div class="chart-wrap">
+          <h3>💪 معدل RPE لكل جلسة</h3>
+          <canvas id="chartRpe"></canvas>
+          <div id="rpeDeloadHint" class="rpe-deload-hint" style="display:none"></div>
+          <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--tx3)">RPE = صعوبة السيت (6=سهل، 10=الفشل). مفيد لاكتشاف الإرهاق المتراكم.</div>
+        </div>
       </div>
-      <div class="chart-wrap">
-        <h3>📅 الحجم الأسبوعي الإجمالي</h3>
-        <canvas id="chartVol"></canvas>
-      </div>
-      <div class="chart-wrap">
-        <h3>⚖️ وزن الجسم</h3>
-        <canvas id="chartBW"></canvas>
-        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--tx3)">سجّل وزنك من تبويب 📏 قياسات الجسم</div>
-      </div>
-      <!-- V7.3 — RPE Trend Chart -->
-      <div class="chart-wrap">
-        <h3>💪 معدل RPE لكل جلسة</h3>
-        <canvas id="chartRpe"></canvas>
-        <div id="rpeDeloadHint" class="rpe-deload-hint" style="display:none"></div>
-        <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--tx3)">RPE = صعوبة السيت (6=سهل، 10=الفشل). مفيد لاكتشاف الإرهاق المتراكم.</div>
+      <div class="pp-subsection">
+        <div class="pp-subhead">📜 سجل الجلسات</div>
+        <div id="historyBody2"><div class="chart-loading">جاري التحميل...</div></div>
       </div>
     </div>
 
@@ -682,10 +692,6 @@
     <!-- V8 — Progress Photos -->
     <div class="prog-pane" id="ppPhotos">
       <div id="ppBody"><div class="chart-loading">جاري التحميل...</div></div>
-    </div>
-
-    <div class="prog-pane" id="ppHistory">
-      <div id="historyBody2"><div class="chart-loading">جاري التحميل...</div></div>
     </div>
   </div>
 </div>

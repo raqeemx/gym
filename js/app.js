@@ -33,6 +33,39 @@
 })();
 
 // ============ FAB MENU ============
+// V8.3 (UX-3) — hint لموقع زر الـ FAB (يسار) أول مرة فقط
+async function maybeShowFabHint(){
+  try{
+    const rec=await db.get('settings',KEYS.FAB_HINT_SHOWN);
+    if(rec && rec.value) return;
+    const fab=document.getElementById('fabBtn');
+    if(!fab) return;
+    const hint=document.createElement('div');
+    hint.id='fabHint';
+    hint.className='fab-hint';
+    hint.innerHTML=`
+      <div class="fh-arrow"></div>
+      <div class="fh-body">
+        <b>📊 قائمتك هنا</b>
+        <div>الإحصائيات، الملف الشخصي، التصدير، حاسبة البليتات — كلها من هذا الزر.</div>
+      </div>
+      <button class="fh-close" type="button" aria-label="فهمت">فهمت</button>
+    `;
+    document.body.appendChild(hint);
+    setTimeout(()=>hint.classList.add('show'),300);
+    const dismiss=async()=>{
+      hint.classList.remove('show');
+      setTimeout(()=>hint.remove(),300);
+      try{await db.put('settings',{key:KEYS.FAB_HINT_SHOWN,value:true})}catch(e){}
+    };
+    hint.querySelector('.fh-close').onclick=dismiss;
+    // اضغطة على الـ fab نفسه = تجاهل الـ hint
+    fab.addEventListener('click',dismiss,{once:true});
+    // اختفاء تلقائي بعد ٨ ثوانٍ
+    setTimeout(()=>{if(document.body.contains(hint)) dismiss()},8000);
+  }catch(e){}
+}
+
 document.getElementById('fabBtn').addEventListener('click',(e)=>{
   e.stopPropagation();
   document.getElementById('fabMenu').classList.toggle('open');
@@ -555,6 +588,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
     await checkSessionRecovery(); // V7 #36 — فحص جلسة معلّقة بعد فترة طويلة
     if(typeof checkMissedDayRecommendation==='function'){
       checkMissedDayRecommendation(); // V8.3 (3.10) — banner استرجاع لو فات >24س
+    }
+    if(typeof maybeRemindDeloadActive==='function'){
+      maybeRemindDeloadActive(); // V8.3 (UX-2) — toast يومي أثناء الـ deload
+    }
+    if(typeof maybeShowBackupReminder==='function'){
+      maybeShowBackupReminder(); // V8.3 (UX-4) — تذكير قوي بعد ١٠ سيتات
+    }
+    if(typeof maybeShowFabHint==='function'){
+      maybeShowFabHint(); // V8.3 (UX-3) — hint لموقع الـ FAB
     }
     highlightToday();          // تظليل بطاقة اليوم + فتحها تلقائياً (V7)
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)

@@ -317,10 +317,24 @@ function injectSkipButtons(){
     const btn=document.createElement('button');
     btn.className='skip-btn';
     btn.setAttribute('aria-label','تخطّى التمرين اليوم');
+    // V8.3 (UX-1) — tooltip توضيحية لمتى يُستخدم الزر
+    btn.title='تخطّى هذا التمرين اليوم فقط (الجهاز مشغول، أو ضيق وقت، أو إصابة بسيطة). يعود تلقائياً غداً.';
     btn.innerHTML='<span class="skip-icon">↷</span><span>تخطّى</span>';
-    btn.onclick=(e)=>{e.stopPropagation();toggleSkipStep(step.id)};
+    btn.onclick=(e)=>{e.stopPropagation();maybeShowSkipHint();toggleSkipStep(step.id)};
     step.appendChild(btn);
   });
+}
+
+// V8.3 (UX-1) — اعرض شرح أوّل مرة فقط عبر toast، ثم خزّن flag في settings
+async function maybeShowSkipHint(){
+  try{
+    const rec=await db.get('settings','app:skip_hint_shown');
+    if(rec && rec.value) return;
+    await db.put('settings',{key:'app:skip_hint_shown',value:true});
+    if(typeof showToast==='function'){
+      showToast('💡 التخطّي يخصّ اليوم فقط — يعود التمرين غداً تلقائياً.','var(--blue)',5000);
+    }
+  }catch(e){}
 }
 
 // V7 — تبديل حالة التخطّي (#12)
@@ -763,23 +777,83 @@ async function checkSmartSuggestion(original){
 }
 
 // جعل الاستبدال دائماً
+// V8.3 (UX-6) — توست مع زر "تراجع" لمدة ١٠ ثوانٍ يستعيد الحالة السابقة
 async function makePermanent(original,substitute,btn){
+  // ١) خزّن السياق للتراجع
   const prefsRec=await db.get('settings',KEYS.SUBS_PREFS);
-  const prefs=(prefsRec&&prefsRec.value)||{};
-  prefs[original]=substitute;
-  await db.put('settings',{key:KEYS.SUBS_PREFS,value:prefs});
-
-  // طبّق على كل الـsteps المطابقة
+  const prevPrefs=(prefsRec&&prefsRec.value)?{...prefsRec.value}:{};
+  const prevAssignment=prevPrefs[original]; // قد يكون undefined لو ما في استبدال سابق
+  // التقط الستيبات اللي ستُعدَّل (لاستعادتها)
+  const willChange=[];
   for(const step of document.querySelectorAll('.step:not(.rest):not(.warmup)')){
     const orig=normalizeExName(getExerciseName(step));
-    if(orig===original && !step.dataset.substitute){
+    if(orig===original && !step.dataset.substitute) willChange.push(step.id);
+  }
+
+  // ٢) طبّق الاستبدال الدائم
+  const newPrefs={...prevPrefs,[original]:substitute};
+  await db.put('settings',{key:KEYS.SUBS_PREFS,value:newPrefs});
+  for(const sid of willChange){
+    const step=document.getElementById(sid);
+    if(step && !step.dataset.substitute){
       await applySubstitutionUI(step,original,substitute);
     }
   }
-
   closeAltModal();
-  showToast(`✓ ${substitute} الآن البديل الدائم لـ ${original}`,'var(--purple)');
   try{navigator.vibrate&&navigator.vibrate([60,30,60])}catch(e){}
+
+  // ٣) اعرض toast مع زر تراجع (١٠ ثوانٍ)
+  const undoCtx={original,substitute,prevAssignment,changedStepIds:willChange};
+  showToast(`✓ ${substitute} الآن البديل الدائم لـ ${original}`,'var(--purple)',10000,{
+    action:{label:'تراجع',handler:()=>undoMakePermanent(undoCtx)}
+  });
+}
+
+// V8.3 (UX-6) — تراجع عن makePermanent
+async function undoMakePermanent(ctx){
+  try{
+    // ١) أعد prefs لحالتها السابقة
+    const rec=await db.get('settings',KEYS.SUBS_PREFS);
+    const prefs=(rec&&rec.value)||{};
+    if(ctx.prevAssignment==null) delete prefs[ctx.original];
+    else prefs[ctx.original]=ctx.prevAssignment;
+    await db.put('settings',{key:KEYS.SUBS_PREFS,value:prefs});
+
+    // ٢) استعد كل الـ steps اللي تغيّرت
+    for(const sid of ctx.changedStepIds||[]){
+      const step=document.getElementById(sid);
+      if(!step) continue;
+      // امسح dataset + استرجع الاسم الأصلي
+      if(step.dataset.originalNameText){
+        const nameEl=step.querySelector('.step-name');
+        if(nameEl) nameEl.textContent=step.dataset.originalNameText;
+      }
+      delete step.dataset.substitute;
+      delete step.dataset.original;
+      delete step.dataset.originalNameText;
+      step.classList.remove('exercise-substituted');
+      // أعِد data-name إلى الأصلي
+      const wInput=step.querySelector('.weight-input');
+      const rInput=step.querySelector('.reps-input');
+      const rawOriginal=getExerciseName(step);
+      if(wInput){wInput.dataset.name=rawOriginal;wInput.dataset.ex=rawOriginal.replace(/\s+/g,'_')}
+      if(rInput) rInput.dataset.ex=rawOriginal.replace(/\s+/g,'_');
+      // حدّث "آخر/أفضل" للأصلي
+      const lastEl=step.querySelector('.track-input .last');
+      if(lastEl && typeof setLastBestForExName==='function') await setLastBestForExName(lastEl,rawOriginal);
+      if(typeof getLastSetFor==='function'){
+        const ls=await getLastSetFor(rawOriginal);
+        if(wInput) wInput.placeholder=ls?ls.weight:'';
+        if(rInput) rInput.placeholder=ls?ls.reps:'';
+      }
+      // أزل الاستبدال من store أيضاً (لو دخل)
+      if(typeof removeSubstitution==='function') await removeSubstitution(sid);
+    }
+    showToast('↩ تم التراجع — البديل الدائم أُلغي','var(--blue)',2500);
+  }catch(e){
+    console.warn('undoMakePermanent failed:',e);
+    showToast('⚠️ فشل التراجع','var(--red)');
+  }
 }
 
 // سجل تاريخ الاستبدالات (لميزة الاقتراح الذكي)

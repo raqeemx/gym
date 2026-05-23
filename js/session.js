@@ -1031,6 +1031,30 @@ async function detectDeloadNeed(){
   return {...out, reason:'الأداء جيد — لا حاجة لـ deload الآن'};
 }
 
+// V8.3 (UX-2) — تذكير يومي غير مزعج أثناء الـ deload
+// يظهر مرة واحدة لكل يوم (مفتاح KEYS.DELOAD_LAST_REMINDER يحمل تاريخ اليوم)
+async function maybeRemindDeloadActive(){
+  try{
+    const rec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
+    if(!rec || !rec.value || !rec.value.active) return;
+    const todayISO=new Date().toISOString().split('T')[0];
+    const lastRec=await db.get('settings',KEYS.DELOAD_LAST_REMINDER);
+    const last=lastRec && lastRec.value;
+    if(last===todayISO) return; // اليوم أُظهر بالفعل
+    await db.put('settings',{key:KEYS.DELOAD_LAST_REMINDER,value:todayISO});
+    // احسب اليوم الذي بدأت فيه
+    const startedAt=rec.value.startedAt?new Date(rec.value.startedAt):null;
+    const dayNum=startedAt?Math.floor((Date.now()-startedAt.getTime())/86400000)+1:1;
+    setTimeout(()=>{
+      if(typeof showToast==='function'){
+        showToast(`🛟 اليوم ${dayNum} من Deload — اضرب ×0.6 على أوزانك واحتفظ بنفس التكرارات`,'var(--blue)',5500,{
+          action:{label:'إيقاف',handler:()=>{if(typeof endManualDeload==='function') endManualDeload()}}
+        });
+      }
+    },1800);
+  }catch(e){}
+}
+
 // ============ V8 — Activate/Deactivate Manual Deload ============
 async function startManualDeload(reason){
   await db.put('settings',{key:KEYS.MANUAL_DELOAD_ACTIVE,value:{
@@ -1108,6 +1132,28 @@ async function updateDeloadHeaderBanner(){
 
 async function endSession(silent=false){
   if(!currentSession) return;
+  // V8.3 (UX-7) — لو ما في أي سيت محفوظ، حذّر المستخدم بدلاً من حفظ workout فارغ
+  if(!silent && (!currentSession.setsCount || currentSession.setsCount<=0)){
+    const choice=confirm('⚠️ لم تسجّل أي سيت في هذه الجلسة.\n\nاضغط "موافق" لإلغاء الجلسة بدون حفظ (لن تُحتسب)،\nأو "إلغاء" للعودة لإكمال السيتات.');
+    if(!choice){
+      // المستخدم اختار العودة لإكمال السيتات
+      return;
+    }
+    // ألغِ الجلسة بدون حفظ workout
+    const sid=currentSession.id;
+    currentSession=null;
+    await db.put('settings',{key:KEYS.CURRENT_SESSION,value:null});
+    if(sessionTimerId){clearInterval(sessionTimerId);sessionTimerId=null}
+    stopHeartbeat();
+    updateSessionUI();
+    document.querySelectorAll('.step.completed,.step.has-pr').forEach(s=>{
+      s.classList.remove('completed','has-pr');
+      const btn=s.querySelector('.save-btn');
+      if(btn){btn.textContent='حفظ';btn.classList.remove('saved')}
+    });
+    showToast('🚫 أُلغيت الجلسة الفارغة — لم تُحفظ.','var(--org)',3500);
+    return;
+  }
   const endTime=new Date().toISOString();
   const duration=Math.round((new Date(endTime)-new Date(currentSession.startTime))/1000);
 

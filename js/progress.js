@@ -476,6 +476,82 @@ async function checkExportReminder(){
   }catch(e){}
 }
 
+// V8.3 (UX-4) — تذكير قوي يظهر مرة واحدة عند الوصول لأول ١٠ سيتات
+// الهدف: المستخدم الجديد يفهم خطورة فقدان البيانات قبل ما يبني تاريخاً كبيراً
+async function maybeShowBackupReminder(){
+  try{
+    const rec=await db.get('settings',KEYS.BACKUP_REMINDER_SHOWN);
+    if(rec && rec.value) return;
+    const sets=await db.getAll('sets');
+    if(sets.length<10) return;
+    // لو سبق له تصدير → ما نحتاج تذكير قوي
+    const last=await db.get('settings',KEYS.LAST_EXPORT);
+    if(last && last.value){
+      await db.put('settings',{key:KEYS.BACKUP_REMINDER_SHOWN,value:true});
+      return;
+    }
+    // لو فعّل النسخ التلقائي → نسخ مؤمّنة، نطفي التذكير
+    if(typeof getAutoBackupPrefs==='function'){
+      const ab=await getAutoBackupPrefs();
+      if(ab && ab.enabled){
+        await db.put('settings',{key:KEYS.BACKUP_REMINDER_SHOWN,value:true});
+        return;
+      }
+    }
+    // اعرض modal أو dialog قوي بعد قليل من تحميل التطبيق
+    setTimeout(()=>showBackupReminderDialog(sets.length),2000);
+    await db.put('settings',{key:KEYS.BACKUP_REMINDER_SHOWN,value:true});
+  }catch(e){}
+}
+
+function showBackupReminderDialog(setsCount){
+  // أنشئ overlay بسيط (modal مخصّص — أبرز من toast)
+  const existing=document.getElementById('backupReminderModal');
+  if(existing) existing.remove();
+  const m=document.createElement('div');
+  m.id='backupReminderModal';
+  m.className='backup-reminder-modal show';
+  m.innerHTML=`
+    <div class="brm-card">
+      <div class="brm-icon">🚨</div>
+      <h3 class="brm-title">احمِ بياناتك الآن</h3>
+      <p class="brm-body">
+        سجّلت <b>${setsCount} سيت</b> حتى الآن — كلها على هذا الجهاز فقط.
+        <br>لو فقدت الجهاز أو مسحت بيانات المتصفّح، <b>كل تاريخك سيضيع</b>.
+      </p>
+      <p class="brm-sub">احفظ نسخة احتياطية الآن — تستغرق ٥ ثوانٍ فقط.</p>
+      <div class="brm-actions">
+        <button class="brm-btn brm-export" type="button" onclick="brmExportNow()">💾 صدّر الآن</button>
+        <button class="brm-btn brm-auto" type="button" onclick="brmOpenAutoBackup()">🔗 فعّل التلقائي</button>
+        <button class="brm-btn brm-skip" type="button" onclick="brmClose()">لاحقاً</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+  document.body.style.overflow='hidden';
+}
+
+async function brmExportNow(){
+  brmClose();
+  if(typeof exportData==='function') await exportData();
+}
+
+function brmOpenAutoBackup(){
+  brmClose();
+  if(typeof openProfile==='function') openProfile();
+  // مرّر للمستخدم لقسم النسخ التلقائي
+  setTimeout(()=>{
+    const ab=document.getElementById('autobackupBody');
+    if(ab) ab.scrollIntoView({behavior:'smooth',block:'center'});
+  },400);
+}
+
+function brmClose(){
+  const m=document.getElementById('backupReminderModal');
+  if(m){m.classList.remove('show');setTimeout(()=>m.remove(),250)}
+  document.body.style.overflow='';
+}
+
 async function importData(event){
   const file=event.target.files[0];
   if(!file) return;
