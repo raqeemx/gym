@@ -86,27 +86,18 @@ document.addEventListener('click',(e)=>{
 });
 
 // ============ MODAL OUTSIDE CLICKS ============
+// V8.4 — defensive: lazily bind only if elements exist (test.html safe)
 {
-  const _statsM=document.getElementById('statsModal');
-  if(_statsM) _statsM.addEventListener('click',(e)=>{
-  if(e.target.id==='statsModal') closeStats();
-});
-document.getElementById('summaryModal').addEventListener('click',(e)=>{
-  if(e.target.id==='summaryModal') closeSummary();
-});
-// V7.2 (#37) — Profile modal outside click
-const _profileModal=document.getElementById('profileModal');
-if(_profileModal){
-  _profileModal.addEventListener('click',(e)=>{
-    if(e.target.id==='profileModal') closeProfile();
-  });
-}
-// V8 — Plate Calculator modal outside click
-const _plateCalcModal=document.getElementById('plateCalcModal');
-if(_plateCalcModal){
-  _plateCalcModal.addEventListener('click',(e)=>{
-    if(e.target.id==='plateCalcModal') closePlateCalc();
-  });
+  const bindings=[
+    {id:'statsModal',close:()=>closeStats()},
+    {id:'summaryModal',close:()=>closeSummary()},
+    {id:'profileModal',close:()=>closeProfile()},
+    {id:'plateCalcModal',close:()=>closePlateCalc()}
+  ];
+  for(const b of bindings){
+    const el=document.getElementById(b.id);
+    if(el) el.addEventListener('click',(e)=>{if(e.target.id===b.id) b.close()});
+  }
 }
 
 // ============ V7.2 — USER PROFILE (#37) ============
