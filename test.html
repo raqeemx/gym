@@ -49,9 +49,12 @@
 
 <!-- نحمّل ملفات المنطق مباشرة -->
 <script src="js/data.js"></script>
+<script src="js/program-data.js"></script>
 <script src="js/session.js"></script>
+<script src="js/gyms.js"></script>
 <script src="js/substitutions.js"></script>
 <script src="js/progress.js"></script>
+<script src="js/achievements.js"></script>
 
 <script>
 // ============ Test Framework ============
@@ -110,6 +113,9 @@ group('normalizeExName', (g)=>{
   g.add(test('Pulley Tricep Pushdown → Pulley Pushdown', ()=>assertEq(normalizeExName('Pulley — Tricep Pushdown'), 'Pulley Pushdown')));
   g.add(test('strips على Leg Press suffix', ()=>assertEq(normalizeExName('Calf Raise على Leg Press'), 'Calf Raise')));
   g.add(test('strips تسخين suffix', ()=>assertEq(normalizeExName('Chest Press — تسخين'), 'Chest Press')));
+  // V8.3 (3.1) — warmup set suffix
+  g.add(test('strips مجموعة تسخين (warmup set)', ()=>assertEq(normalizeExName('Chest Press — مجموعة تسخين'), 'Chest Press')));
+  g.add(test('strips مجموعة تسخين with multiple spaces', ()=>assertEq(normalizeExName('Lat Machine — مجموعة  تسخين'), 'Lat Machine')));
   g.add(test('empty input → empty', ()=>assertEq(normalizeExName(''), '')));
   g.add(test('null safe', ()=>assertEq(normalizeExName(null), '')));
 });
@@ -389,6 +395,177 @@ group('EXERCISE_ALTERNATIVES integrity', (g)=>{
     assertTrue(EXERCISE_ALTERNATIVES['Chest Press']);
     assertTrue(EXERCISE_ALTERNATIVES['Lat Machine']);
     assertTrue(EXERCISE_ALTERNATIVES['Leg Press']);
+  }));
+});
+
+// ============ V8.3 / V8.4 — New feature tests ============
+
+group('PROGRAM_DATA structure (V8.3 — 3.3)', (g)=>{
+  g.add(test('all 7 days present', ()=>assertEq(PROGRAM_DATA.days.length, 7)));
+  g.add(test('exactly one REST day', ()=>{
+    const rest = PROGRAM_DATA.days.filter(d=>d.isRest||d.type==='REST');
+    assertEq(rest.length, 1);
+  }));
+  g.add(test('each non-rest day has phases', ()=>{
+    for(const d of PROGRAM_DATA.days){
+      if(d.isRest) continue;
+      assertTrue(Array.isArray(d.phases) && d.phases.length>0, `${d.id} missing phases`);
+    }
+  }));
+  g.add(test('each training day has last:true on a step', ()=>{
+    for(const d of PROGRAM_DATA.days){
+      if(d.isRest) continue;
+      const hasLast = d.phases.some(p=>(p.steps||[]).some(s=>s.last));
+      assertTrue(hasLast, `${d.id} missing last:true`);
+    }
+  }));
+  g.add(test('each day has unique id', ()=>{
+    const ids = PROGRAM_DATA.days.map(d=>d.id);
+    assertEq(ids.length, new Set(ids).size);
+  }));
+  g.add(test('dayOfWeek 0-6 covered', ()=>{
+    const wd = PROGRAM_DATA.days.map(d=>d.dayOfWeek).sort();
+    assertEq(wd, [0,1,2,3,4,5,6]);
+  }));
+});
+
+group('EXERCISE_FORM_NOTES (V8.3 — 3.2)', (g)=>{
+  g.add(test('schema loaded', ()=>assertTrue(typeof EXERCISE_FORM_NOTES === 'object')));
+  g.add(test('all entries have title + formNote', ()=>{
+    for(const [name,note] of Object.entries(EXERCISE_FORM_NOTES)){
+      assertTrue(typeof note.title === 'string' && note.title.length>0, `${name}: missing title`);
+      assertTrue(typeof note.formNote === 'string' && note.formNote.length>0, `${name}: missing formNote`);
+    }
+  }));
+  g.add(test('all entries point to SVG/GIF assets (3.1 followup)', ()=>{
+    // After V8.4 issue fix, every form note should have a gif path (no more null)
+    const missing = Object.entries(EXERCISE_FORM_NOTES).filter(([,n])=>!n.gif);
+    assertTrue(missing.length===0, 'missing gif: '+missing.map(([n])=>n).join(','));
+  }));
+  g.add(test('asset paths point to assets/gifs/', ()=>{
+    for(const [name,note] of Object.entries(EXERCISE_FORM_NOTES)){
+      if(!note.gif) continue;
+      assertTrue(/^assets\/gifs\//.test(note.gif), `${name}: bad path ${note.gif}`);
+    }
+  }));
+});
+
+group('ACHIEVEMENTS progress (V8.3 — 3.8)', (g)=>{
+  g.add(test('catalog has 16 entries', ()=>assertEq(ACHIEVEMENTS.length, 16)));
+  g.add(test('all entries have id+title+desc+check', ()=>{
+    for(const a of ACHIEVEMENTS){
+      assertTrue(typeof a.id === 'string');
+      assertTrue(typeof a.title === 'string');
+      assertTrue(typeof a.check === 'function');
+    }
+  }));
+  g.add(test('most entries have progress() (binary excluded)', ()=>{
+    const withProgress = ACHIEVEMENTS.filter(a=>typeof a.progress==='function').length;
+    // 14 of 16 (pr_storm + pr_legend are binary per-session, no progress)
+    assertTrue(withProgress>=14, 'only '+withProgress+' have progress');
+  }));
+  g.add(test('progress() returns {current,target}', ()=>{
+    const sample = ACHIEVEMENTS.find(a=>a.id==='sets_100');
+    const p = sample.progress({totalSets:50,totalSessions:5,totalPRs:0,totalVolume:0,bestStreak:0});
+    assertEq(p.current, 50);
+    assertEq(p.target, 100);
+    assertTrue(typeof p.unit === 'string');
+  }));
+});
+
+group('MUSCLE_VOLUME_REF (V8.3 — 3.11)', (g)=>{
+  g.add(test('reference loaded', ()=>assertTrue(typeof MUSCLE_VOLUME_REF === 'object')));
+  g.add(test('all groups have mev+mav+mrv', ()=>{
+    for(const [grp,ref] of Object.entries(MUSCLE_VOLUME_REF)){
+      assertTrue(typeof ref.mev === 'number', `${grp}: missing mev`);
+      assertTrue(Array.isArray(ref.mav) && ref.mav.length===2, `${grp}: bad mav`);
+      assertTrue(typeof ref.mrv === 'number', `${grp}: missing mrv`);
+      assertTrue(ref.mev <= ref.mav[0], `${grp}: mev should be <= mav.min`);
+      assertTrue(ref.mav[1] <= ref.mrv, `${grp}: mav.max should be <= mrv`);
+    }
+  }));
+  g.add(test('evaluateMuscleVolume — under MEV', ()=>{
+    const r = evaluateMuscleVolume('صدر', 5);
+    assertEq(r.status, 'under');
+  }));
+  g.add(test('evaluateMuscleVolume — optimal (in MAV)', ()=>{
+    const r = evaluateMuscleVolume('صدر', 15);
+    assertEq(r.status, 'optimal');
+  }));
+  g.add(test('evaluateMuscleVolume — over MRV', ()=>{
+    const r = evaluateMuscleVolume('صدر', 30);
+    assertEq(r.status, 'over');
+  }));
+  g.add(test('evaluateMuscleVolume — unknown group → null', ()=>{
+    assertEq(evaluateMuscleVolume('UNKNOWN', 10), null);
+  }));
+});
+
+group('ACTIVITY_FACTORS (V8.3 — 3.14)', (g)=>{
+  g.add(test('has 5 activity levels', ()=>assertEq(Object.keys(ACTIVITY_FACTORS).length, 5)));
+  g.add(test('factors are ascending sedentary→very_active', ()=>{
+    const order = ['sedentary','light','moderate','active','very_active'];
+    let prev = 0;
+    for(const k of order){
+      const f = ACTIVITY_FACTORS[k].factor;
+      assertTrue(f > prev, `${k} factor ${f} not > ${prev}`);
+      prev = f;
+    }
+  }));
+  g.add(test('moderate matches Harris-Benedict (1.55)', ()=>assertEq(ACTIVITY_FACTORS.moderate.factor, 1.55)));
+});
+
+group('Gym profile filtering (V8.4)', (g)=>{
+  // unit tests for isAltAvailableIn (pure function)
+  g.add(test('isAltAvailableIn — bodyweight tag always allowed in regular gym', ()=>{
+    const gym = {equipment:['Chest Press'], bodyweightOnly:false};
+    const alt = {name:'Push-ups',equipment:'بدون جهاز'};
+    assertTrue(isAltAvailableIn(gym, alt));
+  }));
+  g.add(test('isAltAvailableIn — match equipment in list', ()=>{
+    const gym = {equipment:['Pulley','Chest Press'], bodyweightOnly:false};
+    const alt = {name:'Cable X',equipment:'Pulley'};
+    assertTrue(isAltAvailableIn(gym, alt));
+  }));
+  g.add(test('isAltAvailableIn — reject equipment not in list', ()=>{
+    const gym = {equipment:['Chest Press'], bodyweightOnly:false};
+    const alt = {name:'Decline X',equipment:'Decline Bench'};
+    assertEq(isAltAvailableIn(gym, alt), false);
+  }));
+  g.add(test('isAltAvailableIn — bodyweightOnly excludes machine equipment', ()=>{
+    const gym = {equipment:['Pulley','Chest Press'], bodyweightOnly:true};
+    const alt = {name:'Cable X',equipment:'Pulley'};
+    assertEq(isAltAvailableIn(gym, alt), false);
+  }));
+  g.add(test('isAltAvailableIn — bodyweightOnly allows bodyweight tags', ()=>{
+    const gym = {equipment:[], bodyweightOnly:true};
+    const alt = {name:'Plank',equipment:'بدون جهاز'};
+    assertTrue(isAltAvailableIn(gym, alt));
+  }));
+  g.add(test('isAltAvailableIn — null gym returns true (passthrough)', ()=>{
+    assertTrue(isAltAvailableIn(null, {name:'X',equipment:'Pulley'}));
+  }));
+});
+
+group('listAllKnownEquipment (V8.4)', (g)=>{
+  g.add(test('returns array', ()=>{
+    const list = listAllKnownEquipment();
+    assertTrue(Array.isArray(list));
+    assertTrue(list.length>0);
+  }));
+  g.add(test('includes default Technogym machines', ()=>{
+    const list = listAllKnownEquipment();
+    assertTrue(list.indexOf('Chest Press')>=0);
+    assertTrue(list.indexOf('Lat Machine')>=0);
+    assertTrue(list.indexOf('Pulley')>=0);
+  }));
+  g.add(test('includes bodyweight tag', ()=>{
+    const list = listAllKnownEquipment();
+    assertTrue(list.indexOf('بدون جهاز')>=0);
+  }));
+  g.add(test('no duplicates', ()=>{
+    const list = listAllKnownEquipment();
+    assertEq(list.length, new Set(list).size);
   }));
 });
 

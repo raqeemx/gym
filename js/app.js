@@ -66,19 +66,29 @@ async function maybeShowFabHint(){
   }catch(e){}
 }
 
-document.getElementById('fabBtn').addEventListener('click',(e)=>{
-  e.stopPropagation();
-  document.getElementById('fabMenu').classList.toggle('open');
-});
+// V8.4 — defensive: لا تكسر صفحات لا تحتوي FAB (مثلاً test.html)
+{
+  const _fabBtn=document.getElementById('fabBtn');
+  if(_fabBtn){
+    _fabBtn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const menu=document.getElementById('fabMenu');
+      if(menu) menu.classList.toggle('open');
+    });
+  }
+}
 
 document.addEventListener('click',(e)=>{
   if(!e.target.closest('#fabBtn')&&!e.target.closest('#fabMenu')){
-    document.getElementById('fabMenu').classList.remove('open');
+    const menu=document.getElementById('fabMenu');
+    if(menu) menu.classList.remove('open');
   }
 });
 
 // ============ MODAL OUTSIDE CLICKS ============
-document.getElementById('statsModal').addEventListener('click',(e)=>{
+{
+  const _statsM=document.getElementById('statsModal');
+  if(_statsM) _statsM.addEventListener('click',(e)=>{
   if(e.target.id==='statsModal') closeStats();
 });
 document.getElementById('summaryModal').addEventListener('click',(e)=>{

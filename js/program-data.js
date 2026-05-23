@@ -708,41 +708,41 @@ const EXERCISE_FORM_NOTES = {
   "Chest Press": {
     title: "Chest Press — ضغط صدر",
     formNote: "<b>الأسلوب الصحيح:</b><br>• اجلس وظهرك ملصوق بالمسند بالكامل<br>• المقابض بمستوى صدرك (عدّل المقعد)<br>• ادفع للأمام بدون قفل الكوع<br>• ارجع <b>ببطء</b> — هذا الجزء الأهم<br><br>⚠️ لا ترمي الوزن للخلف، تحكّم في الحركة كاملة.",
-    gif: null
+    gif: "assets/gifs/chest-press.svg"
   },
   "Pectoral Fly": {
     title: "Pectoral Fly — تفتيح صدر",
     formNote: "<b>الأسلوب الصحيح:</b><br>• اجلس وظهرك ملصوق<br>• جيب الذراعين لقدام لين يلتقون أمام صدرك<br>• حس بالضغط على عضلة الصدر<br>• ارجع <b>ببطء</b> لين تحس بتمدد<br><br>⚠️ لا تفتح أكثر من اللازم — تجنّب إجهاد الكتف.",
-    gif: null
+    gif: "assets/gifs/pectoral-fly.svg"
   },
   "Shoulder Press": {
     title: "Shoulder Press — ضغط أكتاف",
     formNote: "<b>الأسلوب الصحيح:</b><br>• اجلس — المقابض بمستوى أذنك تقريباً<br>• ادفع لفوق بدون قفل الكوع<br>• انزل ببطء لين المقبض يرجع بمستوى أذنك<br><br>⚠️ الكتف عضلة صغيرة — ابدأ خفيف وزد تدريجياً.",
-    gif: null
+    gif: "assets/gifs/shoulder-press.svg"
   },
   "Delts Machine": {
     title: "Delts Machine — كتف جانبي",
     formNote: "<b>الأسلوب الصحيح:</b><br>• الوسائد على ذراعك من الخارج (فوق الكوع)<br>• ارفع للجانب لين يوصل مستوى الكتف<br>• <b>لا ترفع أعلى من الكتف</b><br>• انزل ببطء<br><br>⚠️ الحركة بطيئة ومتحكمة — لا أرجحة.",
-    gif: null
+    gif: "assets/gifs/delts-machine.svg"
   },
   "Lat Machine": {
     title: "Lat Machine — سحب عمودي",
     formNote: "<b>الأسلوب الصحيح:</b><br>• ثبّت فخذك تحت الوسادة<br>• قبضة عريضة من فوق<br>• اسحب البار لصدرك — <b>تخيّل كوعك يدخل جيبك</b><br>• ارجع ببطء وبتحكم<br><br>⚠️ لا تسحب لخلف الرقبة — خطر على الكتف.",
-    gif: null
+    gif: "assets/gifs/lat-machine.svg"
   },
   "Low Row": {
     title: "Low Row — سحب أفقي",
     formNote: "<b>الأسلوب الصحيح:</b><br>• صدرك ملصوق بالوسادة الأمامية<br>• اسحب لصدرك — اجمع لوحين الظهر<br>• ارجع ببطء — احتفظ بتوتر الظهر<br><br>⚠️ لا تستخدم الذراع فقط — الحركة من الظهر.",
-    gif: null
+    gif: "assets/gifs/low-row.svg"
   },
   "Reverse Fly": {
     title: "Reverse Fly — خلف الكتف",
     formNote: "<b>الأسلوب الصحيح:</b><br>• ووجهك مقابل الجهاز (عكس Pectoral Fly)<br>• صدرك على الوسادة<br>• ادفع الذراعين للخلف — افتح صدرك<br>• ارجع ببطء<br><br>⚠️ عضلة صغيرة جداً — ابدأ بـ ٥ كجم فقط.",
-    gif: null
+    gif: "assets/gifs/reverse-fly.svg"
   },
   "Crossover Cables": {
     title: "Crossover Cables — كابل صدر",
     formNote: "<b>الأسلوب الصحيح:</b><br>• قف بين العمودين، الكابل بارتفاع الكتف<br>• خطوة للأمام، جيب يديك لقدام لين يلتقون<br>• حس بضغط على الصدر<br>• ارجع ببطء وافتح الصدر<br><br>✅ ميزته: تمدد أعمق من Pectoral Fly.",
-    gif: null
+    gif: "assets/gifs/crossover-cables.svg"
   }
 };

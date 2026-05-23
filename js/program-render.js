@@ -187,10 +187,17 @@ function openFormNoteModal(exName){
   const gifWrap=document.getElementById('formNoteGifWrap');
   const gifEl=document.getElementById('formNoteGif');
   if(note.gif){
+    // V8.4 — fallback عند فشل التحميل: أخفِ الإطار بدل عرض icon مكسور
+    gifEl.onerror=()=>{
+      gifWrap.style.display='none';
+      console.warn('Form-note asset failed to load:',note.gif);
+    };
+    gifEl.onload=()=>{gifWrap.style.display=''};
     gifEl.src=note.gif;
     gifEl.alt=note.title||exName;
-    gifWrap.style.display='';
+    gifWrap.style.display=''; // اعرض مبدئياً — onerror سيُخفيه لو فشل
   }else{
+    gifEl.onerror=null;gifEl.onload=null;
     gifEl.removeAttribute('src');
     gifWrap.style.display='none';
   }

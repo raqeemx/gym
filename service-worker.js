@@ -28,6 +28,15 @@ const ASSETS = [
   './js/gyms.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
+  // V8.4 — Exercise demonstration assets (form notes modal)
+  './assets/gifs/chest-press.svg',
+  './assets/gifs/pectoral-fly.svg',
+  './assets/gifs/shoulder-press.svg',
+  './assets/gifs/delts-machine.svg',
+  './assets/gifs/lat-machine.svg',
+  './assets/gifs/low-row.svg',
+  './assets/gifs/reverse-fly.svg',
+  './assets/gifs/crossover-cables.svg',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'
 ];
 

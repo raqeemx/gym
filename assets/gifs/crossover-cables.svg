@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" role="img" aria-label="كروس أوفر — جيب الكابلات لقدام">
+  <defs>
+    <linearGradient id="bg-cross" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#0B0D11"/>
+      <stop offset="1" stop-color="#10131A"/>
+    </linearGradient>
+    <linearGradient id="acc-cross" x1="0" x2="1">
+      <stop offset="0" stop-color="#D4A853"/>
+      <stop offset="1" stop-color="#EDCA7A"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="140" rx="10" fill="url(#bg-cross)"/>
+  <!-- Two cable towers -->
+  <rect x="20" y="35" width="6" height="80" fill="#3A3F4B"/>
+  <rect x="174" y="35" width="6" height="80" fill="#3A3F4B"/>
+  <rect x="17" y="35" width="12" height="8" fill="#2A2F38"/>
+  <rect x="171" y="35" width="12" height="8" fill="#2A2F38"/>
+  <!-- Body (front, standing) -->
+  <circle cx="100" cy="50" r="9" fill="#DEE0E6"/>
+  <rect x="93" y="59" width="14" height="42" rx="3" fill="#DEE0E6"/>
+  <rect x="93" y="101" width="6" height="22" fill="#DEE0E6"/>
+  <rect x="101" y="101" width="6" height="22" fill="#DEE0E6"/>
+  <!-- Cables going from pulleys to hands (animated converging) -->
+  <line x1="26" y1="50" x2="65" y2="80" stroke="#5AB4FF" stroke-width="2" opacity=".7">
+    <animate attributeName="x2" values="65;95;65" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="y2" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </line>
+  <line x1="174" y1="50" x2="135" y2="80" stroke="#5AB4FF" stroke-width="2" opacity=".7">
+    <animate attributeName="x2" values="135;105;135" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="y2" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </line>
+  <!-- Arms -->
+  <line x1="93" y1="70" x2="65" y2="80" stroke="#FF5A5F" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="x2" values="65;95;65" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="y2" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </line>
+  <line x1="107" y1="70" x2="135" y2="80" stroke="#FF5A5F" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="x2" values="135;105;135" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="y2" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </line>
+  <!-- Handles -->
+  <circle cx="65" cy="80" r="4" fill="url(#acc-cross)">
+    <animate attributeName="cx" values="65;95;65" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="135" cy="80" r="4" fill="url(#acc-cross)">
+    <animate attributeName="cx" values="135;105;135" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="80;90;80" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <text x="100" y="22" font-family="Outfit, sans-serif" font-size="11" font-weight="700" fill="#D4A853" text-anchor="middle">CROSSOVER CABLES</text>
+  <text x="100" y="132" font-family="Rubik, sans-serif" font-size="9" fill="#9CA4B5" text-anchor="middle">التقِ اليدين أمام الصدر · تمدد عند الرجوع</text>
+</svg>
