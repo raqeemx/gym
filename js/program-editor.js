@@ -15,7 +15,7 @@ async function openProgramEditor(dayId){
   if(!dayId){showToast('⚠️ لم يتم تحديد اليوم','var(--red)');return}
   // تحذير لو في جلسة نشطة — التعديل يُعيد بناء الواجهة
   if(typeof currentSession!=='undefined' && currentSession){
-    if(!confirm('لديك جلسة نشطة. تعديل اليوم سيُعيد بناء الواجهة، وقد تفقد المدخلات غير المحفوظة. متابعة؟')) return;
+    if(!await customConfirm('لديك جلسة نشطة. تعديل اليوم سيُعيد بناء الواجهة، وقد تفقد المدخلات غير المحفوظة.<br><br>هل تريد المتابعة؟',{title:'جلسة نشطة',okText:'متابعة',danger:false,icon:'⚠️'})) return;
   }
   const defaultDay=PROGRAM_DATA.days.find(d=>d.id===dayId);
   if(!defaultDay){showToast('⚠️ يوم غير معروف','var(--red)');return}
@@ -29,9 +29,9 @@ async function openProgramEditor(dayId){
   // Deep clone for editing — لا نعدّل المرجع الأصلي
   _editorState={
     dayId,
-    day:JSON.parse(JSON.stringify(day)),
+    day:structuredClone(day),
     isCustom,
-    originalDay:JSON.parse(JSON.stringify(defaultDay))
+    originalDay:structuredClone(defaultDay)
   };
   renderEditorBody();
   const modal=document.getElementById('editorModal');
@@ -55,7 +55,8 @@ function renderEditorBody(){
   if(!_editorState) return;
   const day=_editorState.day;
   const titleEl=document.getElementById('editorTitle');
-  if(titleEl) titleEl.innerHTML=`✏️ تخصيص: ${day.type||day.label||day.id} ${_editorState.isCustom?'<span class="ed-custom-tag">معدّل</span>':''}`;
+  // V8.4 (P1-#6) — escape day fields (user-editable via program editor)
+  if(titleEl) titleEl.innerHTML=`✏️ تخصيص: ${escAttr(day.type||day.label||day.id)} ${_editorState.isCustom?'<span class="ed-custom-tag">معدّل</span>':''}`;
 
   const body=document.getElementById('editorBody');
   if(!body) return;
@@ -129,7 +130,8 @@ function renderEditorStep(step,pIdx,sIdx){
   `;
 }
 
-function escAttr(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+// V8.4 (P1-#6) — استخدم escHTML الـ global (escape كامل ضد XSS)
+function escAttr(s){return (typeof escHTML==='function')?escHTML(s):String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#039;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 function bindEditorEvents(){
   const body=document.getElementById('editorBody');
@@ -174,11 +176,11 @@ function bindDayFieldInputs(){
   });
 }
 
-function handleEditorAction(action,pIdx,sIdx){
+async function handleEditorAction(action,pIdx,sIdx){
   const day=_editorState.day;
   if(action==='del-step'){
     if(!day.phases[pIdx]||!day.phases[pIdx].steps[sIdx]) return;
-    if(!confirm('حذف هذا الستيب؟')) return;
+    if(!await customConfirm('حذف هذا الستيب؟',{title:'حذف ستيب',okText:'احذف',danger:true,icon:'🗑'})) return;
     day.phases[pIdx].steps.splice(sIdx,1);
     renderEditorBody();
     return;
@@ -224,7 +226,7 @@ async function saveEditorChanges(){
 
 async function resetEditorDay(){
   if(!_editorState) return;
-  if(!confirm('استعادة هذا اليوم لإعداداته الافتراضية؟ سيتم فقدان كل التعديلات.')) return;
+  if(!await customConfirm('استعادة هذا اليوم لإعداداته الافتراضية؟<br><br><b>سيتم فقدان كل التعديلات</b>.',{title:'إعادة للافتراضي',okText:'استعد',danger:true,icon:'↺'})) return;
   try{
     const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
     const ovs=(rec&&rec.value)||{};

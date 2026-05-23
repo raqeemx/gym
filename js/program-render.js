@@ -13,6 +13,10 @@
 // مُحدَّث في renderProgram() ومُستخدَم في openProgramEditor()
 let EFFECTIVE_PROGRAM=null;
 
+// V8.4 (P1-#6) — helper للحقول القابلة للتعديل من المستخدم (program editor)
+// الحقول التي تحوي HTML مقصود (finishTip, planB, banner.text, dayIntro.text) تبقى بدون escape
+function _pre(s){return (typeof escHTML==='function')?escHTML(s):String(s==null?'':s)}
+
 async function renderProgram(){
   const container=document.getElementById('programContainer');
   if(!container){console.warn('programContainer not found — skipping renderProgram');return}
@@ -44,12 +48,12 @@ function renderDay(day){
     ?`<div class="tip tpu" style="margin-bottom:14px"><div class="ti">${day.dayIntro.icon||'⭐'}</div><div class="tt">${day.dayIntro.text}</div></div>`
     :'';
   return `
-  <!-- يوم ${day.shortName}: ${day.type} -->
-  <div class="dy" onclick="tg(this)" data-day-id="${day.id||''}">
+  <!-- يوم ${_pre(day.shortName)}: ${_pre(day.type)} -->
+  <div class="dy" onclick="tg(this)" data-day-id="${_pre(day.id||'')}">
     <div class="dh">
-      <div class="db ${day.colorClass}">${day.shortName}</div>
-      <div class="di"><div class="dn">${day.label}</div><div class="df">${day.description}</div></div>
-      <span class="dt ${day.tagClass}">${day.tagLabel}</span><span class="da">▾</span>
+      <div class="db ${_pre(day.colorClass)}">${_pre(day.shortName)}</div>
+      <div class="di"><div class="dn">${_pre(day.label)}</div><div class="df">${_pre(day.description)}</div></div>
+      <span class="dt ${_pre(day.tagClass)}">${_pre(day.tagLabel)}</span><span class="da">▾</span>
     </div>
     <div class="dby"><div class="dbi">
 
@@ -69,11 +73,11 @@ function renderRestDay(day){
     ?`\n  <div class="tip t0" style="margin-bottom:16px"><div class="ti">${day.restNote.icon||'🧘'}</div><div class="tt">${day.restNote.text}</div></div>`
     :'';
   return `
-  <!-- يوم ${day.shortName}: راحة -->
-  <div class="dy" data-day-id="${day.id||''}">
+  <!-- يوم ${_pre(day.shortName)}: راحة -->
+  <div class="dy" data-day-id="${_pre(day.id||'')}">
     <div class="dh" style="cursor:default">
-      <div class="db ${day.colorClass||'rest'}">${day.shortName}</div>
-      <div class="di"><div class="dn">${day.label}</div><div class="df">${day.description}</div></div>
+      <div class="db ${_pre(day.colorClass||'rest')}">${_pre(day.shortName)}</div>
+      <div class="di"><div class="dn">${_pre(day.label)}</div><div class="df">${_pre(day.description)}</div></div>
     </div>
   </div>${noteHtml}`;
 }
@@ -93,9 +97,9 @@ function renderDaySummary(stats){
 // ============ مرحلة (warmup/solo/pair) ============
 function renderPhase(phase,counter){
   let html=`      <div class="phase-bar">`+
-           `<span class="pl">${phase.label}</span>`+
-           `<span class="pn">${phase.name}</span>`+
-           (phase.meta?`<span class="pmeta">${phase.meta}</span>`:'')+
+           `<span class="pl">${_pre(phase.label)}</span>`+
+           `<span class="pn">${_pre(phase.name)}</span>`+
+           (phase.meta?`<span class="pmeta">${_pre(phase.meta)}</span>`:'')+
            `</div>`;
   // banner اختياري (للأزواج)
   if(phase.banner){
@@ -122,8 +126,8 @@ function renderStep(step,counter){
     return `<div class="step rest">`+
            `<div class="step-num">⏱</div>`+
            `<div class="step-body">`+
-           `<div class="step-name">${step.name}</div>`+
-           `<div class="step-info">${step.info}</div>`+
+           `<div class="step-name">${_pre(step.name)}</div>`+
+           `<div class="step-info">${_pre(step.info)}</div>`+
            `</div></div>`;
   }
   // ستيب تدريبي — عدّاد متسلسل
@@ -141,8 +145,8 @@ function renderStep(step,counter){
   return `<div class="${classes.join(' ')}">`+
          `<div class="step-num">${counter.n}</div>`+
          `<div class="step-body">`+
-         `<div class="step-name">${step.name}</div>`+
-         `<div class="step-info">${step.info}</div>`+
+         `<div class="step-name">${_pre(step.name)}</div>`+
+         `<div class="step-info">${_pre(step.info)}</div>`+
          `</div></div>`;
 }
 

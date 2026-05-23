@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- V8.4 (P1-#5) — Content Security Policy (transitional: unsafe-inline لأن inline onclick + style بداخل HTML/SVG، نخفّضها تدريجياً في P2) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; child-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>BULK MODE V8 — برنامج التضخيم</title>
 
 <!-- PWA Configuration -->
@@ -86,9 +89,14 @@
     <div class="tip t0"><div class="ti">📋</div><div class="tt"><strong>قراءة البرنامج:</strong><br>• <span style="color:var(--purple)">رقم بنفسجي</span> = سيت SOLO (تمرين منفرد براحة كاملة)<br>• <span style="color:var(--g2)">رقم ذهبي</span> = سيت داخل زوج APS<br>• <span style="color:var(--blue)">⏱ أزرق</span> = استراحة محسوبة بالثانية<br>• <span style="color:var(--blue)">📋 Plan B</span> = البديل لو الجهاز مشغول<br>• <span style="color:var(--grn)">🟢 ZONE</span> = منطقة الأجهزة في الجيم<br><br><b>كل اللي عليك:</b> اتبع الترتيب من ١ لآخر رقم. لا تفكر، لا تخطّط — بس نفّذ.</div></div>
   </div>
 
-  <div class="card fu">
-    <div class="ch"><div class="ci">👤</div><div><div class="ct">بياناتك</div></div></div>
-    <div class="tip t0"><div class="ti">📋</div><div class="tt">العمر: <b>30 سنة</b> · الطول: <b>174 سم</b> · الوزن: <b>73 كجم</b><br>المستوى: <b>مبتدئ — أول مرة في الجيم</b><br>الهدف: <b>زيادة عضلات مع أقل دهون ممكنة</b><br>وقت التمرين: <b>بعد العشاء حوالي 9:30 مساءً</b><br>إصابات: <b>لا يوجد</b></div></div>
+  <!-- V8.4 (P1-#1) — البيانات تُملأ ديناميكياً من profile (settings:user_profile) -->
+  <div class="card fu" id="userProfileCard">
+    <div class="ch">
+      <div class="ci">👤</div>
+      <div><div class="ct">بياناتك</div><div class="cs" id="userProfileCardSub">عدّلها من 👤 ملفي الشخصي</div></div>
+    </div>
+    <div class="tip t0" id="userProfileCardBody"><div class="ti">📋</div><div class="tt" id="userProfileCardText">جاري التحميل...</div></div>
+    <div style="text-align:center;margin-top:10px"><button type="button" class="bm-save" style="font-size:11px;padding:8px 16px" onclick="openProfile()">✏️ عدّل ملفك الشخصي</button></div>
   </div>
 
   <div class="card fu fu2">
@@ -267,7 +275,8 @@
       <div class="mc mcb"><span class="mn">362g</span><span class="ml">كارب (نشويات)</span></div>
       <div class="mc mcf"><span class="mn">74g</span><span class="ml">دهون</span></div>
     </div>
-    <div class="tip t0"><div class="ti">📐</div><div class="tt"><strong>كيف حسبناها؟</strong><br>• بروتين: 2.4 × 73 كجم (وزنك) = <b>175 جرام</b> — هذا الحد الأدنى لبناء العضل<br>• السعرات: جسمك يحتاج ~2,400 سعرة يومياً + 400 زيادة للتضخيم = <b>~2,815</b><br>• الباقي يتوزع بين كارب ودهون</div></div>
+    <!-- V8.4 (P1-#1) — صيغة عامة بدل قيم ثابتة (الأرقام الفعلية في 👤 ملفي الشخصي) -->
+    <div class="tip t0"><div class="ti">📐</div><div class="tt"><strong>كيف حسبناها؟</strong><br>• بروتين: <b>2.0-2.4 جم/كجم</b> من وزن جسمك (لبناء العضل)<br>• السعرات: BMR × معامل النشاط + <b>400</b> سعرة (للتضخيم)<br>• الباقي يتوزع بين كارب ودهون<br><small style="color:var(--tx3)">اضغط 👤 ملفي الشخصي لحساب أرقامك بدقّة.</small></div></div>
     <div class="tip tr"><div class="ti">⚠️</div><div class="tt"><strong>البروتين غير قابل للتفاوض.</strong> لازم 175 جرام كل يوم. بدونه مستحيل تبني عضل حتى لو تمارينك ممتازة.</div></div>
   </div>
 
@@ -1120,6 +1129,19 @@
     <div class="summary-day" id="summaryDay">—</div>
     <div id="summaryBody"></div>
     <button class="summary-close" onclick="closeSummary()">ممتاز 🔥</button>
+  </div>
+</div>
+
+<!-- V8.4 (P1-#2) — Custom confirm modal (replaces native confirm()) -->
+<div class="confirm-modal" id="confirmModal" aria-hidden="true" role="dialog">
+  <div class="confirm-card">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">تأكيد</div>
+    <div class="confirm-body" id="confirmBody"></div>
+    <div class="confirm-actions">
+      <button type="button" class="confirm-btn confirm-cancel" id="confirmCancelBtn">إلغاء</button>
+      <button type="button" class="confirm-btn confirm-ok" id="confirmOkBtn">موافق</button>
+    </div>
   </div>
 </div>
 

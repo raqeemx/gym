@@ -302,7 +302,8 @@ async function switchActiveGym(id){
   await setActiveGymId(id);
   const g=await getGym(id);
   if(typeof showToast==='function' && g){
-    showToast(`${g.icon||'🏋️'} تم التبديل إلى "${g.name}"`,'var(--blue)',3000);
+    // V8.4 (P1-#6) — escape gym.name (user-typed)
+    showToast(`${escHTML(g.icon||'🏋️')} تم التبديل إلى "${escHTML(g.name)}"`,'var(--blue)',3000);
   }
   await refreshGymSwitcherUI();
   // أعد فحص أزرار البدائل + خرائط Plan B
@@ -370,7 +371,8 @@ async function renderGymManagerBody(focusGymId){
 async function confirmDeleteGym(id){
   const g=await getGym(id);
   if(!g) return;
-  if(!confirm(`حذف "${g.name}"؟ لا يمكن التراجع.`)) return;
+  // V8.4 (P1-#2) — custom modal
+  if(!await customConfirm(`حذف <b>"${escHTML(g.name)}"</b>؟<br><small style="color:var(--tx3)">لا يمكن التراجع.</small>`,{title:'حذف جيم',okText:'احذف',danger:true,icon:'🗑'})) return;
   await deleteGym(id);
   await renderGymManagerBody();
   await refreshGymSwitcherUI();
@@ -397,7 +399,7 @@ async function startCreateGym(){
 async function openGymEditor(id){
   const g=await getGym(id);
   if(!g){if(typeof showToast==='function') showToast('⚠️ جيم غير موجود','var(--red)');return}
-  _editingGym=JSON.parse(JSON.stringify(g));
+  _editingGym=structuredClone(g);
   _editingSelected=new Set(_editingGym.equipment||[]);
   populateGymEditor(`تعديل: ${g.name}`);
 }
@@ -492,10 +494,11 @@ async function saveGymFromEditor(){
   closeGymEditor();
   await renderGymManagerBody(_editingGym.id);
   await refreshGymSwitcherUI();
-  if(typeof showToast==='function') showToast(`✓ تم حفظ "${_editingGym.name}"`,'var(--grn)');
+  if(typeof showToast==='function') showToast(`✓ تم حفظ "${escHTML(_editingGym.name)}"`,'var(--grn)');
 }
 
-function escAttrGym(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/'/g,"\\'").replace(/</g,'&lt;')}
+// V8.4 (P1-#6) — يحوّل لاستخدام escHTML الـ global (escape كامل)
+function escAttrGym(s){return (typeof escHTML==='function')?escHTML(s):String(s==null?'':s).replace(/"/g,'&quot;').replace(/'/g,'&#039;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/&/g,'&amp;')}
 
 // V8.4 — first-time hint to introduce gym switcher
 async function maybeShowGymHint(){

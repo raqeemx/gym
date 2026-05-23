@@ -568,11 +568,12 @@ async function loadCurrentSession(){
 async function onStartSession(dayType){
   if(currentSession){
     if(currentSession.dayType===dayType){
-      if(!confirm('الجلسة الحالية بنفس اليوم. هل تريد إنهاءها؟')) return;
+      if(!await customConfirm('الجلسة الحالية بنفس اليوم.<br>هل تريد إنهاءها؟',{title:'إنهاء جلسة',okText:'أنهِها',icon:'⏹'})) return;
       await endSession();
       return;
     }
-    if(!confirm(`لديك جلسة نشطة (${currentSession.dayType}). هل تريد إنهاءها وبدء ${dayType}؟`)) return;
+    // V8.4 (P1-#2) — custom modal مع escape للقيم
+    if(!await customConfirm(`لديك جلسة نشطة (<b>${escHTML(currentSession.dayType)}</b>).<br>هل تريد إنهاءها وبدء <b>${escHTML(dayType)}</b>؟`,{title:'تبديل الجلسة',okText:'بدّل',icon:'🔄'})) return;
     await endSession(true);
   }
   const nowISO=new Date().toISOString();
@@ -646,7 +647,8 @@ async function checkSessionRecovery(){
   if(diffH<4) return; // أقل من ٤ ساعات: طبيعي
   // أكثر من ٤ ساعات → اقترح إنهاء الجلسة على آخر نشاط
   const hoursTxt=diffH>=24?`${Math.floor(diffH/24)} يوم`:`${Math.floor(diffH)} ساعة`;
-  const choice=confirm(`الجلسة (${currentSession.dayType}) معلّقة منذ ${hoursTxt}.\n\nأنهِها على آخر نشاط مسجّل؟\n(إلغاء = استمر في الجلسة)`);
+  // V8.4 (P1-#2) — custom modal
+  const choice=await customConfirm(`الجلسة (<b>${escHTML(currentSession.dayType)}</b>) معلّقة منذ <b>${escHTML(hoursTxt)}</b>.<br><br>أنهِها على آخر نشاط مسجّل؟`,{title:'جلسة معلّقة',okText:'أنهِها',cancelText:'استمر',icon:'⏳'});
   if(choice){
     // أنهِ الجلسة وضع endTime = lastActiveAt
     const savedEndTime=last.value;
@@ -1134,7 +1136,8 @@ async function endSession(silent=false){
   if(!currentSession) return;
   // V8.3 (UX-7) — لو ما في أي سيت محفوظ، حذّر المستخدم بدلاً من حفظ workout فارغ
   if(!silent && (!currentSession.setsCount || currentSession.setsCount<=0)){
-    const choice=confirm('⚠️ لم تسجّل أي سيت في هذه الجلسة.\n\nاضغط "موافق" لإلغاء الجلسة بدون حفظ (لن تُحتسب)،\nأو "إلغاء" للعودة لإكمال السيتات.');
+    // V8.4 (P1-#2) — custom modal بدلاً من confirm() المدمج
+    const choice=await customConfirm('لم تسجّل أي سيت في هذه الجلسة.<br><br>هل تريد <b>إلغاءها بدون حفظ</b>؟ (لن تُحتسب)',{title:'جلسة فارغة',okText:'ألغِ الجلسة',cancelText:'عُد لإكمالها',danger:true,icon:'🚫'});
     if(!choice){
       // المستخدم اختار العودة لإكمال السيتات
       return;
@@ -1191,9 +1194,10 @@ async function endSession(silent=false){
   }
   // V7 (#24) — لو هذه أول جلسة، فعّل طي الـ Hero
   await setupHeroCollapse();
-  // V8.3 (3.13) — شغّل النسخ الاحتياطي التلقائي لو مفعّل (لا يفشل ولا يُزعج لو غير مدعوم)
+  // V8.3 (3.13) — شغّل النسخ الاحتياطي التلقائي لو مفعّل
+  // V8.4 (P1-#9) — silent=false لإظهار toast تأكيد للمستخدم (يفشل بصمت لو غير مدعوم)
   if(typeof runAutoBackup==='function'){
-    runAutoBackup(true).catch(e=>console.warn('Auto-backup post-session failed:',e));
+    runAutoBackup(false).catch(e=>console.warn('Auto-backup post-session failed:',e));
   }
 }
 
@@ -1205,10 +1209,12 @@ function showSessionSummary(s){
   _lastFinishedWorkoutId=s.id; // V7.3
   _lastFinishedSession=s;       // V8
   document.getElementById('summaryDay').textContent=s.dayType;
+  // V8.4 (P1-#6) — escape user-controlled fields (exerciseName, label, notes)
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
   const prsHtml=(s.prList&&s.prList.length)?
-    `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${p.exerciseName} — ${p.label}: <b>${p.value}</b></div>`).join('')}</div>`
+    `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${E(p.exerciseName)} — ${E(p.label)}: <b>${E(p.value)}</b></div>`).join('')}</div>`
     :'';
-  const existingNote=(s.notes||'').replace(/"/g,'&quot;');
+  const existingNote=E(s.notes||'');
   document.getElementById('summaryBody').innerHTML=`
     <div class="summary-grid">
       <div class="summary-stat"><span class="ss-num">${fmtDuration(s.duration)}</span><span class="ss-lbl">مدة الجلسة</span></div>
@@ -1314,13 +1320,15 @@ async function detectPRs(setRec){
 function celebratePR(prs,exName){
   const overlay=document.createElement('div');
   overlay.className='pr-flash';
+  // V8.4 (P1-#6) — escape exName + pr labels (يأتيان من user-controlled data)
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
   overlay.innerHTML=`
     <div class="pr-flash-inner">
       <div class="pr-flash-icon">🏆</div>
       <div class="pr-flash-title">رقم قياسي جديد!</div>
-      <div class="pr-flash-ex">${exName}</div>
+      <div class="pr-flash-ex">${E(exName)}</div>
       <div class="pr-flash-prs">
-        ${prs.map(p=>`<div class="pr-flash-item">${p.label}</div>`).join('')}
+        ${prs.map(p=>`<div class="pr-flash-item">${E(p.label)}</div>`).join('')}
       </div>
     </div>
   `;

@@ -86,18 +86,102 @@ document.addEventListener('click',(e)=>{
 });
 
 // ============ MODAL OUTSIDE CLICKS ============
-// V8.4 — defensive: lazily bind only if elements exist (test.html safe)
+// V8.4 (P1-#10) — توحيد سلوك "اضغط خارج النافذة للإغلاق" لكل الـ modals
+// + إضافة Escape key لإغلاق آخر modal مفتوح
+// defensive: lazily bind only if elements exist (test.html safe)
 {
   const bindings=[
     {id:'statsModal',close:()=>closeStats()},
     {id:'summaryModal',close:()=>closeSummary()},
     {id:'profileModal',close:()=>closeProfile()},
-    {id:'plateCalcModal',close:()=>closePlateCalc()}
+    {id:'plateCalcModal',close:()=>closePlateCalc()},
+    // V8.3+ modals
+    {id:'gymManagerModal',close:()=>{if(typeof closeGymManager==='function') closeGymManager()}},
+    {id:'gymEditorModal',close:()=>{if(typeof closeGymEditor==='function') closeGymEditor()}},
+    {id:'editorModal',close:()=>{if(typeof closeProgramEditor==='function') closeProgramEditor()}},
+    {id:'formNoteModal',close:()=>{if(typeof closeFormNoteModal==='function') closeFormNoteModal()}},
+    {id:'exHistoryModal',close:()=>{if(typeof closeExerciseHistory==='function') closeExerciseHistory()}},
+    {id:'altModal',close:()=>{if(typeof closeAltModal==='function') closeAltModal()}}
   ];
   for(const b of bindings){
     const el=document.getElementById(b.id);
     if(el) el.addEventListener('click',(e)=>{if(e.target.id===b.id) b.close()});
   }
+
+  // V8.4 (P1-#10) — Escape key يغلق آخر modal مفتوح (LIFO حسب z-index الفعلي)
+  document.addEventListener('keydown',(e)=>{
+    if(e.key!=='Escape') return;
+    // ابحث عن أعلى modal مفتوح: order = critical → fullscreen → sheet → overlay → priority → modal
+    const order=[
+      '#backupReminderModal.show',
+      '#formNoteModal.open',
+      '#exHistoryModal.open',
+      '#altModal.open',
+      '#summaryModal.open',
+      '#gymEditorModal.open',
+      '#editorModal.open',
+      '#gymManagerModal.open',
+      '#plateCalcModal.open',
+      '#profileModal.open',
+      '#statsModal.open'
+    ];
+    for(const sel of order){
+      const el=document.querySelector(sel);
+      if(el){
+        const id=el.id;
+        const m={
+          backupReminderModal:()=>{if(typeof brmClose==='function') brmClose()},
+          formNoteModal:()=>{if(typeof closeFormNoteModal==='function') closeFormNoteModal()},
+          exHistoryModal:()=>{if(typeof closeExerciseHistory==='function') closeExerciseHistory()},
+          altModal:()=>{if(typeof closeAltModal==='function') closeAltModal()},
+          summaryModal:()=>{if(typeof closeSummary==='function') closeSummary()},
+          gymEditorModal:()=>{if(typeof closeGymEditor==='function') closeGymEditor()},
+          editorModal:()=>{if(typeof closeProgramEditor==='function') closeProgramEditor()},
+          gymManagerModal:()=>{if(typeof closeGymManager==='function') closeGymManager()},
+          plateCalcModal:()=>{if(typeof closePlateCalc==='function') closePlateCalc()},
+          profileModal:()=>{if(typeof closeProfile==='function') closeProfile()},
+          statsModal:()=>{if(typeof closeStats==='function') closeStats()}
+        };
+        const fn=m[id];
+        if(fn){fn();return}
+      }
+    }
+  });
+}
+
+// V8.4 (P1-#1) — املأ بطاقة "بياناتك" في "نظرة عامة" من profile (بدل HTML hardcoded)
+// تُستدعى في init + بعد saveUserProfile لإبقاء العرض متزامناً
+async function refreshOverviewProfileCard(){
+  const textEl=document.getElementById('userProfileCardText');
+  if(!textEl) return;
+  let p={};
+  try{
+    const rec=await db.get('settings',KEYS.USER_PROFILE);
+    p=(rec&&rec.value)||{};
+  }catch(e){}
+  // لو لا يوجد profile محفوظ — اعرض دعوة لإكمال البيانات
+  if(!p.age && !p.height && !p.weight && !p.name){
+    textEl.innerHTML=`<i style="color:var(--tx3)">لم تُعبَّأ بياناتك بعد. اضغط <b>"عدّل ملفك الشخصي"</b> لتدخل العمر، الطول، الوزن، والهدف.</i>`;
+    return;
+  }
+  // ابنِ العرض من القيم المحفوظة فقط (escape آمن — كل القيم تمرّ عبر escHTML)
+  const e=(typeof escHTML==='function')?escHTML:(s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  const parts=[];
+  if(p.age) parts.push('العمر: <b>'+e(p.age)+' سنة</b>');
+  if(p.height) parts.push('الطول: <b>'+e(p.height)+' سم</b>');
+  if(p.weight) parts.push('الوزن: <b>'+e(p.weight)+' كجم</b>');
+  const goalMap={bulk:'تضخيم',cut:'تنشيف',recomp:'إعادة تركيب',maintain:'حفاظ'};
+  const expMap={beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم'};
+  const lines=[];
+  if(parts.length) lines.push(parts.join(' · '));
+  if(p.experience) lines.push('المستوى: <b>'+e(expMap[p.experience]||p.experience)+'</b>');
+  if(p.goal) lines.push('الهدف: <b>'+e(goalMap[p.goal]||p.goal)+'</b>');
+  if(p.gender){
+    const gMap={male:'ذكر',female:'أنثى'};
+    lines.push('الجنس: <b>'+e(gMap[p.gender]||p.gender)+'</b>');
+  }
+  if(p.targetWeight && p.targetDate) lines.push('الهدف: <b>'+e(p.targetWeight)+' كجم</b> بحلول <b>'+e(p.targetDate)+'</b>');
+  textEl.innerHTML=lines.join('<br>')||'<i style="color:var(--tx3)">بيانات غير مكتملة</i>';
 }
 
 // ============ V7.2 — USER PROFILE (#37) ============
@@ -369,6 +453,8 @@ async function saveUserProfile(){
   await db.put('settings',{key:KEYS.USER_PROFILE,value:p});
   showToast('✓ تم حفظ الملف الشخصي','var(--grn)');
   closeProfile();
+  // V8.4 (P1-#1) — حدّث بطاقة "بياناتك" في نظرة عامة بعد كل حفظ
+  if(typeof refreshOverviewProfileCard==='function') refreshOverviewProfileCard();
 }
 
 // ============ TODAY HIGHLIGHT (V7) ============
@@ -603,6 +689,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
     if(typeof refreshGymSwitcherUI==='function'){
       refreshGymSwitcherUI(); // V8.4 — أظهر pill الجيم النشط
+    }
+    if(typeof refreshOverviewProfileCard==='function'){
+      refreshOverviewProfileCard(); // V8.4 (P1-#1) — املأ بطاقة "بياناتك" من profile
     }
     if(typeof maybeShowGymHint==='function'){
       maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة

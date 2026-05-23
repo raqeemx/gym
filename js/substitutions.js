@@ -285,26 +285,29 @@ function ensureStepIds(){
 }
 
 // حقن زر "⇄ بديل؟" بجانب كل تمرين قابل للاستبدال
+// V8.4 (P1-#3) — أصبح icon-only ويوضع داخل step-body بصف منسجم مع form-note + history
 function injectAltButtons(){
   document.querySelectorAll('.step:not(.rest):not(.warmup)').forEach(step=>{
     if(step.querySelector('.alt-btn')) return;
+    const stepBody=step.querySelector('.step-body');
     const nameEl=step.querySelector('.step-name');
-    if(!nameEl) return;
+    if(!stepBody||!nameEl) return;
     const rawName=nameEl.textContent.trim();
-    // skip non-trackable rows (warmup-like)
     if(rawName.includes('تجديف')||rawName.includes('مجموعة تسخين')) return;
     const norm=normalizeExName(getExerciseName(step));
-    if(!EXERCISE_ALTERNATIVES[norm]) return; // لا بدائل مسجلة → لا زر
+    if(!EXERCISE_ALTERNATIVES[norm]) return;
 
     const btn=document.createElement('button');
-    btn.className='alt-btn';
+    btn.type='button';
+    btn.className='alt-btn step-tool-btn';
     btn.setAttribute('aria-label','عرض البدائل');
-    btn.innerHTML='<span class="alt-icon">⇄</span><span>بديل؟</span>';
+    btn.title='بدائل لهذا التمرين';
+    btn.textContent='⇄';
     btn.onclick=(e)=>{e.stopPropagation();showAlternatives(step)};
-    step.appendChild(btn);
+    stepBody.appendChild(btn);
     step.classList.add('has-alt');
+    stepBody.classList.add('has-alt');
   });
-  // V8.4 — حدّث حالة الأزرار حسب توفّر بدائل في الجيم النشط
   if(typeof refreshAltButtonsAvailability==='function') refreshAltButtonsAvailability();
 }
 
@@ -316,14 +319,18 @@ function injectSkipButtons(){
     if(!nameEl) return;
     const rawName=nameEl.textContent.trim();
     if(rawName.includes('تجديف')||rawName.includes('مجموعة تسخين')) return;
+    // V8.4 (P1-#3) — icon-only داخل step-body (مثل أزرار info)
+    const stepBody=step.querySelector('.step-body');
+    if(!stepBody) return;
     const btn=document.createElement('button');
-    btn.className='skip-btn';
+    btn.type='button';
+    btn.className='skip-btn step-tool-btn';
     btn.setAttribute('aria-label','تخطّى التمرين اليوم');
-    // V8.3 (UX-1) — tooltip توضيحية لمتى يُستخدم الزر
     btn.title='تخطّى هذا التمرين اليوم فقط (الجهاز مشغول، أو ضيق وقت، أو إصابة بسيطة). يعود تلقائياً غداً.';
-    btn.innerHTML='<span class="skip-icon">↷</span><span>تخطّى</span>';
+    btn.textContent='↷';
     btn.onclick=(e)=>{e.stopPropagation();maybeShowSkipHint();toggleSkipStep(step.id)};
-    step.appendChild(btn);
+    stepBody.appendChild(btn);
+    stepBody.classList.add('has-skip');
   });
 }
 
@@ -352,16 +359,18 @@ async function toggleSkipStep(stepId){
     step.classList.remove('skipped');
     delete data[stepId];
     await db.put('settings',{key:KEYS.SKIPPED_STEPS,value:data});
-    const btn=step.querySelector('.skip-btn span:last-child');
-    if(btn) btn.textContent='تخطّى';
+    // V8.4 (P1-#3) — icon-only الآن؛ نُعيد الأيقونة الافتراضية ↷
+    const btn=step.querySelector('.skip-btn');
+    if(btn){btn.textContent='↷';btn.title='تخطّى هذا التمرين اليوم فقط'}
     showToast('↩ أُعيد التمرين','var(--blue)');
   }else{
     // تطبيق التخطّي
     step.classList.add('skipped');
     data[stepId]={date:today,skippedAt:new Date().toISOString()};
     await db.put('settings',{key:KEYS.SKIPPED_STEPS,value:data});
-    const btn=step.querySelector('.skip-btn span:last-child');
-    if(btn) btn.textContent='تراجع';
+    // V8.4 (P1-#3) — icon-only؛ نغيّر الأيقونة لـ ↩ للإشارة لإمكانية التراجع
+    const btn=step.querySelector('.skip-btn');
+    if(btn){btn.textContent='↩';btn.title='اضغط لإلغاء التخطّي'}
     showToast('↷ تم تخطّي التمرين اليوم','var(--org)');
     try{navigator.vibrate&&navigator.vibrate(20)}catch(e){}
   }
@@ -920,7 +929,8 @@ async function logSubstitutionHistory(original,substitute){
 }
 
 // V8.4 — helper لـ HTML attribute escaping
-function escAttrSub(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/'/g,"\\'").replace(/</g,'&lt;')}
+// V8.4 (P1-#6) — يستخدم escHTML الـ global لتشمل >, &, ' (escape كامل)
+function escAttrSub(s){return (typeof escHTML==='function')?escHTML(s):String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
 
 // V8.4 — تبديل سريع للوضع الـ bodyweight
 async function quickSwitchToBodyweight(){

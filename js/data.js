@@ -40,6 +40,89 @@ window.addEventListener('scroll',()=>{
 
 function scrollTop(){window.scrollTo({top:0,behavior:'smooth'})}
 
+// V8.4 (P1-#6) — HTML escape helper (نُقل من progress.js ليكون global قبل أوّل استخدام)
+// استخدمه لكل نص يأتي من المستخدم قبل إدراجه في innerHTML
+function escHTML(str){
+  if(str==null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+// ============ V8.4 (P1-#2) — CUSTOM CONFIRM MODAL ============
+// بديل أنيق لـ window.confirm() — يحترم theme التطبيق، يدعم RTL، multi-line، أيقونة، خطر/معلومات.
+// الاستخدام:
+//   if(await customConfirm('حذف هذا الستيب؟')) { ... }
+//   await customConfirm('متابعة؟', { title:'تأكيد', okText:'احذف', cancelText:'إلغاء', danger:true, icon:'🗑' })
+//
+// المعاملات:
+//   message: string|HTML — يدعم <b>, <br>... (escape الـ user-controlled portions من القائل قبل التمرير)
+//   opts.title: عنوان مختصر (افتراضي "تأكيد")
+//   opts.okText: نص زر التأكيد (افتراضي "موافق")
+//   opts.cancelText: نص زر الإلغاء (افتراضي "إلغاء"). لو null = زر واحد فقط (alert-mode)
+//   opts.danger: true = زر التأكيد أحمر (للعمليات الخطرة)
+//   opts.icon: emoji للأيقونة (افتراضي "⚠️" للخطرة، "❓" للعادية)
+let _confirmActive=null;
+function customConfirm(message,opts={}){
+  return new Promise(resolve=>{
+    const modal=document.getElementById('confirmModal');
+    if(!modal){
+      // fallback آمن لو الـ modal مش موجود (مثل test.html)
+      console.warn('confirmModal not in DOM — falling back to native confirm()');
+      resolve(window.confirm(typeof message==='string'?message.replace(/<[^>]+>/g,''):''));
+      return;
+    }
+    // أعدّ المحتوى
+    const titleEl=document.getElementById('confirmTitle');
+    const bodyEl=document.getElementById('confirmBody');
+    const iconEl=document.getElementById('confirmIcon');
+    const okBtn=document.getElementById('confirmOkBtn');
+    const cancelBtn=document.getElementById('confirmCancelBtn');
+    const isDanger=!!opts.danger;
+    if(titleEl) titleEl.textContent=opts.title||'تأكيد';
+    if(bodyEl) bodyEl.innerHTML=String(message||'');
+    if(iconEl) iconEl.textContent=opts.icon||(isDanger?'⚠️':'❓');
+    if(okBtn) okBtn.textContent=opts.okText||'موافق';
+    okBtn.classList.toggle('danger',isDanger);
+    if(opts.cancelText===null){
+      cancelBtn.style.display='none';
+    }else{
+      cancelBtn.style.display='';
+      cancelBtn.textContent=opts.cancelText||'إلغاء';
+    }
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    // تنظيف معالجات سابقة (لمنع memory leak عند نوافذ متعدّدة)
+    if(_confirmActive){_confirmActive()}
+    const cleanup=()=>{
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow='';
+      okBtn.onclick=null;
+      cancelBtn.onclick=null;
+      modal.onclick=null;
+      document.removeEventListener('keydown',onKey);
+      _confirmActive=null;
+    };
+    const onOk=()=>{cleanup();resolve(true)};
+    const onCancel=()=>{cleanup();resolve(false)};
+    const onKey=(e)=>{
+      if(e.key==='Escape'){e.preventDefault();onCancel()}
+      else if(e.key==='Enter'){e.preventDefault();onOk()}
+    };
+    okBtn.onclick=onOk;
+    cancelBtn.onclick=onCancel;
+    modal.onclick=(e)=>{if(e.target===modal) onCancel()};
+    document.addEventListener('keydown',onKey);
+    _confirmActive=cleanup;
+    setTimeout(()=>okBtn.focus(),50);
+  });
+}
+
 // ============ TOAST ============
 let TOAST_TIMER=null;
 function showToast(msg,color='var(--grn)',duration=2500,opts={}){
@@ -285,6 +368,26 @@ async function migrateFromLS(){
     }catch(e){console.warn('Migration error:',e)}
   }
   await db.put('settings',{key:KEYS.MIGRATION_LS_V1,value:true});
+  // V8.4 (P1-#7) — نظّف مفاتيح localStorage القديمة بعد نجاح الترحيل
+  cleanupLegacyLocalStorage();
+}
+
+// V8.4 (P1-#7) — حذف مفاتيح localStorage التي لم تعد مستخدمة بعد الترحيل لـ IndexedDB
+// الـ flag KEYS.MIGRATION_LS_V1 يبقى في settings (داخل IDB) — مفاتيح LS الفعلية تُحذف
+function cleanupLegacyLocalStorage(){
+  const legacyKeys=[
+    'bulkmode_tracker_v1',      // النسخة الأولى — لم تعد مقروءة
+    'bulkmode_tracker_v0',      // احتياط
+    'bulkmode_logs',             // مفاتيح أقدم محتملة
+    'bulkmode_lastWeights'
+  ];
+  for(const k of legacyKeys){
+    try{
+      if(localStorage.getItem(k)!==null){
+        localStorage.removeItem(k);
+      }
+    }catch(e){}
+  }
 }
 
 // ============ HELPERS ============

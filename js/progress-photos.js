@@ -259,7 +259,7 @@ function closePhotoFullscreen(){
 
 // ============ حذف صورة ============
 async function deletePhoto(id){
-  if(!confirm('حذف الصورة نهائياً؟')) return;
+  if(!await customConfirm('حذف الصورة نهائياً؟<br><small style="color:var(--tx3)">لا يمكن استرجاعها.</small>',{title:'حذف صورة',okText:'احذف',danger:true,icon:'🗑'})) return;
   await db.delete('progressPhotos',id);
   closePhotoFullscreen();
   showToast('🗑 تم حذف الصورة','var(--red)');

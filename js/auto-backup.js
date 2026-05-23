@@ -93,7 +93,7 @@ async function pickAutoBackupFolder(){
 }
 
 async function unlinkAutoBackupFolder(){
-  if(!confirm('إلغاء ربط المجلد؟ لن يتم حذف أي ملف سابق — فقط ستتوقف النسخ التلقائية.')) return;
+  if(!await customConfirm('إلغاء ربط المجلد؟<br><small style="color:var(--tx3)">لن يتم حذف أي ملف سابق — فقط ستتوقف النسخ التلقائية.</small>',{title:'إلغاء ربط',okText:'إلغاء الربط',danger:true,icon:'🔌'})) return;
   await clearAutoBackupHandle();
   const prefs=await getAutoBackupPrefs();
   prefs.enabled=false;

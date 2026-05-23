@@ -529,6 +529,8 @@ function showBackupReminderDialog(setsCount){
   `;
   document.body.appendChild(m);
   document.body.style.overflow='hidden';
+  // V8.4 (P1-#10) — توحيد outside-click + Escape مع باقي الـ modals
+  m.addEventListener('click',(e)=>{if(e.target===m) brmClose()});
 }
 
 async function brmExportNow(){
@@ -561,7 +563,7 @@ async function importData(event){
       const imp=JSON.parse(e.target.result);
       // دعم النسخة القديمة (logs + lastWeights)
       if(imp.logs && imp.lastWeights){
-        if(!confirm(`استيراد ${imp.logs.length} سجل من نسخة قديمة؟`)) return;
+        if(!await customConfirm(`استيراد <b>${imp.logs.length}</b> سجل من نسخة قديمة؟`,{title:'استيراد قديم',okText:'استورد',icon:'📥'})) return;
         localStorage.setItem('bulkmode_tracker_v1',JSON.stringify(imp));
         // أعد الترحيل بإجبار
         await db.delete('settings',KEYS.MIGRATION_LS_V1);
@@ -574,7 +576,7 @@ async function importData(event){
         throw new Error('بنية ملف غير معروفة');
       }
       const setsCount=(imp.sets||[]).length;
-      if(!confirm(`استيراد ${setsCount} سيت + ${(imp.workouts||[]).length} جلسة؟ سيُمسح ما هو موجود.`)) return;
+      if(!await customConfirm(`استيراد <b>${setsCount}</b> سيت + <b>${(imp.workouts||[]).length}</b> جلسة؟<br><br><b style="color:var(--red)">⚠️ سيُمسح ما هو موجود حالياً.</b>`,{title:'استيراد بيانات',okText:'استورد',danger:true,icon:'📥'})) return;
       // امسح كل المتجرات (عدا settings)
       for(const st of ['workouts','sets','exercises','bodyMetrics','dailyLog','prs','progressPhotos']){
         try{await db.clear(st)}catch(e){console.warn('clear failed:',st,e)}
@@ -595,9 +597,17 @@ async function importData(event){
   event.target.value='';
 }
 
+// V8.4 (P1-#2) — wrapper handler for manual-deload button (custom modal)
+async function manualDeloadConfirm(){
+  if(!await customConfirm('تفعيل deload يدوياً <b>رغم عدم الحاجة</b>؟<br><small style="color:var(--tx3)">سيُضرب وزن كل سيت × ٠.٦ لمدة أسبوع.</small>',{title:'تفعيل Deload يدوي',okText:'فعّل',icon:'🛟'})) return;
+  await startManualDeload('manual-override');
+  if(typeof renderRecovery==='function') renderRecovery();
+}
+
 async function clearAllData(){
-  if(!confirm('⚠️ هل أنت متأكد من مسح كل بيانات التتبع؟ لا يمكن التراجع.')) return;
-  if(!confirm('🚨 تأكيد نهائي — كل البيانات ستُمسح. متأكد؟')) return;
+  // V8.4 (P1-#2) — double-confirm flow
+  if(!await customConfirm('هل أنت متأكد من مسح كل بيانات التتبع؟<br><br><b style="color:var(--red)">لا يمكن التراجع.</b>',{title:'مسح كل البيانات',okText:'متابعة',danger:true,icon:'⚠️'})) return;
+  if(!await customConfirm('🚨 <b>تأكيد نهائي</b><br><br>كل البيانات (جلسات، سيتات، صور، ملاحظات، تخصيصات الجيم) ستُمسح بشكل دائم.',{title:'تأكيد نهائي',okText:'امسح الكل',danger:true,icon:'🚨'})) return;
   for(const st of STORES){await db.clear(st)}
   localStorage.removeItem('bulkmode_tracker_v1');
   showToast('🗑 تم مسح كل البيانات','var(--red)');
@@ -682,7 +692,7 @@ async function renderRecovery(){
       <div class="recovery-state-icon">✅</div>
       <div class="recovery-state-title">لا حاجة لـ Deload الآن</div>
       <div class="recovery-state-sub">${detection.reason}</div>
-      <button class="recovery-btn recovery-manual" onclick="if(confirm('تفعيل deload يدوياً رغم عدم الحاجة؟')) startManualDeload('manual-override').then(()=>renderRecovery())">تفعيل يدوي</button>
+      <button class="recovery-btn recovery-manual" onclick="manualDeloadConfirm()">تفعيل يدوي</button>
     </div>`;
   }
 
@@ -1097,12 +1107,13 @@ async function saveBodyMetrics(){
   // ٣. كشف الشذوذ الجماعي (احتمال خطأ في الوحدات: سم vs بوصة، كجم vs رطل)
   // لو ٣ حقول أو أكثر قفزت دفعة واحدة → اسأل عن الوحدات
   if(softWarnings.length>=3){
-    const ok=confirm(`⚠️ ${softWarnings.length} قياسات تغيّرت بشكل كبير دفعة واحدة.\n\nاحتمال خطأ في الوحدات — تأكّد أنك تستخدم:\n• السنتيمتر (وليس البوصة)\n• الكيلوغرام (وليس الرطل)\n\nاضغط "موافق" للمتابعة، أو "إلغاء" للرجوع وتعديل القيم.`);
+    // V8.4 (P1-#2) — custom modal
+    const ok=await customConfirm(`<b>${softWarnings.length}</b> قياسات تغيّرت بشكل كبير دفعة واحدة.<br><br>احتمال خطأ في الوحدات — تأكّد أنك تستخدم:<br>• السنتيمتر (وليس البوصة)<br>• الكيلوغرام (وليس الرطل)`,{title:'تأكيد القياسات',okText:'متابعة',cancelText:'مراجعة',icon:'⚠️'});
     if(!ok) return;
   }else{
     // ٤. لو القفزات أقل من ٣، اطلب تأكيد لكل واحدة على حدة
     for(const w of softWarnings){
-      if(!confirm(w.msg)) return;
+      if(!await customConfirm(escHTML(w.msg).replace(/\n/g,'<br>'),{title:'تأكيد القياس',okText:'متابعة',cancelText:'مراجعة',icon:'⚠️'})) return;
     }
   }
 
@@ -1121,7 +1132,7 @@ async function saveBodyMetrics(){
 }
 
 async function deleteBodyMetric(date){
-  if(!confirm(`حذف قياسات ${fmtDate(date)}؟`)) return;
+  if(!await customConfirm(`حذف قياسات <b>${escHTML(fmtDate(date))}</b>؟`,{title:'حذف قياسات',okText:'احذف',danger:true,icon:'🗑'})) return;
   await db.delete('bodyMetrics',date);
   showToast('🗑 تم الحذف','var(--red)');
   renderBodyMetrics();
@@ -1196,16 +1207,7 @@ async function renderHistory(){
   body.innerHTML=items.join('');
 }
 
-// V7.3 — escape HTML للملاحظات (يمنع XSS من نص المستخدم)
-function escHTML(str){
-  if(!str) return '';
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
-}
+// V8.4 (P1-#6) — escHTML نُقل لـ data.js (global) ليتاح للملفات الأخرى — هذا التعليق احتفاظ بالـ history
 
 // ============ CHART.JS (LAZY) ============
 // V7 (#31) — نسخة محلية بدل CDN (أمان: لا CDN compromise، يعمل offline من أول مرة)
@@ -1293,7 +1295,7 @@ async function renderRpeTrend(setsOrNull){
   const data=workouts.map(w=>w.avg);
 
   // RPE-specific options (Y axis: 6-10)
-  const opts=JSON.parse(JSON.stringify(CHART_BASE_OPTS));
+  const opts=structuredClone(CHART_BASE_OPTS);
   opts.scales.y.min=6;
   opts.scales.y.max=10;
   opts.scales.y.beginAtZero=false;
