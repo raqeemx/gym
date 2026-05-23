@@ -109,7 +109,11 @@ const KEYS={
   SKIP_HINT_SHOWN:'app:skip_hint_shown',
   FAB_HINT_SHOWN:'app:fab_hint_shown',
   DELOAD_LAST_REMINDER:'app:deload_last_reminder',
-  BACKUP_REMINDER_SHOWN:'app:backup_reminder_shown'
+  BACKUP_REMINDER_SHOWN:'app:backup_reminder_shown',
+  // V8.4 — Multi-gym support
+  GYM_PROFILES:'app:gym_profiles',           // { [id]: GymProfile }
+  ACTIVE_GYM_ID:'app:active_gym_id',         // string
+  GYM_HINT_SHOWN:'app:gym_hint_shown'        // first-time switcher hint flag
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

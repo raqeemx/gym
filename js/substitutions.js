@@ -304,6 +304,8 @@ function injectAltButtons(){
     step.appendChild(btn);
     step.classList.add('has-alt');
   });
+  // V8.4 — حدّث حالة الأزرار حسب توفّر بدائل في الجيم النشط
+  if(typeof refreshAltButtonsAvailability==='function') refreshAltButtonsAvailability();
 }
 
 // V7 — حقن زر "↷ تخطّى" بجانب كل تمرين قابل للتتبع (#12)
@@ -397,16 +399,27 @@ async function getSkippedTodayCount(){
 }
 
 // فتح Modal البدائل
-function showAlternatives(step){
+// V8.4 — async الآن، يفلتر البدائل حسب الجيم النشط
+async function showAlternatives(step){
   // لو الستيب مستبدل بالفعل، اقرأ الأصلي من dataset (تجنب نص الـ DOM المُعدّل)
   const rawOriginal=step.dataset.original||getExerciseName(step);
   const original=normalizeExName(rawOriginal);
   const currentSub=step.dataset.substitute || null;
-  const alts=EXERCISE_ALTERNATIVES[original]||[];
-  if(!alts.length){
+  const rawAlts=EXERCISE_ALTERNATIVES[original]||[];
+  if(!rawAlts.length){
     showToast('⚠️ لا توجد بدائل مسجلة لهذا التمرين','var(--red)');
     return;
   }
+
+  // V8.4 — فلترة حسب الجيم النشط + قراءة الجيم لعرضه في الترويسة
+  let activeGym=null;
+  let alts=rawAlts;
+  try{
+    if(typeof getActiveGym==='function') activeGym=await getActiveGym();
+    if(typeof getEffectiveAlternatives==='function'){
+      alts=await getEffectiveAlternatives(original);
+    }
+  }catch(e){console.warn('Gym filter failed:',e)}
 
   const modal=document.getElementById('altModal');
   const sheet=document.getElementById('altSheet');
@@ -417,6 +430,19 @@ function showAlternatives(step){
   const allWrap=document.getElementById('altAllWrap');
   allWrap.style.display='none';
   allWrap.innerHTML='';
+
+  // V8.4 — همزة سياق: الجيم النشط
+  const gymCtx=document.getElementById('altGymContext');
+  if(gymCtx){
+    if(activeGym){
+      const hidden=rawAlts.length-alts.length;
+      const hiddenTxt=hidden>0?` <small>(${hidden} بديل غير متاح في هذا الجيم)</small>`:'';
+      gymCtx.innerHTML=`<span class="agc-icon">${activeGym.icon||'🏋️'}</span> البدائل المتاحة في: <b>${escAttrSub(activeGym.name||'الجيم')}</b>${hiddenTxt}`;
+      gymCtx.style.display='';
+    }else{
+      gymCtx.style.display='none';
+    }
+  }
 
   title.innerHTML=`🔄 بدائل لـ <b>${original}</b>`;
 
@@ -440,6 +466,28 @@ function showAlternatives(step){
       </div>`;
     }
   });
+
+  // V8.4 — حالة فارغة: لا بدائل متاحة في هذا الجيم
+  if(!alts.length){
+    list.innerHTML=`
+      <div class="alt-empty-gym">
+        <div class="aeg-icon">🚫</div>
+        <div class="aeg-title">لا يوجد بديل مناسب في "${escAttrSub(activeGym?activeGym.name:'الجيم النشط')}"</div>
+        <div class="aeg-body">جميع البدائل المسجّلة لهذا التمرين تحتاج معدّات غير متوفرة هنا.</div>
+        <div class="aeg-actions">
+          <button class="aeg-bw" type="button" onclick="quickSwitchToBodyweight()">✈️ فعّل وضع السفر (وزن جسم)</button>
+          <button class="aeg-add" type="button" onclick="openGymManager('${activeGym?activeGym.id:''}')">🛠 أضف معدّات للجيم</button>
+          <button class="aeg-show-all" type="button" onclick="showAllEquipment()">📦 شوف كل المعدّات للاستبدال يدوياً</button>
+        </div>
+      </div>
+    `;
+    setTimeout(()=>{},0);
+    modal.dataset.targetStep=step.id;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    return;
+  }
 
   // رتّب: peakFriendly أولاً في وقت الذروة، وإلا الترتيب الأصلي
   const sorted=isPeak?[...alts].sort((a,b)=>(b.peakFriendly?1:0)-(a.peakFriendly?1:0)):alts;
@@ -536,8 +584,13 @@ function syncPlanBTexts(){
     let target=m[1].trim();
     // تطبيع الأسماء الجزئية
     if(partialMap[target]) target=partialMap[target];
-    const alts=EXERCISE_ALTERNATIVES[target];
+    let alts=EXERCISE_ALTERNATIVES[target];
     if(!alts || !alts.length) return;
+    // V8.4 — فلتر حسب الجيم النشط لو الكاش موجود
+    if(typeof getEffectiveAlternativesSync==='function'){
+      const filtered=getEffectiveAlternativesSync(target);
+      if(filtered.length) alts=filtered;
+    }
     // اختر الأول كأفضل بديل، لكن لو في وقت ذروة ولديه peakFriendly اختره
     const hour=new Date().getHours();
     const isPeak=hour>=18 && hour<21;
@@ -864,4 +917,37 @@ async function logSubstitutionHistory(original,substitute){
   // احتفظ بآخر ٢٠٠ فقط
   if(hist.length>200) hist.splice(0,hist.length-200);
   await db.put('settings',{key:KEYS.SUBS_HISTORY,value:hist});
+}
+
+// V8.4 — helper لـ HTML attribute escaping
+function escAttrSub(s){return String(s==null?'':s).replace(/"/g,'&quot;').replace(/'/g,"\\'").replace(/</g,'&lt;')}
+
+// V8.4 — تبديل سريع للوضع الـ bodyweight
+async function quickSwitchToBodyweight(){
+  if(typeof setActiveGymId!=='function') return;
+  await setActiveGymId('bodyweight-travel');
+  if(typeof refreshGymSwitcherUI==='function') await refreshGymSwitcherUI();
+  closeAltModal();
+  if(typeof showToast==='function') showToast('✈️ تم التبديل إلى وضع السفر (وزن جسم)','var(--blue)',3500);
+  // أعد فحص قابلية البدائل في الـ DOM (للأزرار)
+  if(typeof refreshAltButtonsAvailability==='function') refreshAltButtonsAvailability();
+}
+
+// V8.4 — يعيد فحص أزرار "بديل؟" بعد تغيير الجيم
+function refreshAltButtonsAvailability(){
+  document.querySelectorAll('.step:not(.rest):not(.warmup)').forEach(step=>{
+    const altBtn=step.querySelector('.alt-btn');
+    if(!altBtn) return;
+    const norm=normalizeExName(getExerciseName(step));
+    const rawAlts=(EXERCISE_ALTERNATIVES[norm]||[]);
+    if(!rawAlts.length) return;
+    const filtered=(typeof getEffectiveAlternativesSync==='function')?getEffectiveAlternativesSync(norm):rawAlts;
+    if(filtered.length===0){
+      altBtn.classList.add('alt-btn-empty');
+      altBtn.title='لا بدائل متاحة في الجيم النشط — اضغط لرؤية الخيارات';
+    }else{
+      altBtn.classList.remove('alt-btn-empty');
+      altBtn.title='';
+    }
+  });
 }

@@ -25,6 +25,7 @@ const ASSETS = [
   './js/exercise-history.js',
   './js/smart-recovery.js',
   './js/auto-backup.js',
+  './js/gyms.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   'https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap'

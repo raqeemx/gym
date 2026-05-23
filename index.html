@@ -53,6 +53,19 @@
   </div>
 </nav>
 
+<!-- V8.4 — Gym Switcher pill (active gym indicator + quick switch) -->
+<div id="gymSwitcher" class="gym-switcher" style="display:none">
+  <button type="button" class="gs-pill" onclick="toggleGymSwitcherMenu(event)" aria-label="تبديل الجيم النشط">
+    <span class="gs-icon" id="gsIcon">🏋️</span>
+    <span class="gs-text">
+      <small>الجيم النشط</small>
+      <b id="gsName">—</b>
+    </span>
+    <span class="gs-chev">▾</span>
+  </button>
+  <div id="gsMenu" class="gs-menu" aria-hidden="true"></div>
+</div>
+
 <!-- V8 — Smart Deload Header Banner (sticky below nav) -->
 <div id="deloadHeaderBanner" class="deload-header-banner"></div>
 
@@ -796,6 +809,7 @@
 <div class="fab-menu" id="fabMenu">
   <button onclick="openStats()">📈 إحصائياتي</button>
   <button onclick="openProfile()">👤 ملفي الشخصي</button>
+  <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
   <button onclick="openPlateCalc()">🧮 حاسبة بليتات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
@@ -978,6 +992,7 @@
       <button class="alt-close" onclick="closeAltModal()" aria-label="إغلاق">✕</button>
     </div>
     <div class="alt-subtitle" id="altSubtitle">اختر بديلاً مناسباً لو الجهاز مشغول. <b>كل البدائل تستهدف نفس العضلة تقريباً</b>.</div>
+    <div id="altGymContext" class="alt-gym-context" style="display:none"></div>
     <div id="altSmartSuggest"></div>
     <div id="altPeakWarn"></div>
     <div id="altList"></div>
@@ -999,6 +1014,70 @@
     </div>
     <div id="exHistoryStats" class="exh-stats"></div>
     <div id="exHistoryBody" class="exh-body"></div>
+  </div>
+</div>
+
+<!-- V8.4 — Gym Manager Modal -->
+<div class="stats-modal" id="gymManagerModal" aria-hidden="true">
+  <div class="stats-content" style="max-width:620px;position:relative">
+    <button class="close-modal" onclick="closeGymManager()">✕</button>
+    <h2>🏋️ إدارة الجيمات</h2>
+    <div class="bm-hint">أنشئ جيمات متعددة (البيت، السفر، الجيم الأساسي…) وبدّل بينها بضغطة. كل جيم يحدّد البدائل المعروضة.</div>
+    <div id="gymManagerBody"><div class="chart-loading">جاري التحميل...</div></div>
+    <div class="gm-footer">
+      <button class="gm-create" type="button" onclick="startCreateGym()">➕ إنشاء جيم جديد</button>
+    </div>
+  </div>
+</div>
+
+<!-- V8.4 — Gym Editor Modal (create/edit gym profile) -->
+<div class="stats-modal" id="gymEditorModal" aria-hidden="true">
+  <div class="stats-content" style="max-width:560px;position:relative">
+    <button class="close-modal" onclick="closeGymEditor()">✕</button>
+    <h2 id="gymEditorTitle">تعديل جيم</h2>
+    <div class="bm-form">
+      <div class="bm-grid">
+        <div class="bm-field"><label>اسم الجيم</label><input type="text" id="gymEdName" placeholder="مثلاً: جيم البيت" maxlength="40"></div>
+        <div class="bm-field"><label>إيموجي</label>
+          <select id="gymEdIcon" class="prof-select">
+            <option value="🏋️">🏋️ عام</option>
+            <option value="🏠">🏠 البيت</option>
+            <option value="🏨">🏨 فندق</option>
+            <option value="✈️">✈️ سفر</option>
+            <option value="🏢">🏢 مكتبي</option>
+            <option value="🌴">🌴 إجازة</option>
+            <option value="🎒">🎒 رحلة</option>
+            <option value="💪">💪 شخصي</option>
+          </select>
+        </div>
+      </div>
+      <label class="rem-toggle">
+        <input type="checkbox" id="gymEdBodyweight">
+        <span>وضع وزن الجسم فقط (Bodyweight Mode) — يفلتر البدائل بشدّة</span>
+      </label>
+      <div class="gm-eq-section">
+        <div class="gm-eq-head">
+          <span>📦 المعدّات المتوفرة</span>
+          <small id="gymEdEqCount">0 جهاز محدّد</small>
+        </div>
+        <div class="gm-eq-search-wrap">
+          <input type="text" id="gymEdEqSearch" placeholder="🔍 ابحث عن جهاز..." oninput="filterEquipmentList()">
+        </div>
+        <div class="gm-eq-actions">
+          <button type="button" onclick="selectAllEquipment(true)">حدّد الكل</button>
+          <button type="button" onclick="selectAllEquipment(false)">امسح الكل</button>
+        </div>
+        <div id="gymEdEqList" class="gm-eq-list"></div>
+        <div class="gm-eq-custom">
+          <input type="text" id="gymEdCustomEq" placeholder="أضف معدّاً مخصّصاً (مثلاً: Smith Machine)" maxlength="60">
+          <button type="button" onclick="addCustomEquipment()">➕ أضف</button>
+        </div>
+      </div>
+    </div>
+    <div class="gm-footer">
+      <button class="gm-cancel" type="button" onclick="closeGymEditor()">إلغاء</button>
+      <button class="gm-save" type="button" onclick="saveGymFromEditor()">💾 حفظ</button>
+    </div>
   </div>
 </div>
 
@@ -1133,6 +1212,7 @@
 <script src="js/program-render.js"></script>
 <script src="js/program-editor.js"></script>
 <script src="js/session.js"></script>
+<script src="js/gyms.js"></script>
 <script src="js/substitutions.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/achievements.js"></script>

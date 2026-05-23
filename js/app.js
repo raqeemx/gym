@@ -569,6 +569,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{
     await db.open();
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
+    if(typeof bootstrapGyms==='function') await bootstrapGyms(); // V8.4 — أنشئ الجيم الافتراضي + bodyweight
+    if(typeof getActiveGym==='function') await getActiveGym();   // V8.4 — املأ الكاش قبل أي render
     await loadTheme();        // V7 #26 — حمّل الـ theme قبل أي شيء آخر
     await migrateFromLS();
     await renderProgram();    // V8 (#37) — ولّد HTML من PROGRAM_DATA · V8.3 — async (يحمّل التخصيصات)
@@ -597,6 +599,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
     if(typeof maybeShowFabHint==='function'){
       maybeShowFabHint(); // V8.3 (UX-3) — hint لموقع الـ FAB
+    }
+    if(typeof refreshGymSwitcherUI==='function'){
+      refreshGymSwitcherUI(); // V8.4 — أظهر pill الجيم النشط
+    }
+    if(typeof maybeShowGymHint==='function'){
+      maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة
     }
     highlightToday();          // تظليل بطاقة اليوم + فتحها تلقائياً (V7)
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)
