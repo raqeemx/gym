@@ -61,19 +61,58 @@ function pctDelta(now,prev){
 
 // تقسيم الحجم حسب المجموعة العضلية لنطاق ٢٨ يوم الأخيرة
 // V8.3 — استبعاد سيتات التسخين (لا تمثّل حملاً فعلياً)
+// V8.3 (3.11) — يحسب أيضاً sets count + متوسط أسبوعي + setsLast7 لكل مجموعة
 function volumeByMuscle(sets,daysBack=28){
   const cutoff=_daysAgo(daysBack).getTime();
+  const cutoff7=_daysAgo(7).getTime();
   const buckets={};
   let unknown=0;
   sets.forEach(s=>{
-    if(s.isWarmup) return; // V8.3
-    if(new Date(s.timestamp).getTime()<cutoff) return;
+    if(s.isWarmup) return;
+    const t=new Date(s.timestamp).getTime();
+    if(t<cutoff) return;
     const mg=getMuscleGroup(s.exerciseName);
     if(!mg){unknown+=s.weight*s.reps;return}
-    if(!buckets[mg.group]) buckets[mg.group]={vol:0,region:mg.region};
+    if(!buckets[mg.group]) buckets[mg.group]={vol:0,sets:0,setsLast7:0,region:mg.region};
     buckets[mg.group].vol+=s.weight*s.reps;
+    buckets[mg.group].sets++;
+    if(t>=cutoff7) buckets[mg.group].setsLast7++;
   });
+  // متوسط أسبوعي (آخر 28 يوم / 4)
+  for(const k of Object.keys(buckets)){
+    buckets[k].weeklyAvg=Math.round((buckets[k].sets/4)*10)/10;
+  }
   return {buckets,unknown:Math.round(unknown)};
+}
+
+// V8.3 (3.11) — يقيّم حجم العضلة مقارنةً بـ MEV/MAV/MRV ويرجّع status + label + color
+function evaluateMuscleVolume(groupName,weeklySets){
+  const ref=(typeof MUSCLE_VOLUME_REF!=='undefined')?MUSCLE_VOLUME_REF[groupName]:null;
+  if(!ref) return null;
+  const w=Number(weeklySets)||0;
+  let status, label, cls;
+  if(w<ref.mev){
+    status='under';
+    label='تحت MEV — حافز غير كافٍ للنمو';
+    cls='vol-under';
+  }else if(w>=ref.mev && w<ref.mav[0]){
+    status='approaching';
+    label='قرب MEV — يمكن زيادة الحجم تدريجياً';
+    cls='vol-approaching';
+  }else if(w>=ref.mav[0] && w<=ref.mav[1]){
+    status='optimal';
+    label='ضمن نطاق النمو الأمثل (MAV)';
+    cls='vol-optimal';
+  }else if(w>ref.mav[1] && w<=ref.mrv){
+    status='high';
+    label='حجم عالٍ — راقب التعافي';
+    cls='vol-high';
+  }else{
+    status='over';
+    label='تجاوز MRV — خطر إفراط';
+    cls='vol-over';
+  }
+  return {status,label,cls,ref,weekly:w};
 }
 
 // تكرار نوع اليوم
@@ -245,14 +284,42 @@ async function openStats(){
     <!-- MUSCLE GROUP BREAKDOWN -->
     ${muscleEntries.length?`
     <div class="stats-section">
-      <div class="ss-title">💪 الحجم حسب العضلة <span class="ss-sub">(آخر ٢٨ يوم)</span></div>
+      <div class="ss-title">💪 الحجم حسب العضلة <span class="ss-sub">(آخر ٢٨ يوم · مقارنة بـ MEV/MAV/MRV)</span></div>
+      <div class="mv-legend"><small>📐 المرجع: <b>MEV</b> الحد الأدنى الفعّال · <b>MAV</b> نطاق النمو الأمثل · <b>MRV</b> الحد الأقصى للتعافي (Renaissance Periodization)</small></div>
       <div class="mg-list">
         ${muscleEntries.map(([name,v])=>{
           const pct=Math.round((v.vol/muscleTotal)*100);
           const color=MUSCLE_COLORS[name]||'#D4A853';
+          // V8.3 (3.11) — قيّم حجم العضلة مقابل MEV/MAV/MRV
+          const eval_=(typeof evaluateMuscleVolume==='function')?evaluateMuscleVolume(name,v.setsLast7||0):null;
+          const setsLast7=v.setsLast7||0;
+          const weeklyAvg=v.weeklyAvg||0;
+          let volBlock='';
+          if(eval_){
+            const r=eval_.ref;
+            const pos=Math.min(100,Math.round((setsLast7/r.mrv)*100));
+            const mevPct=Math.round((r.mev/r.mrv)*100);
+            const mavStartPct=Math.round((r.mav[0]/r.mrv)*100);
+            const mavEndPct=Math.round((r.mav[1]/r.mrv)*100);
+            volBlock=`
+              <div class="mv-row">
+                <span class="mv-status ${eval_.cls}">${eval_.label}</span>
+                <span class="mv-vals">هذا الأسبوع: <b>${setsLast7}</b> سيت · متوسط ٤ أسابيع: <b>${weeklyAvg}</b></span>
+              </div>
+              <div class="mv-range" title="MEV ${r.mev} · MAV ${r.mav[0]}-${r.mav[1]} · MRV ${r.mrv}">
+                <div class="mv-zone mv-mav" style="right:${mavStartPct}%;width:${mavEndPct-mavStartPct}%"></div>
+                <div class="mv-tick mv-mev-tick" style="right:${mevPct}%" data-lbl="MEV ${r.mev}"></div>
+                <div class="mv-tick mv-mav-tick mv-mav-start" style="right:${mavStartPct}%" data-lbl="${r.mav[0]}"></div>
+                <div class="mv-tick mv-mav-tick mv-mav-end" style="right:${mavEndPct}%" data-lbl="${r.mav[1]}"></div>
+                <div class="mv-tick mv-mrv-tick" style="right:100%" data-lbl="MRV ${r.mrv}"></div>
+                <div class="mv-marker ${eval_.cls}" style="right:${Math.min(100,pos)}%" title="أنت هنا: ${setsLast7} سيت"></div>
+              </div>
+              <div class="mv-scale"><span>0</span><span class="mv-scale-mid">${r.mev} (MEV)</span><span>${r.mav[1]}</span><span>${r.mrv} (MRV)</span></div>`;
+          }
           return `<div class="mg-row">
             <div class="mg-head"><span class="mg-name" style="color:${color}">${name}</span><span class="mg-val">${Math.round(v.vol).toLocaleString('ar-SA')} <small>(${pct}%)</small></span></div>
             <div class="mg-bar-bg"><div class="mg-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+            ${volBlock}
           </div>`;
         }).join('')}
       </div>
@@ -605,11 +672,31 @@ async function renderAchievements(){
         <div class="ach-date">✓ ${fmtDate(u.unlockedAt)}</div>
       </div>`;
     }
+    // V8.3 (3.8) — اعرض شريط تقدّم للإنجازات المقفلة لو لها progress()
+    let progressHtml='— لم يُفتح بعد —';
+    if(stats && typeof ach.progress==='function'){
+      try{
+        const p=ach.progress(stats);
+        if(p && isFinite(p.target) && p.target>0){
+          const cur=Math.max(0,Math.min(p.current,p.target));
+          const pct=Math.round((cur/p.target)*100);
+          const curFmt=Math.round(cur).toLocaleString('ar-SA');
+          const tgtFmt=Math.round(p.target).toLocaleString('ar-SA');
+          const unit=p.unit?` ${p.unit}`:'';
+          const cls=pct>=90?'almost':pct>=50?'half':'';
+          progressHtml=`
+            <div class="ach-progress">
+              <div class="ach-progress-text"><b>${curFmt}</b> / ${tgtFmt}${unit} <span class="ach-pct">${pct}%</span></div>
+              <div class="ach-progress-track-mini"><div class="ach-progress-fill-mini ${cls}" style="width:${pct}%"></div></div>
+            </div>`;
+        }
+      }catch(e){console.warn('Ach progress failed:',ach.id,e)}
+    }
     return `<div class="ach-card ach-locked">
       <div class="ach-icon">🔒</div>
       <div class="ach-title">${ach.title}</div>
       <div class="ach-desc">${ach.desc}</div>
-      <div class="ach-date">— لم يُفتح بعد —</div>
+      ${progressHtml}
     </div>`;
   };
 

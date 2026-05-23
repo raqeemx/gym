@@ -250,6 +250,7 @@ async function rerenderProgramAfterEdit(){
   if(typeof injectSkipButtons==='function') injectSkipButtons();
   if(typeof injectFormNoteButtons==='function') injectFormNoteButtons();
   if(typeof injectEditorButtons==='function') injectEditorButtons();
+  if(typeof injectHistoryButtons==='function') injectHistoryButtons();
   if(typeof loadSubstitutions==='function') await loadSubstitutions();
   if(typeof loadSkippedSteps==='function') await loadSkippedSteps();
   if(typeof updateSessionUI==='function') updateSessionUI();

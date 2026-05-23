@@ -10,30 +10,32 @@
  *   الباقي يظهر في تبويب "🏆 إنجازاتي" بدون spam.
  * ============================================================ */
 
+// V8.3 (3.8) — أضيف حقل progress لكل إنجاز يرجّع {current, target, unit?}
+// (للإنجازات الثنائية مثل pr_storm — لا progress لأن العدّاد يصفّر كل جلسة)
 const ACHIEVEMENTS = [
   // ===== الأساسيات (first-time milestones) =====
-  { id:'first_set',     icon:'🎯', title:'أول سيت',         desc:'سجّلت أول سيت لك',           check:(s)=>s.totalSets>=1 },
-  { id:'first_session', icon:'🔥', title:'بدأت الرحلة',     desc:'أنهيت أول جلسة كاملة',       check:(s)=>s.totalSessions>=1 },
-  { id:'first_pr',      icon:'🏆', title:'أول رقم قياسي',   desc:'حطّمت أول PR',                check:(s)=>s.totalPRs>=1 },
+  { id:'first_set',     icon:'🎯', title:'أول سيت',         desc:'سجّلت أول سيت لك',           check:(s)=>s.totalSets>=1,        progress:(s)=>({current:Math.min(s.totalSets,1),target:1,unit:'سيت'}) },
+  { id:'first_session', icon:'🔥', title:'بدأت الرحلة',     desc:'أنهيت أول جلسة كاملة',       check:(s)=>s.totalSessions>=1,    progress:(s)=>({current:Math.min(s.totalSessions,1),target:1,unit:'جلسة'}) },
+  { id:'first_pr',      icon:'🏆', title:'أول رقم قياسي',   desc:'حطّمت أول PR',                check:(s)=>s.totalPRs>=1,         progress:(s)=>({current:Math.min(s.totalPRs,1),target:1,unit:'PR'}) },
 
   // ===== كميات تراكمية =====
-  { id:'sets_100',      icon:'💯', title:'100 سيت',          desc:'سجّلت 100 سيت إجمالي',       check:(s)=>s.totalSets>=100 },
-  { id:'sets_500',      icon:'🔥', title:'500 سيت',          desc:'سجّلت 500 سيت',              check:(s)=>s.totalSets>=500 },
-  { id:'sets_1000',     icon:'💎', title:'1000 سيت',         desc:'وصلت 1000 سيت',              check:(s)=>s.totalSets>=1000 },
-  { id:'volume_10k',    icon:'⚡', title:'10,000 كجم',       desc:'حجم تراكمي 10,000 كجم',      check:(s)=>s.totalVolume>=10000 },
-  { id:'volume_50k',    icon:'🚀', title:'50,000 كجم',       desc:'حجم تراكمي 50,000 كجم',      check:(s)=>s.totalVolume>=50000 },
-  { id:'volume_100k',   icon:'🌟', title:'100,000 كجم',      desc:'حجم تراكمي 100,000 كجم',     check:(s)=>s.totalVolume>=100000 },
+  { id:'sets_100',      icon:'💯', title:'100 سيت',          desc:'سجّلت 100 سيت إجمالي',       check:(s)=>s.totalSets>=100,      progress:(s)=>({current:s.totalSets,target:100,unit:'سيت'}) },
+  { id:'sets_500',      icon:'🔥', title:'500 سيت',          desc:'سجّلت 500 سيت',              check:(s)=>s.totalSets>=500,      progress:(s)=>({current:s.totalSets,target:500,unit:'سيت'}) },
+  { id:'sets_1000',     icon:'💎', title:'1000 سيت',         desc:'وصلت 1000 سيت',              check:(s)=>s.totalSets>=1000,     progress:(s)=>({current:s.totalSets,target:1000,unit:'سيت'}) },
+  { id:'volume_10k',    icon:'⚡', title:'10,000 كجم',       desc:'حجم تراكمي 10,000 كجم',      check:(s)=>s.totalVolume>=10000,  progress:(s)=>({current:s.totalVolume,target:10000,unit:'كجم'}) },
+  { id:'volume_50k',    icon:'🚀', title:'50,000 كجم',       desc:'حجم تراكمي 50,000 كجم',      check:(s)=>s.totalVolume>=50000,  progress:(s)=>({current:s.totalVolume,target:50000,unit:'كجم'}) },
+  { id:'volume_100k',   icon:'🌟', title:'100,000 كجم',      desc:'حجم تراكمي 100,000 كجم',     check:(s)=>s.totalVolume>=100000, progress:(s)=>({current:s.totalVolume,target:100000,unit:'كجم'}) },
 
   // ===== سلاسل (streaks) =====
-  { id:'streak_7',      icon:'📅', title:'أسبوع كامل',       desc:'7 أيام تدريب متتالية',       check:(s)=>s.bestStreak>=7 },
-  { id:'streak_14',     icon:'🗓️', title:'أسبوعان',          desc:'14 يوم متتالي',              check:(s)=>s.bestStreak>=14 },
-  { id:'streak_30',     icon:'🔱', title:'شهر بلا انقطاع',   desc:'30 يوم متتالي',              check:(s)=>s.bestStreak>=30 },
+  { id:'streak_7',      icon:'📅', title:'أسبوع كامل',       desc:'7 أيام تدريب متتالية',       check:(s)=>s.bestStreak>=7,       progress:(s)=>({current:s.bestStreak,target:7,unit:'يوم'}) },
+  { id:'streak_14',     icon:'🗓️', title:'أسبوعان',          desc:'14 يوم متتالي',              check:(s)=>s.bestStreak>=14,      progress:(s)=>({current:s.bestStreak,target:14,unit:'يوم'}) },
+  { id:'streak_30',     icon:'🔱', title:'شهر بلا انقطاع',   desc:'30 يوم متتالي',              check:(s)=>s.bestStreak>=30,      progress:(s)=>({current:s.bestStreak,target:30,unit:'يوم'}) },
 
   // ===== PRs تراكمية =====
-  { id:'prs_10',        icon:'🥇', title:'محطّم الأرقام',    desc:'10 PRs',                     check:(s)=>s.totalPRs>=10 },
-  { id:'prs_50',        icon:'🥈', title:'ملك الـ PRs',      desc:'50 PRs',                     check:(s)=>s.totalPRs>=50 },
+  { id:'prs_10',        icon:'🥇', title:'محطّم الأرقام',    desc:'10 PRs',                     check:(s)=>s.totalPRs>=10,        progress:(s)=>({current:s.totalPRs,target:10,unit:'PR'}) },
+  { id:'prs_50',        icon:'🥈', title:'ملك الـ PRs',      desc:'50 PRs',                     check:(s)=>s.totalPRs>=50,        progress:(s)=>({current:s.totalPRs,target:50,unit:'PR'}) },
 
-  // ===== PRs في جلسة واحدة (تحتاج lastSession) =====
+  // ===== PRs في جلسة واحدة (تحتاج lastSession — لا progress) =====
   { id:'pr_storm',      icon:'⛈️', title:'عاصفة الأرقام',    desc:'3 PRs في جلسة واحدة',        check:(s,ls)=>ls && ls.prCount>=3 },
   { id:'pr_legend',     icon:'🐉', title:'أسطورة',            desc:'5 PRs في جلسة واحدة',        check:(s,ls)=>ls && ls.prCount>=5 }
 ];

@@ -378,11 +378,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
     injectSkipButtons();      // أزرار "↷ تخطّى" (V7 — #12)
     injectFormNoteButtons();  // V8.3 — أزرار "ℹ️" لشرح طريقة الأداء (3.2)
     injectEditorButtons();    // V8.3 — أزرار "✏️ تخصيص" لتعديل اليوم (3.3)
+    if(typeof injectHistoryButtons==='function') injectHistoryButtons(); // V8.3 — أزرار "📜" لتاريخ التمرين (3.9)
     syncPlanBTexts();         // مزامنة نصوص Plan B من الكتالوج (V7 — #11)
     await loadSubstitutions();// استرجع البدائل المحفوظة (V6)
     await loadSkippedSteps(); // استرجع حالات التخطّي اليوم (V7 — #12)
     await loadCurrentSession();
     await checkSessionRecovery(); // V7 #36 — فحص جلسة معلّقة بعد فترة طويلة
+    if(typeof checkMissedDayRecommendation==='function'){
+      checkMissedDayRecommendation(); // V8.3 (3.10) — banner استرجاع لو فات >24س
+    }
     highlightToday();          // تظليل بطاقة اليوم + فتحها تلقائياً (V7)
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)
     await updateWeekUI();      // شارة الأسبوع + بانر deload (V7 — #15)
