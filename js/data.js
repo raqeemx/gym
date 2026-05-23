@@ -23,10 +23,22 @@ document.querySelectorAll('.nb[data-t]').forEach(b=>{
 });
 
 // ============ DAY TOGGLE ============
+// V8.4 (P2-UX-#4) — عند فتح اليوم يدوياً، اسكرول حتى يظهر زر "بدء الجلسة" تحت الـ nav
 function tg(e){
   // لا تطوي عند الضغط على الأزرار داخل اليوم
   if(event && event.target.closest('.session-ctrl,.track-input,.save-btn,.dby')) return;
+  const willOpen=!e.classList.contains('open');
   e.classList.toggle('open');
+  if(willOpen){
+    // انتظر transition قليلاً (max-height يستغرق ~500ms) ثم اسكرول
+    setTimeout(()=>{
+      // ضع رأس البطاقة تحت الـ nav (~54px) ليظهر زر "بدء" فور الفتح
+      const rect=e.getBoundingClientRect();
+      const navH=document.querySelector('.nav')?.offsetHeight||48;
+      const target=window.pageYOffset+rect.top-navH-8;
+      window.scrollTo({top:target,behavior:'smooth'});
+    },120);
+  }
 }
 
 // ============ SCROLL PROGRESS + BACK TO TOP ============
