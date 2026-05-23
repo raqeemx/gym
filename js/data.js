@@ -101,7 +101,10 @@ const KEYS={
   // V8 — workout reminders preferences
   REMINDER_PREFS:'app:reminder_prefs',
   // V8.3 (3.3) — program editor: per-day full overrides {dayId: dayObject}
-  PROGRAM_OVERRIDES:'app:program_overrides'
+  PROGRAM_OVERRIDES:'app:program_overrides',
+  // V8.3 (3.13) — File System Access auto-backup
+  AUTOBACKUP_HANDLE:'app:autobackup_handle',
+  AUTOBACKUP_PREFS:'app:autobackup_prefs'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

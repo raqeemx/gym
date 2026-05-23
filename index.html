@@ -852,6 +852,26 @@
         <div class="bm-field"><label>الطول <small>(سم)</small></label><input type="number" inputmode="numeric" id="profHeight" placeholder="—"></div>
         <div class="bm-field"><label>الوزن الحالي <small>(كجم)</small></label><input type="number" inputmode="decimal" step="0.1" id="profWeight" placeholder="—"></div>
       </div>
+      <!-- V8.3 (3.14) — جنس + مستوى نشاط لحساب دقيق للسعرات -->
+      <div class="bm-grid">
+        <div class="bm-field">
+          <label>الجنس</label>
+          <select id="profGender" class="prof-select">
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+          </select>
+        </div>
+        <div class="bm-field">
+          <label>مستوى النشاط <small>(خارج الجيم)</small></label>
+          <select id="profActivity" class="prof-select">
+            <option value="sedentary">قليل (مكتبي)</option>
+            <option value="light">خفيف (واقف أحياناً)</option>
+            <option value="moderate" selected>متوسط (تمرين ٤-٦ مرات)</option>
+            <option value="active">نشط (عمل بدني)</option>
+            <option value="very_active">نشط جداً (رياضي محترف)</option>
+          </select>
+        </div>
+      </div>
       <div class="bm-field" style="margin-bottom:12px">
         <label>الهدف</label>
         <select id="profGoal" class="prof-select">
@@ -869,8 +889,36 @@
           <option value="advanced">متقدم (أكثر من ٢ سنة)</option>
         </select>
       </div>
+
+      <!-- V8.3 (3.12) — Weight Goal Tracker -->
+      <div class="prof-goal-section">
+        <div class="prof-goal-title">🎯 هدف الوزن <small>(اختياري)</small></div>
+        <div class="bm-grid">
+          <div class="bm-field">
+            <label>الوزن المستهدف <small>(كجم)</small></label>
+            <input type="number" inputmode="decimal" step="0.1" id="profTargetWeight" placeholder="مثلاً 78">
+          </div>
+          <div class="bm-field">
+            <label>التاريخ المستهدف</label>
+            <input type="date" id="profTargetDate">
+          </div>
+        </div>
+        <div id="profGoalSummary" class="prof-goal-summary"></div>
+        <div id="profGoalChart" class="prof-goal-chart" style="display:none">
+          <canvas id="profGoalChartCanvas" height="120"></canvas>
+        </div>
+      </div>
+
       <div id="profCalc" class="prof-calc"></div>
       <button class="bm-save" onclick="saveUserProfile()">💾 احفظ الملف</button>
+    </div>
+
+    <!-- V8.3 (3.13) — Auto Backup Section -->
+    <div class="rem-divider"></div>
+    <div class="rem-section">
+      <h3>💾 النسخ الاحتياطي التلقائي</h3>
+      <div class="rem-hint">احفظ نسخة JSON تلقائياً في مجلد محلي بعد كل جلسة — حماية من فقدان البيانات.</div>
+      <div id="autobackupBody" class="ab-body"></div>
     </div>
 
     <!-- V8 — Workout Reminders Section -->
@@ -1088,6 +1136,7 @@
 <script src="js/calendar.js"></script>
 <script src="js/exercise-history.js"></script>
 <script src="js/smart-recovery.js"></script>
+<script src="js/auto-backup.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

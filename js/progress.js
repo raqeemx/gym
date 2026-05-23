@@ -435,7 +435,8 @@ async function exportData(){
     bodyMetrics:await db.getAll('bodyMetrics'),
     dailyLog:await db.getAll('dailyLog'), // V7.2 #38
     prs:await db.getAll('prs'),
-    settings:await db.getAll('settings')
+    // V8.3 (3.13) — استبعد FileSystemDirectoryHandle (غير قابل للنقل بين الأجهزة)
+    settings:(await db.getAll('settings')).filter(s=>!(s.key||'').includes('autobackup_handle'))
   };
   const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);

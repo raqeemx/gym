@@ -1145,6 +1145,10 @@ async function endSession(silent=false){
   }
   // V7 (#24) — لو هذه أول جلسة، فعّل طي الـ Hero
   await setupHeroCollapse();
+  // V8.3 (3.13) — شغّل النسخ الاحتياطي التلقائي لو مفعّل (لا يفشل ولا يُزعج لو غير مدعوم)
+  if(typeof runAutoBackup==='function'){
+    runAutoBackup(true).catch(e=>console.warn('Auto-backup post-session failed:',e));
+  }
 }
 
 // V7.3 — يحتفظ بـ ID آخر workout مغلق لتحديث الملاحظات عند closeSummary
