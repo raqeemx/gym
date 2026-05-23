@@ -809,7 +809,7 @@ async function renderAchievements(){
 }
 
 // ============ V7.2 — DAILY LOG (#38, #41) ============
-let _dlState={water:0,sleep:0,supplements:{},meals:[]};
+let _dlState={water:0,sleep:0,protein:0,supplements:{},meals:[]};
 
 async function renderDailyLog(){
   const dateInput=document.getElementById('dlDate');
@@ -823,6 +823,12 @@ async function renderDailyLog(){
     dateInput.addEventListener('change',()=>loadDailyLogForDate(dateInput.value));
     dateInput.dataset.bound='1';
   }
+  // V8.4 (P3-UX-#6) — ربط الـ input للبروتين
+  const pIn=document.getElementById('dlProteinVal');
+  if(pIn && !pIn.dataset.bound){
+    pIn.addEventListener('input',()=>{updateProteinProgress();});
+    pIn.dataset.bound='1';
+  }
 
   // اعرض السجل
   const all=(await db.getAll('dailyLog')).sort((a,b)=>b.date.localeCompare(a.date));
@@ -835,22 +841,73 @@ async function loadDailyLogForDate(date){
   _dlState={
     water:rec?(rec.water||0):0,
     sleep:rec?(rec.sleep||0):0,
+    protein:rec?(rec.protein||0):0, // V8.4 (P3-UX-#6)
     supplements:rec?(rec.supplements||{}):{},
     meals:rec?(rec.meals||[false,false,false,false,false,false]):[false,false,false,false,false,false]
   };
   document.getElementById('dlWaterVal').textContent=_dlState.water;
   document.getElementById('dlSleepVal').textContent=_dlState.sleep;
+  const pIn=document.getElementById('dlProteinVal');
+  if(pIn) pIn.value=_dlState.protein;
   document.querySelectorAll('#dlSupplements input').forEach(cb=>{
     cb.checked=!!_dlState.supplements[cb.dataset.supp];
   });
   document.querySelectorAll('#dlMeals input').forEach(cb=>{
     cb.checked=!!_dlState.meals[parseInt(cb.dataset.meal)];
   });
+  // V8.4 (P3-UX-#6) — حدّث مؤشّر هدف البروتين
+  if(typeof updateProteinProgress==='function') updateProteinProgress();
 }
 
 function dlAdjust(field,delta){
+  // V8.4 (P3-UX-#6) — protein: قراءة من الـ input + مدى مختلف
+  if(field==='protein'){
+    const pIn=document.getElementById('dlProteinVal');
+    const cur=parseInt(pIn.value)||0;
+    const next=Math.max(0,Math.min(500,cur+delta));
+    pIn.value=next;
+    _dlState.protein=next;
+    if(typeof updateProteinProgress==='function') updateProteinProgress();
+    return;
+  }
   _dlState[field]=Math.max(0,Math.round((_dlState[field]+delta)*10)/10);
   document.getElementById(field==='water'?'dlWaterVal':'dlSleepVal').textContent=_dlState[field];
+}
+
+// V8.4 (P3-UX-#6) — يقرأ هدف البروتين من profile ويعرض شريط تقدّم
+function updateProteinProgress(){
+  const pIn=document.getElementById('dlProteinVal');
+  const progress=document.getElementById('dlProteinProgress');
+  const fill=document.getElementById('dlProteinFill');
+  const lbl=document.getElementById('dlProteinLbl');
+  const hint=document.getElementById('dlProteinTargetHint');
+  if(!pIn||!progress||!fill||!lbl) return;
+  const cur=parseInt(pIn.value)||0;
+  _dlState.protein=cur;
+  let target=0;
+  try{
+    const p=JSON.parse(localStorage.getItem(KEYS.USER_PROFILE)||'{}');
+    if(typeof computeNutritionTargets==='function'){
+      const n=computeNutritionTargets(p);
+      if(n && n.protein) target=n.protein;
+    }
+  }catch(e){}
+  if(!target){
+    progress.hidden=true;
+    if(hint) hint.textContent='(جم · أدخل هدفك في الملف الشخصي)';
+    return;
+  }
+  progress.hidden=false;
+  if(hint) hint.textContent=`(جم · الهدف ${target}جم)`;
+  const pct=Math.min(100,Math.round(cur/target*100));
+  fill.style.width=pct+'%';
+  fill.className='dl-progress-fill';
+  if(pct>=95) fill.classList.add('good');
+  else if(pct>=70) fill.classList.add('mid');
+  else fill.classList.add('low');
+  const delta=cur-target;
+  const deltaTxt=delta>=0?`+${delta}جم فوق الهدف`:`${delta}جم تحت الهدف`;
+  lbl.textContent=`${cur} / ${target} جم (${pct}٪) — ${deltaTxt}`;
 }
 
 async function saveDailyLog(){
@@ -865,10 +922,14 @@ async function saveDailyLog(){
   document.querySelectorAll('#dlMeals input').forEach(cb=>{
     meals[parseInt(cb.dataset.meal)]=cb.checked;
   });
+  // V8.4 (P3-UX-#6) — اقرأ قيمة البروتين من الـ input
+  const pIn=document.getElementById('dlProteinVal');
+  const protein=pIn?(parseInt(pIn.value)||0):0;
   const rec={
     date,
     water:_dlState.water,
     sleep:_dlState.sleep,
+    protein,
     supplements,
     meals,
     timestamp:new Date().toISOString()
@@ -888,7 +949,7 @@ function renderDailyLogHistory(records){
   }
   body.innerHTML=`<div class="bm-table-wrap"><table class="bm-table dl-table">
     <thead><tr>
-      <th>التاريخ</th><th>💧</th><th>😴</th><th>💊</th><th>🍽️</th>
+      <th>التاريخ</th><th>💧</th><th>😴</th><th>🥩</th><th>💊</th><th>🍽️</th>
     </tr></thead>
     <tbody>
       ${records.map(r=>{
@@ -897,10 +958,13 @@ function renderDailyLogHistory(records){
         const waterClass=r.water>=8?'dl-good':(r.water>=5?'dl-mid':'dl-low');
         const sleepClass=r.sleep>=7?'dl-good':(r.sleep>=5?'dl-mid':'dl-low');
         const mealClass=mealCount>=6?'dl-good':(mealCount>=4?'dl-mid':'dl-low');
+        const protein=r.protein||0;
+        const protClass=protein>=140?'dl-good':(protein>=100?'dl-mid':(protein>0?'dl-low':''));
         return `<tr>
           <td class="bm-date">${fmtDate(r.date)}</td>
           <td class="${waterClass}">${r.water||0}</td>
           <td class="${sleepClass}">${r.sleep||0}س</td>
+          <td class="${protClass}">${protein?protein+'جم':'—'}</td>
           <td>${suppCount}/5</td>
           <td class="${mealClass}">${mealCount}/6</td>
         </tr>`;
@@ -916,7 +980,17 @@ function renderDailyLogStats(allRecords){
   const today=new Date().toISOString().split('T')[0];
   const sevenDaysAgo=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
   const last7=allRecords.filter(r=>r.date>=sevenDaysAgo && r.date<=today);
-  if(!last7.length){wrap.innerHTML='';return}
+  // V8.4 (P3-UX-#10) — empty state واضح بدل إخفاء صامت
+  if(!last7.length){
+    wrap.innerHTML=`<div class="empty-state empty-state-soft">
+      <div class="es-icon">📊</div>
+      <div class="es-text">
+        <b>لا توجد بيانات في آخر ٧ أيام</b><br>
+        <small>سجّل يومك من النموذج فوق لترى المتوسطات هنا.</small>
+      </div>
+    </div>`;
+    return;
+  }
   const avgWater=Math.round(last7.reduce((a,r)=>a+(r.water||0),0)/last7.length*10)/10;
   const avgSleep=Math.round(last7.reduce((a,r)=>a+(r.sleep||0),0)/last7.length*10)/10;
   // التزام الوجبات (%)
@@ -926,9 +1000,25 @@ function renderDailyLogStats(allRecords){
   const suppKeys=['creatine','protein','multi','vitd','omega3'];
   const totalSupp=last7.reduce((a,r)=>a+suppKeys.filter(k=>r.supplements&&r.supplements[k]).length,0);
   const suppCompliance=Math.round((totalSupp/(last7.length*5))*100);
+  // V8.4 (P3-UX-#6) — متوسط البروتين + مقارنة بالهدف
+  const proteinDays=last7.filter(r=>(r.protein||0)>0);
+  const avgProtein=proteinDays.length?Math.round(proteinDays.reduce((a,r)=>a+(r.protein||0),0)/proteinDays.length):0;
+  let proteinTarget=0;
+  try{
+    const p=JSON.parse(localStorage.getItem(KEYS.USER_PROFILE)||'{}');
+    if(typeof computeNutritionTargets==='function'){
+      const n=computeNutritionTargets(p);
+      if(n && n.protein) proteinTarget=n.protein;
+    }
+  }catch(e){}
+  const proteinCompliance=proteinTarget?Math.round(avgProtein/proteinTarget*100):0;
+  const proteinCls=proteinCompliance>=95?'dl-stat-good':(proteinCompliance>=70?'dl-stat-mid':'dl-stat-low');
+  const proteinValTxt=avgProtein?`${avgProtein}جم`:'—';
+  const proteinLblTxt=proteinTarget?`🥩 بروتين/يوم (هدف ${proteinTarget})`:'🥩 معدل البروتين';
   wrap.innerHTML=`<div class="dl-stats-row">
     <div class="dl-stat"><div class="dl-stat-val">${avgWater}</div><div class="dl-stat-lbl">💧 معدل الماء/يوم</div></div>
     <div class="dl-stat"><div class="dl-stat-val">${avgSleep}س</div><div class="dl-stat-lbl">😴 معدل النوم</div></div>
+    <div class="dl-stat ${proteinCls}"><div class="dl-stat-val">${proteinValTxt}</div><div class="dl-stat-lbl">${proteinLblTxt}</div></div>
     <div class="dl-stat"><div class="dl-stat-val">${mealCompliance}%</div><div class="dl-stat-lbl">🍽️ التزام الوجبات</div></div>
     <div class="dl-stat"><div class="dl-stat-val">${suppCompliance}%</div><div class="dl-stat-lbl">💊 التزام المكملات</div></div>
   </div>`;
@@ -1235,6 +1325,28 @@ const CHART_BASE_OPTS={
 
 let _charts={ex:null,vol:null,bw:null,rpe:null};
 
+// V8.4 (P3-UX-#10) — helper: يضع/يخفي empty-state بجوار canvas حسب الحاجة
+function _setChartEmpty(canvasId,isEmpty,opts){
+  const ctx=document.getElementById(canvasId);
+  if(!ctx) return;
+  const wrap=ctx.closest('.chart-wrap');
+  if(!wrap) return;
+  const existing=wrap.querySelector('.chart-empty');
+  if(isEmpty){
+    ctx.style.display='none';
+    if(!existing){
+      const div=document.createElement('div');
+      div.className='chart-empty';
+      div.innerHTML=`<div class="es-icon">${(opts&&opts.icon)||'📊'}</div>
+        <div class="es-text"><b>${(opts&&opts.title)||'لا توجد بيانات بعد'}</b><br><small>${(opts&&opts.hint)||'تظهر هنا بعد أول جلسة.'}</small></div>`;
+      ctx.parentNode.insertBefore(div,ctx.nextSibling);
+    }
+  }else{
+    ctx.style.display='';
+    if(existing) existing.remove();
+  }
+}
+
 async function renderCharts(){
   const sel=document.getElementById('chartExSel');
   try{
@@ -1288,8 +1400,11 @@ async function renderRpeTrend(setsOrNull){
   if(hintEl) hintEl.style.display='none';
   if(!workouts.length){
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    // V8.4 (P3-UX-#10)
+    _setChartEmpty('chartRpe',true,{icon:'💪',title:'لا توجد بيانات RPE بعد',hint:'سجّل RPE داخل سيتاتك ليظهر هنا متوسّط الجلسات.'});
     return;
   }
+  _setChartEmpty('chartRpe',false);
 
   const labels=workouts.map(w=>new Date(w.time).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}));
   const data=workouts.map(w=>w.avg);
@@ -1327,10 +1442,18 @@ async function renderRpeTrend(setsOrNull){
 }
 
 async function renderExerciseChart(name){
-  if(!name) return;
   const Chart=window.Chart;
+  if(!name){
+    // V8.4 (P3-UX-#10)
+    _setChartEmpty('chartEx',true,{icon:'📈',title:'اختر تمريناً لعرض تقدّمه',hint:'القائمة فوق تظهر فقط بعد تسجيل سيت واحد على الأقل.'});
+    return;
+  }
   const sets=(await db.getAll('sets','exerciseName',name)).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
-  if(!sets.length) return;
+  if(!sets.length){
+    _setChartEmpty('chartEx',true,{icon:'📈',title:'لا توجد سيتات لهذا التمرين بعد',hint:'سجّل سيت ليظهر الرسم البياني.'});
+    return;
+  }
+  _setChartEmpty('chartEx',false);
   const labels=sets.map(s=>s.date);
   const weights=sets.map(s=>s.weight);
   const oneRM=sets.map(s=>Math.round(EPLEY(s.weight,s.reps)*10)/10);
@@ -1362,8 +1485,11 @@ function renderVolumeChart(sets){
   if(_charts.vol) _charts.vol.destroy();
   if(!labels.length){
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    // V8.4 (P3-UX-#10)
+    _setChartEmpty('chartVol',true,{icon:'📅',title:'لا يوجد حجم أسبوعي بعد',hint:'يحتاج أسبوعاً واحداً من الجلسات على الأقل ليظهر.'});
     return;
   }
+  _setChartEmpty('chartVol',false);
   _charts.vol=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:[{label:'الحجم الأسبوعي',data,backgroundColor:'rgba(212,168,83,.55)',borderColor:'#D4A853',borderWidth:1,borderRadius:6}]},
@@ -1378,8 +1504,11 @@ async function renderBodyWeightChart(){
   if(_charts.bw) _charts.bw.destroy();
   if(!bm.length){
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    // V8.4 (P3-UX-#10)
+    _setChartEmpty('chartBW',true,{icon:'⚖️',title:'لم تُسجَّل أوزان بعد',hint:'سجّل وزنك من تبويب 📏 قياسات الجسم.'});
     return;
   }
+  _setChartEmpty('chartBW',false);
   _charts.bw=new Chart(ctx,{
     type:'line',
     data:{labels:bm.map(b=>b.date),datasets:[{label:'الوزن (كجم)',data:bm.map(b=>b.bodyWeight),borderColor:'#5AE68A',backgroundColor:'rgba(90,230,138,.12)',tension:.3,fill:true,pointBackgroundColor:'#5AE68A'}]},

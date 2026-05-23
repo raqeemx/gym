@@ -129,8 +129,19 @@ async function runAutoBackup(silent){
   try{
     const ok=await ensureWritePermission(handle,false);
     if(!ok){
-      // لا يمكن الطلب بدون user gesture — نُسجّل الفشل ونحاول لاحقاً
+      // V8.4 (P3-UX-#5) — تتبّع failure streak لتحذير المستخدم عند الفشل المتكرّر
       console.warn('Auto-backup: permission not granted (needs user gesture to re-grant).');
+      const prefs=await getAutoBackupPrefs();
+      prefs.consecutiveFailures=(prefs.consecutiveFailures||0)+1;
+      prefs.lastFailureAt=new Date().toISOString();
+      prefs.lastFailureReason='permission';
+      await setAutoBackupPrefs(prefs);
+      if(!silent && typeof showToast==='function'){
+        if(prefs.consecutiveFailures>=2){
+          showToast('⚠️ النسخ التلقائي يحتاج إعادة ربط المجلد — افتح "الملف الشخصي → النسخ التلقائي"','var(--org)',5500);
+        }
+      }
+      if(typeof refreshAutoBackupUI==='function') refreshAutoBackupUI();
       return false;
     }
     const dump=await buildBackupDump();
@@ -145,17 +156,34 @@ async function runAutoBackup(silent){
     prefs.lastBackupAt=new Date().toISOString();
     prefs.lastFileName=fileName;
     if(!prefs.folderName) prefs.folderName=handle.name||'مجلد';
+    // V8.4 (P3-UX-#5) — صفّر عدّاد الفشل عند النجاح
+    prefs.consecutiveFailures=0;
+    prefs.lastFailureAt=null;
+    prefs.lastFailureReason=null;
     await setAutoBackupPrefs(prefs);
     if(!silent && typeof showToast==='function'){
-      showToast(`💾 نسخة احتياطية محفوظة في "${prefs.folderName}"`,'var(--grn)',3500);
+      // V8.4 (P3-UX-#5) — toast صغير (3s) — صامت بصرياً لكن واضح
+      showToast(`💾 نسخة احتياطية محفوظة (${prefs.folderName})`,'var(--grn)',3000);
     }
     if(typeof refreshAutoBackupUI==='function') refreshAutoBackupUI();
     return true;
   }catch(e){
     console.warn('runAutoBackup failed:',e);
-    if(!silent && typeof showToast==='function'){
-      showToast('⚠️ فشل النسخ التلقائي: '+(e.message||e),'var(--red)',4500);
-    }
+    // V8.4 (P3-UX-#5) — تتبّع failure streak
+    try{
+      const prefs=await getAutoBackupPrefs();
+      prefs.consecutiveFailures=(prefs.consecutiveFailures||0)+1;
+      prefs.lastFailureAt=new Date().toISOString();
+      prefs.lastFailureReason=String(e.message||e).slice(0,120);
+      await setAutoBackupPrefs(prefs);
+      if(!silent && typeof showToast==='function'){
+        if(prefs.consecutiveFailures>=3){
+          showToast(`⚠️ فشل النسخ التلقائي ${prefs.consecutiveFailures} مرّات متتالية — افحص الإعدادات أو صدّر يدوياً`,'var(--red)',6000);
+        }else{
+          showToast('⚠️ فشل النسخ التلقائي: '+(e.message||e),'var(--red)',4500);
+        }
+      }
+    }catch(_e){}
     return false;
   }
 }
@@ -188,12 +216,21 @@ async function refreshAutoBackupUI(){
   }
   const lastTxt=prefs.lastBackupAt?fmtBackupDate(prefs.lastBackupAt):'لم يُكتب بعد';
   const lastFile=prefs.lastFileName?`<small class="ab-file">آخر ملف: ${escAttrAB(prefs.lastFileName)}</small>`:'';
+  // V8.4 (P3-UX-#5) — تحذير في حال failure streak
+  const failStreak=prefs.consecutiveFailures||0;
+  const failBanner=failStreak>=2?`
+    <div class="ab-fail-banner">
+      <b>⚠️ فشل ${failStreak} مرّات متتالية</b>
+      <small>السبب: ${escAttrAB(prefs.lastFailureReason||'صلاحيات أو وصول')}</small>
+      <small>الحل: اضغط "🔌 إلغاء الربط" ثم اربط المجلد من جديد.</small>
+    </div>`:'';
   wrap.innerHTML=`
     <div class="ab-status">
       <div class="ab-row"><span class="ab-lbl">المجلد:</span> <b>${escAttrAB(prefs.folderName||'—')}</b></div>
       <div class="ab-row"><span class="ab-lbl">آخر نسخة:</span> <b>${lastTxt}</b></div>
       ${lastFile}
     </div>
+    ${failBanner}
     <div class="ab-actions">
       <button class="ab-test" type="button" onclick="runAutoBackup(false)">💾 شغّل نسخة الآن</button>
       <button class="ab-unlink" type="button" onclick="unlinkAutoBackupFolder()">🔌 إلغاء الربط</button>

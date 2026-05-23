@@ -622,6 +622,11 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 .ab-unsupported .ab-text{font-size:11.5px;line-height:1.7;color:var(--tx)}
 .ab-unsupported .ab-text b{color:var(--org)}
 .ab-unsupported .ab-text small{display:block;color:var(--tx3);font-size:10.5px;margin-top:3px}
+/* V8.4 (P3-UX-#5) — failure streak banner */
+.ab-fail-banner{background:rgba(255,90,95,.08);border:1px solid rgba(255,90,95,.3);border-radius:8px;padding:9px 11px;margin-bottom:10px;display:flex;flex-direction:column;gap:3px}
+.ab-fail-banner b{color:var(--red);font-size:12px;font-family:'Rubik',sans-serif}
+.ab-fail-banner small{color:var(--tx2);font-size:10.5px;direction:ltr;text-align:right}
+.ab-fail-banner small:last-child{color:var(--tx);direction:rtl}
 
 /* V8.3 (3.8) — Achievement progress on locked cards */
 .ach-progress{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.06)}
@@ -652,12 +657,16 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 .skip-btn{left:98px;background:rgba(136,144,160,.08);border:1px solid rgba(136,144,160,.2);color:var(--tx2);font-size:13px}
 .skip-btn:hover{background:rgba(136,144,160,.18);border-color:var(--tx2);color:#fff;transform:scale(1.06)}
 /* Adjust step-name padding based on which buttons present */
-.step-body.has-alt:not(.has-history):not(.has-form-note) .step-name{padding-left:32px}
+.step-body.has-alt:not(.has-history):not(.has-form-note):not(.has-skip) .step-name{padding-left:32px}
+/* V8.4 (P3-UX-#9) — has-alt + has-skip بدون form/history: skip at 38, لازم 62 */
+.step-body.has-alt.has-skip:not(.has-history):not(.has-form-note) .step-name{padding-left:62px}
 .step-body.has-alt.has-history:not(.has-form-note) .step-name,
 .step-body.has-alt.has-form-note:not(.has-history) .step-name{padding-left:62px}
 .step-body.has-alt.has-form-note.has-history .step-name{padding-left:92px}
 .step-body.has-skip:not(.has-alt):not(.has-history):not(.has-form-note) .step-name{padding-left:32px}
 .step-body.has-skip:not(.has-alt).has-history .step-name{padding-left:62px}
+/* V8.4 (P3-UX-#9) — has-form-note + has-skip بدون alt/history: skip at 38, لازم 62 */
+.step-body.has-skip:not(.has-alt).has-form-note:not(.has-history) .step-name{padding-left:62px}
 .step-body.has-skip:not(.has-alt).has-form-note.has-history .step-name{padding-left:92px}
 .step-body.has-skip.has-alt.has-form-note.has-history .step-name{padding-left:122px}
 .step-body.has-skip.has-alt.has-history:not(.has-form-note) .step-name,
@@ -1419,6 +1428,20 @@ body.sess-active .nav{top:50px}
 .dl-step:hover{background:rgba(212,168,83,.2);color:#fff;transform:translateY(-1px)}
 .dl-step:active{transform:scale(.95)}
 .dl-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--g2);min-width:42px;text-align:center}
+/* V8.4 (P3-UX-#6) — protein input + progress mini */
+.dl-num-input{background:transparent;border:none;color:var(--g2);font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;min-width:60px;width:60px;text-align:center;padding:0;outline:none;-moz-appearance:textfield}
+.dl-num-input::-webkit-outer-spin-button,.dl-num-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.dl-row-protein{flex-wrap:wrap}
+.dl-progress-mini{flex-basis:100%;margin-top:8px}
+.dl-progress-mini .dl-progress-track{height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.dl-progress-mini .dl-progress-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.16,1,.3,1)}
+.dl-progress-mini .dl-progress-fill.low{background:linear-gradient(90deg,var(--red),#ff8a5f)}
+.dl-progress-mini .dl-progress-fill.mid{background:linear-gradient(90deg,var(--org),#ffd47a)}
+.dl-progress-mini .dl-progress-fill.good{background:linear-gradient(90deg,var(--grn),#7ee0a3)}
+.dl-progress-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx2);margin-top:5px;text-align:center;direction:ltr}
+.dl-stat-good .dl-stat-val{color:var(--grn)}
+.dl-stat-mid .dl-stat-val{color:var(--org)}
+.dl-stat-low .dl-stat-val{color:var(--red)}
 
 .dl-section{margin-bottom:14px}
 .dl-section-title{font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:8px;font-family:'Outfit',sans-serif;letter-spacing:.5px}
@@ -1509,6 +1532,20 @@ body.sess-active .nav{top:50px}
 .empty-state .es-icon{font-size:42px;margin-bottom:10px;opacity:.5}
 .empty-state .es-text{font-size:13px;line-height:1.6}
 .empty-state .es-text b{color:var(--g2)}
+.empty-state .es-text small{display:block;color:var(--tx3);font-size:11.5px;margin-top:4px}
+/* V8.4 (P3-UX-#10) — soft variant for inline empties (e.g., stats with no data yet) */
+.empty-state-soft{padding:20px 16px;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);border-radius:10px;display:flex;gap:12px;align-items:center;text-align:right}
+.empty-state-soft .es-icon{font-size:30px;margin:0;opacity:.6}
+.empty-state-soft .es-text{font-size:12px;flex:1}
+.cal-empty-cta{grid-column:1/-1;flex-wrap:wrap}
+.cal-empty-btn{background:linear-gradient(135deg,var(--g2),var(--g3));color:#000;border:none;padding:9px 18px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.3px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.cal-empty-btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(212,168,83,.3)}
+/* V8.4 (P3-UX-#10) — chart empty state */
+.chart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;padding:24px 18px;text-align:center;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);border-radius:10px;gap:10px}
+.chart-empty .es-icon{font-size:34px;opacity:.55}
+.chart-empty .es-text{font-size:12px;line-height:1.7;color:var(--tx2)}
+.chart-empty .es-text b{color:var(--g2);font-size:13px}
+.chart-empty .es-text small{color:var(--tx3);font-size:11px}
 
 /* Charts loading */
 .chart-loading{text-align:center;padding:60px 20px;color:var(--tx3);font-size:12px}

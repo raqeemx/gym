@@ -675,6 +675,19 @@
             <button type="button" class="dl-step" onclick="dlAdjust('sleep',0.5)">+</button>
           </div>
         </div>
+        <!-- V8.4 (P3-UX-#6) — تتبّع البروتين اليومي مع مقارنة بالهدف -->
+        <div class="dl-row dl-row-protein">
+          <label class="dl-label">🥩 البروتين <small id="dlProteinTargetHint">(جم · أدخل هدفك في الملف الشخصي)</small></label>
+          <div class="dl-counter">
+            <button type="button" class="dl-step" onclick="dlAdjust('protein',-10)">−10</button>
+            <input type="number" inputmode="numeric" id="dlProteinVal" class="dl-num-input" value="0" min="0" max="500" step="5">
+            <button type="button" class="dl-step" onclick="dlAdjust('protein',10)">+10</button>
+          </div>
+          <div class="dl-progress-mini" id="dlProteinProgress" hidden>
+            <div class="dl-progress-track"><div class="dl-progress-fill" id="dlProteinFill"></div></div>
+            <div class="dl-progress-label" id="dlProteinLbl"></div>
+          </div>
+        </div>
         <!-- Supplements -->
         <div class="dl-section">
           <div class="dl-section-title">💊 المكملات</div>

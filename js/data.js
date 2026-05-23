@@ -4,14 +4,45 @@
  * ============================================== */
 
 // ============ TAB NAVIGATION ============
+// V8.4 (P3-UX-#7) — حفظ/استعادة موضع التمرير لكل tab
+function _currentTabId(){
+  const b=document.querySelector('.nb.a');
+  return b?b.dataset.t:'1';
+}
+function _saveTabScroll(){
+  try{
+    const t=_currentTabId();
+    sessionStorage.setItem('scroll:t'+t,String(window.scrollY||document.documentElement.scrollTop||0));
+  }catch(e){}
+}
+function _restoreTabScroll(tabId){
+  try{
+    const saved=sessionStorage.getItem('scroll:t'+tabId);
+    if(saved!=null){
+      const y=parseInt(saved)||0;
+      // requestAnimationFrame ليكون بعد transition + render
+      requestAnimationFrame(()=>{
+        window.scrollTo({top:y,behavior:'auto'});
+      });
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
 document.querySelectorAll('.nb[data-t]').forEach(b=>{
   b.addEventListener('click',()=>{
+    // احفظ موقع التبويب الحالي قبل التبديل
+    _saveTabScroll();
     document.querySelectorAll('.nb').forEach(x=>x.classList.remove('a'));
     document.querySelectorAll('.sec').forEach(x=>x.classList.remove('a'));
     b.classList.add('a');
     const sec=document.getElementById('t'+b.dataset.t);
     if(sec) sec.classList.add('a');
-    window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+    // استعد موقع التبويب الجديد لو كان محفوظاً، وإلا اذهب لرأس الصفحة
+    const restored=_restoreTabScroll(b.dataset.t);
+    if(!restored){
+      window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'});
+    }
     // إذا فُتح تبويب "تقدمي" حدّث محتواه
     if(b.dataset.t==='7') refreshProgressTab();
     // V8.3 (3.7) — إذا فُتح تبويب "التقويم" حدّث الشهر
@@ -21,6 +52,8 @@ document.querySelectorAll('.nb[data-t]').forEach(b=>{
     }
   });
 });
+// V8.4 (P3-UX-#7) — احفظ الموقع عند مغادرة الصفحة لتعويد بعد reload
+window.addEventListener('beforeunload',_saveTabScroll);
 
 // ============ DAY TOGGLE ============
 // V8.4 (P2-UX-#4) — عند فتح اليوم يدوياً، اسكرول حتى يظهر زر "بدء الجلسة" تحت الـ nav

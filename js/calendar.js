@@ -183,14 +183,26 @@ async function refreshCalendar(){
   if(statsEl){
     const totalWorkoutDays=completedCount+bonusCount;
     const rate=scheduledCount?Math.round((completedCount/scheduledCount)*100):0;
-    statsEl.innerHTML=`
-      <div class="cs-item"><div class="cs-num">${totalWorkoutDays}</div><div class="cs-lbl">يوم تمرين</div></div>
-      <div class="cs-item"${completedCount>0?' ':''}><div class="cs-num cs-done">${completedCount}/${scheduledCount}</div><div class="cs-lbl">مُنجز/مجدول</div></div>
-      <div class="cs-item"><div class="cs-num cs-rate">${rate}%</div><div class="cs-lbl">معدل الالتزام</div></div>
-      <div class="cs-item"><div class="cs-num cs-missed">${missedCount}</div><div class="cs-lbl">فات</div></div>
-      <div class="cs-item"><div class="cs-num cs-rest">${restCount}</div><div class="cs-lbl">راحة</div></div>
-      ${bonusCount>0?`<div class="cs-item"><div class="cs-num cs-bonus">${bonusCount}</div><div class="cs-lbl">إضافي</div></div>`:''}
-    `;
+    // V8.4 (P3-UX-#10) — empty state لو ما فيه أي جلسة بعد (نظرة شاملة لا شهرية)
+    if(workouts.length===0){
+      statsEl.innerHTML=`<div class="empty-state empty-state-soft cal-empty-cta">
+        <div class="es-icon">🎯</div>
+        <div class="es-text">
+          <b>ابدأ أوّل جلسة لترى تقدّمك هنا</b><br>
+          <small>الشارات الذهبية = أيام مُجدولة · ستتحوّل لأخضر بعد كل جلسة.</small>
+        </div>
+        <button class="cal-empty-btn" type="button" onclick="document.querySelector('.nb[data-t=&quot;1&quot;]').click()">💪 افتح التمارين</button>
+      </div>`;
+    }else{
+      statsEl.innerHTML=`
+        <div class="cs-item"><div class="cs-num">${totalWorkoutDays}</div><div class="cs-lbl">يوم تمرين</div></div>
+        <div class="cs-item"${completedCount>0?' ':''}><div class="cs-num cs-done">${completedCount}/${scheduledCount}</div><div class="cs-lbl">مُنجز/مجدول</div></div>
+        <div class="cs-item"><div class="cs-num cs-rate">${rate}%</div><div class="cs-lbl">معدل الالتزام</div></div>
+        <div class="cs-item"><div class="cs-num cs-missed">${missedCount}</div><div class="cs-lbl">فات</div></div>
+        <div class="cs-item"><div class="cs-num cs-rest">${restCount}</div><div class="cs-lbl">راحة</div></div>
+        ${bonusCount>0?`<div class="cs-item"><div class="cs-num cs-bonus">${bonusCount}</div><div class="cs-lbl">إضافي</div></div>`:''}
+      `;
+    }
   }
 
   // أخفِ تفاصيل اليوم لو ظاهرة من شهر سابق
