@@ -149,6 +149,100 @@ document.addEventListener('click',(e)=>{
   });
 }
 
+// V8.4 (P2-#3) — افتح "أول مرة بالجيم" من FAB (نُقل من nav للتقليل من الازدحام)
+function openFirstTimeGuide(){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('a'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('a'));
+  const t6=document.getElementById('t6');
+  if(t6) t6.classList.add('a');
+  const fabMenu=document.getElementById('fabMenu');
+  if(fabMenu) fabMenu.classList.remove('open');
+  window.scrollTo({top:document.querySelector('.nav')?.offsetTop||0,behavior:'smooth'});
+}
+
+// V8.4 (P2-#1 + P2-#3) — دمج tabs الإرشادية + slim لـ "نظرة عامة"
+// يُستدعى مرة في init قبل أوّل render. ينقل:
+//   - بطاقات t0 التعليمية (نظام V4، ذروة الجيم، حساب الراحة، الأجهزة) → t5
+//   - tab t2 (الأوزان) كاملاً → t5
+//   - tab t4 (نصائح) كاملاً → t5
+// يبقى في t0: بطاقة "بياناتك" + بطاقة "كيف مقسّم الأسبوع".
+function mergeGuideTabs(){
+  const t5=document.getElementById('t5');
+  if(!t5) return;
+  if(t5.dataset.merged==='1') return;
+
+  // ===== Slim t0 — ابقِ بطاقتين فقط (profile + weekly schedule) =====
+  const t0=document.getElementById('t0');
+  const t0Removed=document.createDocumentFragment();
+  if(t0){
+    const cards=Array.from(t0.children).filter(c=>c.classList.contains('card'));
+    for(const card of cards){
+      // ابقِ على "بياناتك" و "كيف مقسّم الأسبوع" — احذف الباقي وانقله للدليل
+      const isUserCard=card.id==='userProfileCard';
+      const titleEl=card.querySelector('.ct');
+      const title=titleEl?titleEl.textContent:'';
+      const isScheduleCard=/كيف مقسّم|الأسبوع/.test(title);
+      if(isUserCard||isScheduleCard) continue; // ابقِها
+      t0Removed.appendChild(card); // اقتطعها (move semantics)
+    }
+  }
+
+  // ابنِ TOC في أعلى t5
+  const toc=document.createElement('div');
+  toc.className='guide-toc';
+  toc.innerHTML=`
+    <div class="gt-title">📖 محتويات الدليل</div>
+    <div class="gt-grid">
+      <a class="gt-link" href="#guide-sec-fundamentals">⚡ نظام V4 — الأساسيات</a>
+      <a class="gt-link" href="#guide-sec-original">📚 الدليل الشامل</a>
+      <a class="gt-link" href="#guide-sec-t2">📈 زيادة الأوزان</a>
+      <a class="gt-link" href="#guide-sec-t4">💡 نصائح ذهبية</a>
+    </div>
+  `;
+
+  // غلّف المحتوى الأصلي لـ t5 بـ wrapper
+  const originalContent=document.createDocumentFragment();
+  while(t5.firstChild) originalContent.appendChild(t5.firstChild);
+  const origWrapper=document.createElement('div');
+  origWrapper.id='guide-sec-original';
+  origWrapper.className='guide-section';
+  origWrapper.innerHTML='<div class="guide-section-head">📚 الدليل الشامل</div>';
+  origWrapper.appendChild(originalContent);
+
+  t5.appendChild(toc);
+
+  // قسم #1 — الأساسيات (من t0 المنقولة)
+  if(t0Removed.children.length>0 || t0Removed.childNodes.length>0){
+    const fund=document.createElement('div');
+    fund.id='guide-sec-fundamentals';
+    fund.className='guide-section';
+    fund.innerHTML='<div class="guide-section-head">⚡ نظام V4 — الأساسيات</div>';
+    fund.appendChild(t0Removed);
+    t5.appendChild(fund);
+  }
+
+  // أضف t2 و t4 كأقسام
+  const sections=[
+    {id:'t2',title:'📈 زيادة الأوزان والتقدّم',icon:'📈'},
+    {id:'t4',title:'💡 نصائح ذهبية للنتائج الأفضل',icon:'💡'}
+  ];
+  for(const s of sections){
+    const src=document.getElementById(s.id);
+    if(!src) continue;
+    const wrap=document.createElement('div');
+    wrap.id='guide-sec-'+s.id;
+    wrap.className='guide-section';
+    wrap.innerHTML=`<div class="guide-section-head">${s.icon} ${s.title}</div>`;
+    while(src.firstChild) wrap.appendChild(src.firstChild);
+    t5.appendChild(wrap);
+    src.remove(); // احذف الـ section الفارغ
+  }
+
+  // المحتوى الأصلي لـ t5 يأتي أخيراً
+  t5.appendChild(origWrapper);
+  t5.dataset.merged='1';
+}
+
 // V8.4 (P1-#1) — املأ بطاقة "بياناتك" في "نظرة عامة" من profile (بدل HTML hardcoded)
 // تُستدعى في init + بعد saveUserProfile لإبقاء العرض متزامناً
 async function refreshOverviewProfileCard(){
@@ -654,6 +748,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const vEl=document.getElementById('footerVersion');
   if(vEl && typeof APP_VERSION==='string') vEl.textContent=`v${APP_VERSION} · ${APP_BUILD||''}`;
   try{
+    // V8.4 (P2-#3) — دمج tabs الإرشادية قبل أوّل render
+    if(typeof mergeGuideTabs==='function') mergeGuideTabs();
     await db.open();
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
     if(typeof bootstrapGyms==='function') await bootstrapGyms(); // V8.4 — أنشئ الجيم الافتراضي + bodyweight

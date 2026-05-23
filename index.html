@@ -44,15 +44,13 @@
 <nav class="nav">
   <div class="nav-brand" onclick="scrollTop()">💪 BULK</div>
   <div class="ni">
-    <button class="nb a" data-t="0">نظرة عامة</button>
+    <!-- V8.4 (P2-#3) — Tab order optimized: التمارين default, 6 tabs total. أول مرة موجود في FAB menu. -->
+    <button class="nb a" data-t="1">💪 التمارين</button>
     <button class="nb" data-t="7">📈 تقدمي</button>
     <button class="nb" data-t="8">📅 التقويم</button>
-    <button class="nb" data-t="6">أول مرة</button>
-    <button class="nb" data-t="1">التمارين</button>
-    <button class="nb" data-t="2">الأوزان</button>
-    <button class="nb" data-t="3">الأكل</button>
-    <button class="nb" data-t="4">نصائح</button>
-    <button class="nb" data-t="5">دليل شامل</button>
+    <button class="nb" data-t="3">🍽️ الأكل</button>
+    <button class="nb" data-t="5">📖 نصائح ودليل</button>
+    <button class="nb" data-t="0">🏠 نظرة عامة</button>
   </div>
 </nav>
 
@@ -73,7 +71,7 @@
 <div id="deloadHeaderBanner" class="deload-header-banner"></div>
 
 <!-- ===== TAB 0: نظرة عامة ===== -->
-<div class="sec a" id="t0">
+<div class="sec" id="t0">
 
   <div class="card fu fu1">
     <div class="ch"><div class="ci">⚡</div><div><div class="ct">النظام الجديد V4 — كيف يشتغل؟</div><div class="cs">Antagonist Paired Sets · محسّن لذروة الجيم</div></div></div>
@@ -166,7 +164,7 @@
 </div>
 
 <!-- ===== TAB 1: التمارين ===== -->
-<div class="sec" id="t1">
+<div class="sec a" id="t1">
 
   <div class="card" style="margin-bottom:12px">
     <div class="ch"><div class="ci">📐</div><div><div class="ct">منطق ترتيب التمارين الجديد</div></div></div>
@@ -819,6 +817,7 @@
   <button onclick="openStats()">📈 إحصائياتي</button>
   <button onclick="openProfile()">👤 ملفي الشخصي</button>
   <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
+  <button onclick="openFirstTimeGuide()">🎯 أول مرة بالجيم</button>
   <button onclick="openPlateCalc()">🧮 حاسبة بليتات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
