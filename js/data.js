@@ -311,7 +311,8 @@ const KEYS={
   // V8.4 — Multi-gym support
   GYM_PROFILES:'app:gym_profiles',           // { [id]: GymProfile }
   ACTIVE_GYM_ID:'app:active_gym_id',         // string
-  GYM_HINT_SHOWN:'app:gym_hint_shown'        // first-time switcher hint flag
+  GYM_HINT_SHOWN:'app:gym_hint_shown',       // first-time switcher hint flag
+  IOS_INSTALL_HINT_SHOWN:'app:ios_install_hint_shown'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

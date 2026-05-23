@@ -887,11 +887,11 @@ function setupInstallPrompt(){
   const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
   if(isIOS && isSafari && !window.navigator.standalone){
-    db.get('settings','app:ios_install_hint_shown').then(rec=>{
+    db.get('settings',KEYS.IOS_INSTALL_HINT_SHOWN).then(rec=>{
       if(!rec||!rec.value){
         setTimeout(()=>{
           showToast('💡 للتثبيت: اضغط مشاركة → "إضافة إلى الشاشة الرئيسية"','var(--blue)',8000);
-          db.put('settings',{key:'app:ios_install_hint_shown',value:true});
+          db.put('settings',{key:KEYS.IOS_INSTALL_HINT_SHOWN,value:true});
         },4000);
       }
     });

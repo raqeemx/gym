@@ -337,9 +337,9 @@ function injectSkipButtons(){
 // V8.3 (UX-1) — اعرض شرح أوّل مرة فقط عبر toast، ثم خزّن flag في settings
 async function maybeShowSkipHint(){
   try{
-    const rec=await db.get('settings','app:skip_hint_shown');
+    const rec=await db.get('settings',KEYS.SKIP_HINT_SHOWN);
     if(rec && rec.value) return;
-    await db.put('settings',{key:'app:skip_hint_shown',value:true});
+    await db.put('settings',{key:KEYS.SKIP_HINT_SHOWN,value:true});
     if(typeof showToast==='function'){
       showToast('💡 التخطّي يخصّ اليوم فقط — يعود التمرين غداً تلقائياً.','var(--blue)',5000);
     }

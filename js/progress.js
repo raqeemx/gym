@@ -875,7 +875,7 @@ function dlAdjust(field,delta){
 }
 
 // V8.4 (P3-UX-#6) — يقرأ هدف البروتين من profile ويعرض شريط تقدّم
-function updateProteinProgress(){
+async function updateProteinProgress(){
   const pIn=document.getElementById('dlProteinVal');
   const progress=document.getElementById('dlProteinProgress');
   const fill=document.getElementById('dlProteinFill');
@@ -886,7 +886,8 @@ function updateProteinProgress(){
   _dlState.protein=cur;
   let target=0;
   try{
-    const p=JSON.parse(localStorage.getItem(KEYS.USER_PROFILE)||'{}');
+    const rec=await db.get('settings',KEYS.USER_PROFILE);
+    const p=(rec&&rec.value)||{};
     if(typeof computeNutritionTargets==='function'){
       const n=computeNutritionTargets(p);
       if(n && n.protein) target=n.protein;
@@ -1005,7 +1006,8 @@ function renderDailyLogStats(allRecords){
   const avgProtein=proteinDays.length?Math.round(proteinDays.reduce((a,r)=>a+(r.protein||0),0)/proteinDays.length):0;
   let proteinTarget=0;
   try{
-    const p=JSON.parse(localStorage.getItem(KEYS.USER_PROFILE)||'{}');
+    const rec=await db.get('settings',KEYS.USER_PROFILE);
+    const p=(rec&&rec.value)||{};
     if(typeof computeNutritionTargets==='function'){
       const n=computeNutritionTargets(p);
       if(n && n.protein) proteinTarget=n.protein;
