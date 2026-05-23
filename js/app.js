@@ -149,6 +149,42 @@ document.addEventListener('click',(e)=>{
   });
 }
 
+// V8.4 (P2-#7) — استبدال emoji card icons بـ SVG icons من sprite #iconSprite
+// خريطة من emoji → اسم symbol في الـ sprite
+const ICON_EMOJI_MAP = {
+  '💪':'i-dumbbell', '🏋️':'i-dumbbell', '🏋':'i-dumbbell',
+  '📊':'i-bar-chart', '📈':'i-trending-up',
+  '📅':'i-calendar', '📆':'i-calendar',
+  '⚡':'i-zap', '🔥':'i-zap',
+  '🎯':'i-target',
+  '🔄':'i-refresh', '🔁':'i-refresh',
+  '📐':'i-ruler', '📏':'i-ruler',
+  '👤':'i-user',
+  '📋':'i-clipboard', '📝':'i-clipboard',
+  '💊':'i-pill',
+  '🛡️':'i-shield', '🛡':'i-shield', '🛟':'i-shield',
+  '🏆':'i-award', '🥇':'i-award',
+  '⚙️':'i-settings', '⚙':'i-settings', '🛠':'i-settings', '🛠️':'i-settings',
+  '📖':'i-book', '📚':'i-book',
+  '🍽️':'i-utensils', '🍽':'i-utensils', '🍴':'i-utensils',
+  '🏠':'i-home',
+  '⚠️':'i-alert', '⚠':'i-alert', '🚨':'i-alert',
+  '💗':'i-activity', '❤️':'i-activity',
+  '📸':'i-image', '🖼':'i-image', '🖼️':'i-image',
+  '🌞':'i-sun', '☀️':'i-sun', '🌙':'i-sun', '🧘':'i-sun'
+};
+function iconizeSectionHeaders(){
+  // اقتصر على .ci (card icons في الـ section headers) — لا تُغيّر emojis الـ celebrations
+  document.querySelectorAll('.ci').forEach(el=>{
+    if(el.dataset.iconized) return; // امنع التكرار
+    const txt=(el.textContent||'').trim();
+    const id=ICON_EMOJI_MAP[txt];
+    if(!id) return;
+    el.innerHTML=`<svg class="ci-svg" aria-hidden="true"><use href="#${id}"/></svg>`;
+    el.dataset.iconized='1';
+  });
+}
+
 // V8.4 (P2-#3) — افتح "أول مرة بالجيم" من FAB (نُقل من nav للتقليل من الازدحام)
 function openFirstTimeGuide(){
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('a'));
@@ -750,6 +786,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
   try{
     // V8.4 (P2-#3) — دمج tabs الإرشادية قبل أوّل render
     if(typeof mergeGuideTabs==='function') mergeGuideTabs();
+    // V8.4 (P2-#7) — استبدل emoji card-icons بـ SVG icons (consistency)
+    if(typeof iconizeSectionHeaders==='function') iconizeSectionHeaders();
     await db.open();
     await applyDataMigrations(); // V7 #29 — رحّل مفاتيح settings للأسماء الـ namespaced
     if(typeof bootstrapGyms==='function') await bootstrapGyms(); // V8.4 — أنشئ الجيم الافتراضي + bodyweight

@@ -52,6 +52,68 @@ function escHTML(str){
     .replace(/'/g,'&#039;');
 }
 
+// ============ V8.4 (P2-#6) — MODAL STACK MANAGER ============
+// LIFO stack يدير z-index تلقائياً لتجنّب صراعات الطبقات عند فتح عدّة modals
+// الاستخدام: ModalStack.push(elementOrId) عند الفتح، ModalStack.pop(elementOrId) عند الإغلاق
+// أعلى modal مفتوح يحصل على أعلى z-index. مفيد لمنع layering bugs.
+const ModalStack = (function(){
+  // قاع الـ z-index لأي modal مدفوع للستاك (يبدأ من 10100 ليكون فوق كل العناصر العادية)
+  const BASE_Z = 10100;
+  // قائمة الـ modals المفتوحة بترتيب الفتح (الأخير = أعلى)
+  const stack = [];
+  function _resolve(el){
+    if(!el) return null;
+    if(typeof el === 'string') return document.getElementById(el);
+    return el;
+  }
+  function push(elOrId){
+    const el = _resolve(elOrId);
+    if(!el) return -1;
+    // إذا موجود سابقاً، أزله ثم أضفه للأعلى (re-open)
+    const i = stack.indexOf(el);
+    if(i >= 0) stack.splice(i, 1);
+    stack.push(el);
+    // طبّق z-index: الأول=BASE_Z, الثاني=BASE_Z+10, ...
+    const z = BASE_Z + (stack.length - 1) * 10;
+    el.style.zIndex = String(z);
+    // علّم على body لو فيه modal مفتوح
+    document.body.classList.add('modal-open');
+    return z;
+  }
+  function pop(elOrId){
+    const el = _resolve(elOrId);
+    if(!el) return;
+    const i = stack.indexOf(el);
+    if(i >= 0) stack.splice(i, 1);
+    el.style.zIndex = '';
+    if(stack.length === 0) document.body.classList.remove('modal-open');
+  }
+  function top(){return stack[stack.length-1]||null}
+  function size(){return stack.length}
+  function has(elOrId){const el=_resolve(elOrId);return el?stack.indexOf(el)>=0:false}
+  // اضغط Escape يغلق الـ top modal لو موجود — مع منع تعدد المعالجات
+  if(typeof document !== 'undefined' && !document._modalStackEscapeBound){
+    document._modalStackEscapeBound = true;
+    document.addEventListener('keydown', (e)=>{
+      if(e.key !== 'Escape' || stack.length === 0) return;
+      const t = top();
+      if(!t) return;
+      // ابحث عن close handler (يُمرَّر عبر data-modal-close)
+      const closeFn = t._modalStackCloseFn;
+      if(typeof closeFn === 'function'){
+        e.preventDefault();
+        closeFn();
+      }
+    });
+  }
+  // اربط close handler على modal — يُستدعى عند Escape أو outside-click
+  function bindClose(elOrId, fn){
+    const el = _resolve(elOrId);
+    if(el) el._modalStackCloseFn = fn;
+  }
+  return { push, pop, top, size, has, bindClose, BASE_Z };
+})();
+
 // ============ V8.4 (P1-#2) — CUSTOM CONFIRM MODAL ============
 // بديل أنيق لـ window.confirm() — يحترم theme التطبيق، يدعم RTL، multi-line، أيقونة، خطر/معلومات.
 // الاستخدام:
@@ -96,12 +158,20 @@ function customConfirm(message,opts={}){
     modal.classList.add('show');
     modal.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
+    // V8.4 (P2-#6) — ادفع للستاك ليأخذ أعلى z-index تلقائياً (يحلّ صراع layering مع modals أخرى مفتوحة)
+    if(typeof ModalStack!=='undefined') ModalStack.push(modal);
     // تنظيف معالجات سابقة (لمنع memory leak عند نوافذ متعدّدة)
     if(_confirmActive){_confirmActive()}
     const cleanup=()=>{
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden','true');
-      document.body.style.overflow='';
+      // V8.4 (P2-#6) — إذا فيه modal تحت الـ confirm، لا تشيل scroll lock (يبقى open)
+      if(typeof ModalStack!=='undefined'){
+        ModalStack.pop(modal);
+        if(ModalStack.size()===0) document.body.style.overflow='';
+      }else{
+        document.body.style.overflow='';
+      }
       okBtn.onclick=null;
       cancelBtn.onclick=null;
       modal.onclick=null;

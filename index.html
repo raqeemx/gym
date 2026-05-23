@@ -17,10 +17,62 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- V8.4 (P2-#5) — قلّلنا أوزان الخطوط من 17 لـ 10 (400/600/700/800 لـ Rubik و Outfit؛ 400/700 لـ JetBrains Mono) -->
+<!-- preconnect لتسريع DNS handshake للخطوط -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+
+<!-- V8.4 (P2-#7) — SVG icon sprite (Lucide-style outline icons). يُحقن في .ci (card icons) بدل emojis لـ visual consistency -->
+<svg xmlns="http://www.w3.org/2000/svg" id="iconSprite" style="display:none" aria-hidden="true">
+  <defs>
+    <!-- Dumbbell (workout/training) -->
+    <symbol id="i-dumbbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5L17.5 17.5"/><path d="M21 21L20 20"/><path d="M3 3L4 4"/><path d="M3.5 3.5L7.5 7.5L4 11L7 14L3 18"/><path d="M20.5 20.5L16.5 16.5L20 13L17 10L21 6"/></symbol>
+    <!-- Bar chart (progress/analytics) -->
+    <symbol id="i-bar-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></symbol>
+    <!-- Trending up -->
+    <symbol id="i-trending-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+    <!-- Calendar -->
+    <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+    <!-- Zap (energy/quick) -->
+    <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <!-- Target -->
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <!-- Refresh / cycle (substitutions) -->
+    <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+    <!-- Ruler (measurements) -->
+    <symbol id="i-ruler" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 8.7L8.7 21.3a2.4 2.4 0 0 1-3.4 0L2.7 18.7a2.4 2.4 0 0 1 0-3.4L15.3 2.7a2.4 2.4 0 0 1 3.4 0l2.6 2.6a2.4 2.4 0 0 1 0 3.4z"/><path d="M7.5 10.5l2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/></symbol>
+    <!-- User -->
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <!-- Clipboard (notes) -->
+    <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></symbol>
+    <!-- Pill (supplements) -->
+    <symbol id="i-pill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5L20 11a4.95 4.95 0 0 0-7-7L3.5 13.5A4.95 4.95 0 0 0 10.5 20.5z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></symbol>
+    <!-- Shield (safety) -->
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <!-- Award (achievements) -->
+    <symbol id="i-award" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+    <!-- Settings -->
+    <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <!-- Book (guide) -->
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+    <!-- Utensils (food) -->
+    <symbol id="i-utensils" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></symbol>
+    <!-- Home -->
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+    <!-- Alert triangle -->
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <!-- Activity (heart pulse) -->
+    <symbol id="i-activity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol>
+    <!-- Image (photos) -->
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+    <!-- Sun (rest/recovery) -->
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></symbol>
+  </defs>
+</svg>
 
 <div class="hero" id="heroEl">
   <button class="hero-toggle" id="heroToggle" onclick="toggleHero()" title="طي/فتح" aria-label="طي أو فتح الترحيب">−</button>
@@ -474,66 +526,12 @@
     <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>القفل الأصفر:</strong> بعض الأجهزة فيها ذراع أمان أصفر — تأكد إنه مفتوح قبل ما تبدأ (اسأل لو ما عرفت).</div></div>
   </div>
 
+  <!-- V8.4 (P2-#4) — بطاقة شرح ٢٥ تمرين نُقلت لـ EXERCISE_FORM_NOTES (modal per-exercise)؛ هذا التنبيه فقط -->
   <div class="card">
-    <div class="ch"><div class="ci">📖</div><div><div class="ct">شرح كل جهاز — كيف تستخدمه خطوة بخطوة</div></div></div>
-
-    <div class="tip tr" style="margin-bottom:14px"><div class="ti">🔴</div><div class="tt"><strong>— أجهزة الدفع (صدر + أكتاف + ترايسبس) —</strong></div></div>
-
-    <div class="tip t0"><div class="ti">1</div><div class="tt"><strong>Chest Press — ضغط صدر</strong><br>• اجلس وظهرك ملصوق بالمسند بالكامل<br>• امسك المقابض — لازم تكون بمستوى صدرك (عدّل المقعد لو مو بالمستوى)<br>• ادفع للأمام لين ذراعك تمتد (لكن لا تقفل الكوع 100%)<br>• ارجع ببطء — <b>هذا الجزء الأهم، لا ترمي الوزن</b><br>• <b>أول وزن تجربه: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">2</div><div class="tt"><strong>Pectoral Fly — تفتيح صدر</strong><br>• اجلس وظهرك ملصوق. امسك الذراعين اللي على الجوانب<br>• جيب الذراعين لقدام لين يلتقون أمام صدرك — حس بالضغط على الصدر<br>• ارجع ببطء لين تحس تمدد في صدرك (لكن لا تفتح أكثر من اللازم أول مرة)<br>• <b>أول وزن: 5-10 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">3</div><div class="tt"><strong>Shoulder Press — ضغط أكتاف</strong><br>• اجلس. المقابض لازم تكون بمستوى أذنك تقريباً<br>• ادفع لفوق لين ذراعك تمتد (لا تقفل الكوع)<br>• انزل ببطء لين المقبض يرجع بمستوى أذنك<br>• <b>أول وزن: 5-10 كجم</b> — الكتف عضلة صغيرة فابدأ خفيف</div></div>
-
-    <div class="tip t0"><div class="ti">4</div><div class="tt"><strong>Delts Machine — كتف جانبي</strong><br>• اجلس والوسائد على ذراعك من الخارج (فوق الكوع)<br>• ارفع ذراعك للجانب لين يوصل مستوى الكتف<br>• انزل ببطء — <b>لا ترفع أعلى من الكتف</b><br>• <b>أول وزن: 5 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">5</div><div class="tt"><strong>Arm Extension — ترايسبس</strong><br>• اجلس والكوع على الوسادة. امسك المقبض<br>• افرد ذراعك بالكامل لتحت<br>• ارجع ببطء — <b>الكوع ثابت ما يتحرك</b>، بس الساعد يتحرك<br>• <b>أول وزن: 5-10 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">6</div><div class="tt"><strong>Dips على Kneeling Easy Chin Dip (غمس بمساعدة)</strong><br>• اركب الجهاز واركع على الوسادة السفلية — هذي تشيل جزء من وزنك<br>• امسك المقابض الجانبية وافرد ذراعك لفوق<br>• انزل ببطء لين الكوع يوصل 90 درجة — <b>لا تنزل أعمق</b><br>• ادفع نفسك لفوق<br>• <b>ابدأ بأثقل مساعدة (أخف حِمل عليك)</b> وكل أسبوع قلّل المساعدة شوي<br>• <b>متى ما قدرت تسويها بدون مساعدة = انتقل لمحطة Chin Up/Dip العادية</b></div></div>
-
-    <div class="tip tb" style="margin-top:14px;margin-bottom:14px"><div class="ti">🔵</div><div class="tt"><strong>— أجهزة السحب (ظهر + بايسبس) —</strong></div></div>
-
-    <div class="tip t0"><div class="ti">7</div><div class="tt"><strong>Lat Machine — سحب عمودي</strong><br>• اجلس وثبّت فخذك تحت الوسادة عشان ما ترتفع<br>• امسك البار العريض من فوق بقبضة أعرض من كتفك<br>• اسحب البار لصدرك — <b>تخيّل إنك تحط كوعك في جيبك</b><br>• ارجع ببطء — لا تترك الوزن يرجع بسرعة<br>• <b>أول وزن: 15-20 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">8</div><div class="tt"><strong>Low Row — سحب أفقي</strong><br>• اجلس وصدرك ملصوق بالوسادة الأمامية<br>• امسك المقابض واسحب لصدرك — حاول تجمع لوحين ظهرك مع بعض<br>• ارجع ببطء<br>• <b>أول وزن: 15-20 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">9</div><div class="tt"><strong>Vertical Traction — سحب عمودي (بديل)</strong><br>• مثل Lat Machine لكن بمقابض مستقلة. اسحب لتحت لين المقبض بمستوى كتفك<br>• <b>أول وزن: 15-20 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">10</div><div class="tt"><strong>Pulley — كابل متعدد</strong><br>• جهاز الكابل — يُستخدم بأوضاع كثيرة<br>• <b>للسحب الأفقي:</b> اجلس على المقعد، امسك المقبض واسحبه لبطنك<br>• <b>للبايسبس:</b> قف أمام الكابل السفلي، امسك البار القصير واثنِ ذراعك لفوق<br>• <b>أول وزن: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">11</div><div class="tt"><strong>Upper Back — أعلى الظهر</strong><br>• اجلس وصدرك على الوسادة. امسك المقابض<br>• اسحب للخلف — ركّز على <b>جمع لوحين الظهر</b> مع بعض<br>• <b>أول وزن: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">12</div><div class="tt"><strong>Reverse Fly — خلف الكتف</strong><br>• اجلس ووجهك مقابل الجهاز (عكس Pectoral Fly). صدرك على الوسادة<br>• ادفع الذراعين للخلف — تخيّل إنك تفتح صدرك<br>• <b>أول وزن: 5 كجم</b> — عضلة صغيرة جداً</div></div>
-
-    <div class="tip t0"><div class="ti">13</div><div class="tt"><strong>Arm Curl — بايسبس</strong><br>• اجلس والكوع على الوسادة. امسك المقبض من تحت<br>• اثنِ ذراعك لفوق — <b>الكوع ثابت تماماً</b><br>• انزل ببطء — لا تفرد ذراعك 100% في الأسفل عشان تحمي المفصل<br>• <b>أول وزن: 5-10 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">14</div><div class="tt"><strong>Chin Ups على Kneeling Easy Chin Dip (عقلة بمساعدة)</strong><br>• اركب الجهاز واركع على الوسادة السفلية<br>• امسك البار العلوي بقبضة معكوسة (كفّك نحوك) بعرض الكتف<br>• اسحب نفسك لفوق لين ذقنك يعدّي البار<br>• انزل ببطء وبتحكم<br>• <b>ابدأ بأثقل مساعدة</b> وكل أسبوع قلّلها تدريجياً<br>• <b>الهدف:</b> خلال 4-8 أسابيع تقدر تسوي العقلة بدون مساعدة على المحطة العادية</div></div>
-
-    <div class="tip tg" style="margin-top:14px;margin-bottom:14px"><div class="ti">🟢</div><div class="tt"><strong>— أجهزة الأرجل والبطن —</strong></div></div>
-
-    <div class="tip t0"><div class="ti">15</div><div class="tt"><strong>Leg Press — ضغط أرجل</strong><br>• اجلس وحط قدمك على المنصة بعرض الكتف<br>• ادفع المنصة لين رجلك تمتد (لا تقفل الركبة 100%)<br>• ارجع ببطء لين الركبة توصل 90 درجة — <b>لا تنزل أعمق من كذا</b><br>• <b>أول وزن: 40-50 كجم</b> — الأرجل أقوى عضلات الجسم<br>• <b>للسمانة:</b> نفس الجهاز، بس حط مقدمة قدمك بس على حافة المنصة وادفع بأصابع قدمك فقط</div></div>
-
-    <div class="tip t0"><div class="ti">16</div><div class="tt"><strong>Leg Extension — فخذ أمامي</strong><br>• اجلس والوسادة على قدمك فوق الكاحل<br>• افرد رجلك لقدام لين تمتد<br>• ارجع ببطء — <b>هذا الجزء اللي يبني العضلة</b><br>• <b>أول وزن: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">17</div><div class="tt"><strong>Prone Leg Curl — فخذ خلفي</strong><br>• استلقِ على بطنك (وجهك لتحت). الوسادة على كاحلك من الخلف<br>• اثنِ رجلك وارفع الوزن لمؤخرتك<br>• انزل ببطء<br>• <b>أول وزن: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">18</div><div class="tt"><strong>Abductor — فتح الأرجل</strong><br>• اجلس والوسائد على ركبتك من الخارج<br>• افتح رجلك للخارج ضد المقاومة<br>• ارجع ببطء<br>• <b>أول وزن: 15-20 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">19</div><div class="tt"><strong>Adductor — ضم الأرجل</strong><br>• عكس اللي قبله — الوسائد على ركبتك من الداخل<br>• ضم رجلك للداخل<br>• <b>أول وزن: 15-20 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">20</div><div class="tt"><strong>Lower Back — أسفل الظهر</strong><br>• اجلس والوسادة على ظهرك. ثبّت قدمك<br>• ادفع للخلف لين جسمك يصير مستقيم — <b>لا تحني ظهرك أكثر من اللازم</b><br>• ارجع ببطء<br>• <b>أول وزن: 10-15 كجم</b> — خفّف على ظهرك أول فترة</div></div>
-
-    <div class="tip t0"><div class="ti">21</div><div class="tt"><strong>Rotary Torso — خصر</strong><br>• اجلس وثبّت رجلك. امسك المقابض<br>• لف جسمك العلوي يمين — ارجع للوسط — لف يسار<br>• حركة بطيئة ومتحكمة — <b>لا تلف بسرعة أبداً</b><br>• <b>أول وزن: 10 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">22</div><div class="tt"><strong>Abdominal Crunch — بطن</strong><br>• اجلس وامسك المقابض فوق. ثبّت قدمك<br>• انحنِ لقدام — حس بعضلة البطن تنضغط<br>• ارجع ببطء — <b>لا ترجع بالكامل، خل التوتر على البطن</b><br>• <b>أول وزن: 10-15 كجم</b></div></div>
-
-    <div class="tip t0"><div class="ti">23</div><div class="tt"><strong>Hanging Leg Raise — بطن سفلي</strong><br>• قف على محطة Chin Up/Dip. اسند ظهرك على المسند والكوع على الوسادات<br>• ارفع ركبك لصدرك ببطء<br>• انزل ببطء — <b>لا تأرجح جسمك</b><br>• <b>بدون وزن — بس وزن جسمك</b></div></div>
-
-    <div class="tip t0"><div class="ti">24</div><div class="tt"><strong>Skillrow — تجديف (إحماء)</strong><br>• اجلس وثبّت قدمك في المكان المخصص<br>• امسك المقبض — ادفع برجلك أولاً، بعدين اسحب بيدك لبطنك<br>• ارجع ببطء — رجلك ترجع أولاً ثم يدك<br>• <b>5 دقائق بسرعة مريحة</b> = إحماء مثالي</div></div>
-
-    <div class="tip t0"><div class="ti">25</div><div class="tt"><strong>Crossover Cables — كابل كروس (بديل لـ Pectoral Fly)</strong><br>• قف بين العمودين. اضبط الكابل على ارتفاع الكتف<br>• امسك المقبضين وخطوة وحدة للأمام<br>• جيب يديك لقدام لين يلتقون أمام صدرك — حس بالضغط على الصدر<br>• ارجع ببطء وافتح صدرك<br>• <b>ميزته عن Pectoral Fly:</b> حرية حركة أكبر وتمدد أعمق للصدر<br>• <b>أول وزن: 5 كجم لكل جانب</b></div></div>
+    <div class="ch"><div class="ci">📖</div><div><div class="ct">شرح كل تمرين</div><div class="cs">اضغط زر ℹ️ بجانب اسم التمرين في تبويب التمارين لشرح كل جهاز</div></div></div>
+    <div class="tip tb"><div class="ti">💡</div><div class="tt">شرح كل التمارين الـ ٢٥ صار في modal مستقل لكل تمرين. روح لـ <b>💪 التمارين</b> → اضغط زر <b>ℹ️</b> بجانب اسم أي تمرين تبي تتعلّمه. أسرع وأنظف من قائمة طويلة.</div></div>
+    <div style="text-align:center;margin-top:10px"><button type="button" class="bm-save" style="font-size:11.5px;padding:9px 18px" onclick="document.querySelector('.nb[data-t=\"1\"]').click();window.scrollTo({top:document.querySelector('.nav').offsetTop,behavior:'smooth'})">💪 افتح تبويب التمارين</button></div>
   </div>
-
   <div class="card">
     <div class="ch"><div class="ci">📅</div><div><div class="ct">خطة أول أسبوعين</div><div class="cs">الأسبوع 1 و 2 مختلفين عن الباقي</div></div></div>
     <div class="tip tg"><div class="ti">📌</div><div class="tt"><strong>الأسبوع الأول:</strong><br>• نفس التمارين المكتوبة في البرنامج بالضبط<br>• <b>كل الأوزان: أخف وزن ممكن</b><br>• <b>ركّز 100% على الأسلوب:</b> الحركة صحيحة؟ تحس بالعضلة المستهدفة؟ التنفس صح؟<br>• طبيعي تحس بألم عضلي بعد أول يومين — هذا اسمه DOMS وطبيعي 100% ويروح خلال 3-4 أيام<br>• <b>لا توقف بسبب الألم العضلي</b> — سخّن زين والألم يخف أثناء التمرين</div></div>

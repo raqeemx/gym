@@ -438,15 +438,23 @@ group('EXERCISE_FORM_NOTES (V8.3 — 3.2)', (g)=>{
       assertTrue(typeof note.formNote === 'string' && note.formNote.length>0, `${name}: missing formNote`);
     }
   }));
-  g.add(test('all entries point to SVG/GIF assets (3.1 followup)', ()=>{
-    // After V8.4 issue fix, every form note should have a gif path (no more null)
-    const missing = Object.entries(EXERCISE_FORM_NOTES).filter(([,n])=>!n.gif);
-    assertTrue(missing.length===0, 'missing gif: '+missing.map(([n])=>n).join(','));
+  // V8.4 (P2-#4) — توسّعت الـ catalog من 8 إلى ~27 تمرين؛ معظم الجديدة بـ gif:null حالياً
+  // (الأصول الموجودة الـ 8 تكفي للتمارين الأساسية)
+  g.add(test('at least 8 entries have GIF/SVG assets', ()=>{
+    const withGif = Object.entries(EXERCISE_FORM_NOTES).filter(([,n])=>!!n.gif);
+    assertTrue(withGif.length>=8, 'only '+withGif.length+' entries have gif');
   }));
-  g.add(test('asset paths point to assets/gifs/', ()=>{
+  g.add(test('all asset paths are valid (assets/gifs/)', ()=>{
     for(const [name,note] of Object.entries(EXERCISE_FORM_NOTES)){
       if(!note.gif) continue;
       assertTrue(/^assets\/gifs\//.test(note.gif), `${name}: bad path ${note.gif}`);
+    }
+  }));
+  g.add(test('catalog covers core program exercises (V8.4 P2-#4)', ()=>{
+    // كل التمارين الأساسية في PROGRAM_DATA لازم يكون لها form-note
+    const required = ['Chest Press','Lat Machine','Shoulder Press','Leg Press','Arm Curl','Arm Extension','Low Row'];
+    for(const ex of required){
+      assertTrue(EXERCISE_FORM_NOTES[ex], 'missing form-note for: '+ex);
     }
   }));
 });

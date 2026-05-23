@@ -17,6 +17,31 @@ let EFFECTIVE_PROGRAM=null;
 // الحقول التي تحوي HTML مقصود (finishTip, planB, banner.text, dayIntro.text) تبقى بدون escape
 function _pre(s){return (typeof escHTML==='function')?escHTML(s):String(s==null?'':s)}
 
+// V8.4 (P2-#8) — قسّم step.info إلى سطرين:
+//   • السطر الأوّل (.si-main): الرقم/الوزن/التكرار — الأكثر أهمية أثناء التمرين (font أكبر، أبيض)
+//   • السطر الثاني (.si-sub): النصائح/الانتقال — أقل تباينًا، خط أصغر
+// قواعد التقسيم: الفصل عند علامة "·" — لأن المعلومات الرقمية أولاً في PROGRAM_DATA
+function _splitStepInfo(info){
+  if(info==null) return '';
+  const s=String(info);
+  // ابحث عن "·" أول (الفاصل الذي يفصل الأرقام عن النص الإرشادي)
+  const idx=s.indexOf('·');
+  if(idx<0){
+    // لا فاصل — كلها سطر واحد
+    return `<div class="si-main">${_pre(s)}</div>`;
+  }
+  // قسّم: أول جزءين أرقام (مثلاً "٨-١٠ تكرار · ١٠ كجم"), الباقي إرشادي
+  // أحياناً تظهر "·" مرتين أو أكثر — أول اثنتين أرقام عادةً
+  const parts=s.split('·').map(p=>p.trim());
+  if(parts.length<=2){
+    return `<div class="si-main">${_pre(parts.join(' · '))}</div>`;
+  }
+  // 3+ أجزاء: أول جزءين main، الباقي sub
+  const main=parts.slice(0,2).join(' · ');
+  const sub=parts.slice(2).join(' · ');
+  return `<div class="si-main">${_pre(main)}</div><div class="si-sub">${_pre(sub)}</div>`;
+}
+
 async function renderProgram(){
   const container=document.getElementById('programContainer');
   if(!container){console.warn('programContainer not found — skipping renderProgram');return}
@@ -127,7 +152,7 @@ function renderStep(step,counter){
            `<div class="step-num">⏱</div>`+
            `<div class="step-body">`+
            `<div class="step-name">${_pre(step.name)}</div>`+
-           `<div class="step-info">${_pre(step.info)}</div>`+
+           `<div class="step-info">${_splitStepInfo(step.info)}</div>`+
            `</div></div>`;
   }
   // ستيب تدريبي — عدّاد متسلسل
@@ -146,7 +171,7 @@ function renderStep(step,counter){
          `<div class="step-num">${counter.n}</div>`+
          `<div class="step-body">`+
          `<div class="step-name">${_pre(step.name)}</div>`+
-         `<div class="step-info">${_pre(step.info)}</div>`+
+         `<div class="step-info">${_splitStepInfo(step.info)}</div>`+
          `</div></div>`;
 }
 
