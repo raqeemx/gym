@@ -1303,6 +1303,11 @@ async function saveSet(btn){
       date:now.split('T')[0],
       isPR:false,prType:null
     };
+    // V9.2 (B.8) — سجّل زمن الراحة الفعلي قبل add (مرفق بـ setRec)
+    if(window.smartRest && typeof window.smartRest.recordActualRest==='function'){
+      window.smartRest.recordActualRest(setRec);
+    }
+
     const setId=await db.add('sets',setRec);
     setRec.id=setId;
 
@@ -1327,6 +1332,10 @@ async function saveSet(btn){
     }
     // V9.0 (P7) — أبطل cache الـ near-PR لهذا التمرين (الـ stats تغيّرت)
     if(typeof _invalidateNearPRCache==='function') _invalidateNearPRCache(exName);
+    // V9.2 (B.8) — وضع علامة الـ save لتتبع زمن الراحة للسيت القادم
+    if(window.smartRest && typeof window.smartRest.markSaveTimestamp==='function'){
+      window.smartRest.markSaveTimestamp();
+    }
     await db.put('settings',{key:KEYS.CURRENT_SESSION,value:currentSession});
     updateSessionUI();
 

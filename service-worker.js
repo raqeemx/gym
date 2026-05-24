@@ -26,7 +26,7 @@ const ASSETS = [
   './js/smart-recovery.js',
   './js/auto-backup.js',
   './js/gyms.js',
-  // V9.0/V9.1 additions
+  // V9.0/V9.1/V9.2 additions
   './js/pr-detection.js',
   './js/dashboard.js',
   './js/weekly-review.js',
@@ -34,6 +34,10 @@ const ASSETS = [
   './js/program-templates.js',
   './js/foods-database.js',
   './js/nutrition.js',
+  './js/smart-next-workout.js',
+  './js/streak-page.js',
+  './js/voice-input.js',
+  './js/auto-rest.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   // V8.4 — Exercise demonstration assets (form notes modal)

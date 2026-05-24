@@ -5,6 +5,81 @@
 
 ---
 
+## [V9.2 — Smart Next + Timeline + Streak Page + Voice + Auto-Rest] — 2026-05-24
+
+تنفيذ ميزات UX المتبقية من المراجعة (B.7-B.9 + C.10 + C.12).
+
+### ✨ جديد
+
+#### B.7 — Smart Next Workout
+- **محرك توصيات** ([`js/smart-next-workout.js`](js/smart-next-workout.js)) يحلل:
+  - آخر مرة استهدفت كل مجموعة عضلية (chest/back/shoulders/quads/hams/glutes/biceps/triceps/calves/core)
+  - أيام التعافي المطلوبة لكل عضلة (Schoenfeld 2016: 48-72h)
+  - يقترح اليوم الذي عضلاته الأقدم تدريباً (longest recovery)
+- **Dashboard hero يستخدمه**:
+  - لو اليوم في الجدول → اقتراحه (السابق)
+  - لو يوم راحة + smart suggestion عاجل → عرضه كـ option
+  - لو لا شيء واضح → استبدال «يوم حر» بـ smart recommendation (variant بنفسجي)
+- النص يشرح السبب: "آخر تدريب لـ <b>الصدر</b> كان قبل <b>٤ أيام</b>"
+
+#### C.12 — Body Composition Timeline
+- **Summary cards** لكل قياس تعرض:
+  - القيمة الحالية + الـ delta منذ أول قياس مسجّل (+٢.٥ سم)
+  - تلوين ذكي: أخضر للزيادة، أحمر للنقص (معكوس للخصر — النقص أفضل)
+- **Chart تفاعلي** (Chart.js lazy-loaded) — كل قياس له tab منفصل (الذراع/الصدر/الكتف/الفخذ/الخصر/الوزن)
+- "التطور خلال X يوم من Y إلى Z" — context زمني واضح
+- يظهر تلقائياً في tab «📏 قياسات الجسم» بمجرد تسجيل ٢ قياسات
+
+#### C.10 — Streak Page (Duolingo-style)
+- **Modal بارز** ([`js/streak-page.js`](js/streak-page.js)) يفتح من Dashboard streak block:
+  - **شعلة كبيرة** (54px) + رقم streak ضخم (64px)
+  - **نص تحفيزي ديناميكي**: «٣ أيام حتى تفتح أسبوع ⭐»
+  - **3 stat cells**: أفضل streak، جلسات الشهر، إجمالي الجلسات
+  - **٦ Milestones** (3/7/14/30/60/100 يوم) — مفتوحة مع أيقونة ملوّنة أو مقفلة بـ grayscale
+  - **Calendar ٤٢ يوم** (٦×٧) مع تظليل أيام التدريب + علامة "اليوم"
+
+#### B.9 — Voice Input
+- **زر 🎤** بجانب زر «حفظ» في كل track-input ([`js/voice-input.js`](js/voice-input.js))
+- **Listening overlay** يستمع لـ ٥-٧ ثوانٍ مع animations
+- **Parser عربي ذكي** يفهم:
+  - أرقام لاتينية: «20 5» → weight=20, reps=5
+  - أرقام عربية منطوقة: «عشرين خمسة» / «خمسة وعشرين تكرار عشرة»
+  - دلائل: «كيلو/كجم» للوزن، «تكرار/مرة» للتكرار
+  - ٣٠+ كلمة عربية للأرقام (واحد→مئة)
+- **Sanity checks**: weight 0-500، reps integer 0-100
+- **Graceful degradation**: يُخفى الزر في Firefox (لا يدعم Web Speech)
+- **MutationObserver**: re-inject الزر بعد تبديل البرامج
+
+#### B.8 — Smart Rest Detection
+- **تتبع زمن الراحة الفعلي** ([`js/auto-rest.js`](js/auto-rest.js)):
+  - يحفظ `actualRestSeconds` لكل setRec (الفرق بين save السابق و save الحالي)
+  - متاح لاحقاً لتحليل: «متوسط راحتك ١٠٥ ث (مستهدف ٦٠)»
+- **Page Visibility resume toast**:
+  - عند العودة للتاب بعد انتهاء الراحة بـ ٣٠+ ثانية، toast لطيف: «✓ راحتك انتهت قبل X ث — جاهز»
+  - يحترم الوقت الفعلي للغياب (يتطلب ٢٠ ث+ غياب لتجنب الـ false positives)
+- **Idle hint**:
+  - بعد ٣ دقائق من آخر save بدون فعل، hint خفيف فوق track-input التالي
+  - يختفي تلقائياً عند بدء الإدخال
+
+### 📁 ملفات جديدة (٥)
+- `js/smart-next-workout.js` (~170 سطر)
+- `js/streak-page.js` (~170 سطر)
+- `js/voice-input.js` (~290 سطر)
+- `js/auto-rest.js` (~125 سطر)
+
+### ✏️ ملفات مُعدّلة
+- `js/dashboard.js` — heroBlock يقبل smartReco + streak block زر قابل للضغط
+- `js/progress.js` — `renderBodyTimeline` + `_renderBmtChart`
+- `js/session.js` — استدعاء `smartRest.recordActualRest` + `markSaveTimestamp` بعد save
+- `index.html` — `bmTimelineWrap` + ٤ script tags جديدة
+- `css/styles.css` — ~٢٥٠ سطر CSS جديد (timeline + streak page + voice + idle hint + hero variants)
+- `service-worker.js` — تضمين الـ ٤ ملفات الجديدة
+
+### 🛡️ Service Worker
+- نسخة جديدة: `bulkmode-v9-2-0`
+
+---
+
 ## [V9.1 — برامج متعددة + تتبع تغذية + مكتبة Media] — 2026-05-24
 
 تنفيذ ميزات Core الناقصة من مراجعة PM (A.1-A.4).

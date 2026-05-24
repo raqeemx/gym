@@ -1048,8 +1048,144 @@ async function renderBodyMetrics(){
     });
   }
 
+  // V9.2 (C.12) — Body Composition Timeline (chart + summary)
+  renderBodyTimeline(all);
+
   // عرض الجدول
   renderBodyMetricsHistory(all);
+}
+
+// V9.2 (C.12) — Body Composition Timeline
+// يعرض: summary cards (delta ٣٠ يوم لكل قياس) + chart لتطور كل قياس عبر الزمن
+function renderBodyTimeline(records){
+  const wrap=document.getElementById('bmTimelineWrap');
+  if(!wrap) return;
+  if(!records || records.length<2){
+    wrap.innerHTML=`<div class="bm-timeline-empty">📊 سجّل ٢ قياسات على الأقل لرؤية التطور البصري.</div>`;
+    return;
+  }
+  // sort ascending (oldest first) للحساب
+  const asc=[...records].sort((a,b)=>a.date.localeCompare(b.date));
+  const first=asc[0];
+  const last=asc[asc.length-1];
+  const fields=[
+    {k:'arm',       lbl:'الذراع',  unit:'سم', invertGood:false, icon:'💪'},
+    {k:'chest',     lbl:'الصدر',   unit:'سم', invertGood:false, icon:'🫁'},
+    {k:'shoulder',  lbl:'الكتف',   unit:'سم', invertGood:false, icon:'📐'},
+    {k:'thigh',     lbl:'الفخذ',   unit:'سم', invertGood:false, icon:'🦵'},
+    {k:'waist',     lbl:'الخصر',   unit:'سم', invertGood:true,  icon:'⏳'},
+    {k:'bodyWeight',lbl:'الوزن',   unit:'كجم',invertGood:false, icon:'⚖️'}
+  ];
+  const daysSpan=Math.max(1,Math.round((new Date(last.date)-new Date(first.date))/86400000));
+
+  // Summary cards
+  const cardsHtml=fields.map(f=>{
+    const firstV=first[f.k], lastV=last[f.k];
+    if(firstV==null||lastV==null){
+      return `<div class="bmt-card bmt-card-empty">
+        <div class="bmt-icon">${f.icon}</div>
+        <div class="bmt-lbl">${f.lbl}</div>
+        <div class="bmt-val">—</div>
+      </div>`;
+    }
+    const delta=Math.round((lastV-firstV)*10)/10;
+    let cls='flat';
+    if(delta!==0){
+      const isUp=delta>0;
+      cls=isUp?(f.invertGood?'down':'up'):(f.invertGood?'up':'down');
+    }
+    const deltaTxt=delta===0?'بدون تغيير':(delta>0?'+'+delta:String(delta))+' '+f.unit;
+    return `<div class="bmt-card bmt-card-${cls}">
+      <div class="bmt-icon">${f.icon}</div>
+      <div class="bmt-lbl">${f.lbl}</div>
+      <div class="bmt-val">${lastV}<small>${f.unit}</small></div>
+      <div class="bmt-delta">${deltaTxt}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div class="bmt-head">
+      <h3>📊 التطور خلال ${daysSpan} يوم</h3>
+      <small>من ${fmtDate(first.date)} → ${fmtDate(last.date)}</small>
+    </div>
+    <div class="bmt-cards">${cardsHtml}</div>
+    <div class="bmt-chart-wrap">
+      <div class="bmt-chart-tabs" id="bmtChartTabs"></div>
+      <canvas id="bmtChart" height="200"></canvas>
+    </div>
+  `;
+  // tabs لاختيار القياس المعروض
+  const tabs=document.getElementById('bmtChartTabs');
+  if(tabs){
+    tabs.innerHTML=fields.map((f,i)=>{
+      const has=asc.some(r=>r[f.k]!=null);
+      const cls=i===0?' active':'';
+      const disabled=has?'':' disabled';
+      return `<button type="button" class="bmt-tab${cls}${disabled}" data-key="${f.k}" data-lbl="${f.lbl}" data-unit="${f.unit}" ${has?'':'disabled'}>${f.icon} ${f.lbl}</button>`;
+    }).join('');
+    tabs.querySelectorAll('.bmt-tab').forEach(b=>{
+      b.onclick=()=>{
+        tabs.querySelectorAll('.bmt-tab').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        _renderBmtChart(asc, b.dataset.key, b.dataset.lbl, b.dataset.unit);
+      };
+    });
+    // اعرض أول حقل له بيانات
+    const firstField=fields.find(f=>asc.some(r=>r[f.k]!=null));
+    if(firstField){
+      tabs.querySelector(`.bmt-tab[data-key="${firstField.k}"]`)?.click();
+    }
+  }
+}
+
+let _bmtChartInstance=null;
+async function _renderBmtChart(records, key, label, unit){
+  const canvas=document.getElementById('bmtChart');
+  if(!canvas) return;
+  if(typeof Chart==='undefined'){
+    // lazy-load Chart.js مثل بقية الـ charts
+    if(typeof loadChart==='function') await loadChart();
+  }
+  if(typeof Chart==='undefined') return;
+  const points=records.filter(r=>r[key]!=null).map(r=>({x:r.date,y:r[key]}));
+  if(_bmtChartInstance){_bmtChartInstance.destroy();_bmtChartInstance=null}
+  const isLight=document.documentElement.dataset.theme==='light';
+  const txColor=isLight?'#454A5A':'#9CA4B5';
+  _bmtChartInstance=new Chart(canvas.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:points.map(p=>p.x),
+      datasets:[{
+        label:`${label} (${unit})`,
+        data:points.map(p=>p.y),
+        borderColor:'#D4A853',
+        backgroundColor:'rgba(212,168,83,.12)',
+        borderWidth:2.5,
+        tension:.25,
+        pointRadius:4,
+        pointBackgroundColor:'#EDCA7A',
+        pointBorderColor:'#B08A3A',
+        pointBorderWidth:1.5,
+        fill:true
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:(ctx)=>` ${ctx.parsed.y} ${unit}`,
+            title:(items)=>items[0].label
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:txColor,maxRotation:0,autoSkip:true,maxTicksLimit:6}, grid:{display:false}},
+        y:{ticks:{color:txColor}, grid:{color:'rgba(255,255,255,.04)'}}
+      }
+    }
+  });
 }
 
 function renderBodyMetricsHistory(records){

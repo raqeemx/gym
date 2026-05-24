@@ -108,7 +108,8 @@
   }
 
   // ---------- render ----------
-  function _heroBlock(todayProg,activeSession,missedDay){
+  // V9.2 (B.7) — heroBlock يقبل smartReco كاقتراح ذكي بديل/مكمّل
+  function _heroBlock(todayProg,activeSession,missedDay,smartReco){
     const dayName=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][_todayWd()];
     if(activeSession){
       return `
@@ -119,7 +120,17 @@
           <button class="dh-cta" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
         </div>`;
     }
+    // "يوم حر" — استخدم smart recommendation لو متاح
     if(!todayProg){
+      if(smartReco && smartReco.day){
+        return `
+          <div class="dash-hero dash-hero-smart">
+            <div class="dh-tag">${E(dayName)} · اقتراح ذكي</div>
+            <div class="dh-title">${E(smartReco.day.type||smartReco.day.label)}</div>
+            <div class="dh-sub">${smartReco.reason}</div>
+            <button class="dh-cta" onclick="switchToTab(1)">💪 ابدأ ${E(smartReco.day.type||'الجلسة')}</button>
+          </div>`;
+      }
       return `
         <div class="dash-hero">
           <div class="dh-tag">${E(dayName)}</div>
@@ -129,13 +140,19 @@
         </div>`;
     }
     if(todayProg.isRest||todayProg.type==='REST'){
-      const missedHint=missedDay?`<div class="dh-missed">⚠️ فاتك يوم ${E(missedDay.type)} — يمكنك تعويضه اليوم.</div>`:'';
+      // أولوية: missed > smart > رسالة راحة عادية
+      let extraBlock='';
+      if(missedDay){
+        extraBlock=`<div class="dh-missed">⚠️ فاتك يوم ${E(missedDay.type)} — يمكنك تعويضه اليوم.</div>`;
+      }else if(smartReco && smartReco.day && smartReco.urgency!=='low'){
+        extraBlock=`<div class="dh-missed">💡 لو تبي تتمرن: <b>${E(smartReco.day.type||smartReco.day.label)}</b> — ${smartReco.reason}</div>`;
+      }
       return `
         <div class="dash-hero dash-hero-rest">
           <div class="dh-tag">${E(dayName)} · 🧘 راحة</div>
           <div class="dh-title">${E(todayProg.label||'يوم راحة نشطة')}</div>
           <div class="dh-sub">جسمك يبني العضل اليوم — لا تفوّت وجباتك ونومك.</div>
-          ${missedHint}
+          ${extraBlock}
           <button class="dh-cta dh-cta-secondary" onclick="switchToTab(1)">شاهد البرنامج</button>
         </div>`;
     }
@@ -154,14 +171,15 @@
     const cur=streak&&streak.current||0;
     const best=streak&&streak.best||0;
     const fire=cur>=7?'🔥🔥🔥':cur>=3?'🔥🔥':cur>=1?'🔥':'•';
+    // V9.2 (C.10) — قابل للضغط: يفتح Streak Page التفصيلية
     return `
-      <div class="dash-streak">
+      <button type="button" class="dash-streak dash-streak-btn" onclick="openStreakPage&&openStreakPage()" aria-label="عرض تفاصيل الـ Streak">
         <div class="ds-icon">${fire}</div>
         <div class="ds-body">
           <div class="ds-current"><b>${cur}</b><span>يوم متتالي</span></div>
-          <div class="ds-best">الأفضل: <b>${best}</b> يوم</div>
+          <div class="ds-best">الأفضل: <b>${best}</b> يوم · <small>اضغط للتفاصيل ›</small></div>
         </div>
-      </div>`;
+      </button>`;
   }
 
   function _statsBlock(week){
@@ -325,6 +343,8 @@
       // V9.1 (A.3) — nutrition totals + targets
       const nutrition=await _todayNutritionTotals();
       const nutritionTargets=(typeof getNutritionTargets==='function')?await getNutritionTargets():null;
+      // V9.2 (B.7) — Smart Next Workout recommendation
+      const smartReco=(typeof recommendNextWorkout==='function')?await recommendNextWorkout():null;
 
       // اكتشف يوم تدريب فات (آخر ٧ أيام)
       let missedDay=null;
@@ -341,7 +361,7 @@
       }
 
       container.innerHTML=`
-        ${_heroBlock(todayProg,activeSession,missedDay)}
+        ${_heroBlock(todayProg,activeSession,missedDay,smartReco)}
         <div class="dash-grid dash-grid-2">
           ${_streakBlock(streak)}
           ${_statsBlock(week)}
