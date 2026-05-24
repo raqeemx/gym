@@ -5,6 +5,73 @@
 
 ---
 
+## [V9.1 — برامج متعددة + تتبع تغذية + مكتبة Media] — 2026-05-24
+
+تنفيذ ميزات Core الناقصة من مراجعة PM (A.1-A.4).
+
+### ✨ جديد
+
+#### A.4 — Program Templates (نظام برامج متعدد)
+- **٣ برامج جاهزة** بدلاً من برنامج واحد ثابت:
+  - **Full Body 3-Day** للمبتدئ (٣ أيام/أسبوع، straight sets، تمارين أساسية)
+  - **Upper/Lower 4-Day** للمتوسط (٢ علوي + ٢ سفلي، توازن مثالي)
+  - **Upper Priority 6-Day** للمتقدم (الأصلي بـ APS، تركيز على الجذع العلوي)
+- [`js/program-templates.js`](js/program-templates.js) — Registry موحّد للبرامج
+- **`recommendProgram(profile)`** — engine يقترح الأنسب حسب الخبرة/الأيام/الهدف
+- **`getActiveProgram() / setActiveProgram(id)`** — تبديل ديناميكي مع إعادة بناء كاملة
+- **UI تبديل البرامج** داخل Profile modal مع زر «⚡ اقتراح ذكي»
+- **Auto-recommendation** بعد onboarding تشخيصي (toast هادئ يخبر بالاختيار)
+
+#### A.3 — Nutrition Tracking (تتبع التغذية الفعلي)
+- **قاعدة بيانات أطعمة عربية** ([`js/foods-database.js`](js/foods-database.js)) — ٧٠+ صنف:
+  - بروتين حيواني (دجاج، لحم، تونة، سلمون، بيض...)
+  - ألبان (زبادي يوناني، حليب، جبن قريش، لبنة...)
+  - نشويات (أرز، شوفان، خبز، معكرونة، بطاطس، بسمتي، كينوا...)
+  - دهون صحية (زيت زيتون، لوز، جوز، طحينة، أفوكادو...)
+  - خضار + فواكه + مشروبات
+  - **أطعمة عربية شعبية** (كبسة، شاورما، فلافل، حمص، متبّل، فول، تبولة...)
+- **IndexedDB store جديد `foodEntries`** — Schema migration V4→V5 + indexes على date/foodId
+- **Food Search modal** ([`js/nutrition.js`](js/nutrition.js)):
+  - بحث فوري (debounced) + فلترة بالفئة
+  - اختيار حصة من قائمة جاهزة أو وزن مخصص
+  - عرض ماكروز محسوبة فوراً قبل الإضافة
+- **Food Log Panel** داخل Daily Log:
+  - قائمة وجبات اليوم مع زر حذف لكل وجبة
+  - Progress bars مقابل أهداف السعرات/البروتين/الكارب/الدهون (من profile)
+  - يعرض نسبة الالتزام بـ ٣ ألوان (منخفض/مثالي/زائد)
+- **Dashboard integration**: بطاقة «🥩 التغذية اليوم» تظهر تلقائياً عند وجود وجبات + توحيد عداد البروتين
+
+#### A.2 — Enhanced Exercise Media
+- **Placeholders محسّنة**: كل SVG يعرض الآن:
+  - **اسم التمرين بارز** في الأعلى
+  - **إيموجي مخصص لكل تمرين** (٢٥+ ايموجي في `EXERCISE_ICONS`)
+  - الـ shape المتحرّك الأصلي حسب category
+- **زر «🎬 شاهد فيديو شرح على YouTube»** داخل form-note modal — يفتح بحث مباشر بـ name + " proper form" (فيديوهات حقيقية بدون استضافة)
+- آلية fallback ثلاثية: gif ملف → placeholder → خفي
+
+### 🛡️ Schema (DB_VERSION=5)
+- V4→V5: `foodEntries` store جديد بـ `keyPath:'id', autoIncrement:true` + indexes (date, foodId)
+
+### 📁 ملفات جديدة
+- `js/program-templates.js` (~390 سطر) — Templates + recommendation engine
+- `js/foods-database.js` (~310 سطر) — قاعدة بيانات أطعمة عربية
+- `js/nutrition.js` (~330 سطر) — Food entries + UI + Daily Log integration
+
+### ✏️ ملفات مُعدّلة
+- `js/data.js` — DB_VERSION 4→5 + migrateV4toV5 + KEYS.ACTIVE_PROGRAM_ID
+- `js/program-render.js` — يستدعي getActiveProgram() قبل PROGRAM_DATA + injectVideoLink
+- `js/exercise-media.js` — placeholders بـ اسم+إيموجي + buildYouTubeSearchURL + EXERCISE_ICONS
+- `js/dashboard.js` — بطاقة nutrition + توحيد عداد البروتين من foodEntries
+- `js/app.js` — refreshProgramList + selectProgram + applyRecommendedProgram + auto-recommend في diagnostic
+- `js/progress.js` — refresh foodLogPanel عند فتح Daily Log
+- `index.html` — قسم program selector + foodLogPanel + script tags
+- `service-worker.js` — تضمين الملفات الجديدة في offline cache
+
+### 🛡️ Service Worker
+- نسخة جديدة: `bulkmode-v9-1-0`
+
+---
+
 ## [V9.0 — لوحة تحكم + Onboarding تشخيصي + Near-PR + معمارية أنظف] — 2026-05-23
 
 ترقية تجربة المستخدم الكبرى — تنفيذ ٨ أولويات من مراجعة PM/UX شاملة.

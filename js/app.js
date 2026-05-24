@@ -355,6 +355,8 @@ async function openProfile(){
   });
   // V8.3 (3.13) — حدّث واجهة النسخ الاحتياطي التلقائي
   if(typeof refreshAutoBackupUI==='function') refreshAutoBackupUI();
+  // V9.1 (A.4) — حدّث قائمة البرامج (templates selector)
+  if(typeof refreshProgramList==='function') refreshProgramList();
   // V8 — املأ حقول التذكيرات من الإعدادات المحفوظة
   if(typeof loadReminderPrefs==='function'){
     const prefs=await loadReminderPrefs();
@@ -585,6 +587,76 @@ async function saveUserProfile(){
   closeProfile();
   // V8.4 (P1-#1) — حدّث بطاقة "بياناتك" في نظرة عامة بعد كل حفظ
   if(typeof refreshOverviewProfileCard==='function') refreshOverviewProfileCard();
+  // V9.1 (A.4) — حدّث Dashboard لو فيه تغيير في goal/weight يؤثر على البروتين المعروض
+  if(typeof refreshDashboard==='function') refreshDashboard();
+}
+
+// ============================================================
+// V9.1 (A.4) — Program Templates UI
+// ============================================================
+async function refreshProgramList(){
+  const wrap=document.getElementById('profProgramList');
+  if(!wrap || typeof listPrograms!=='function') return;
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+  const programs=listPrograms();
+  const activeId=(typeof getActiveProgramId==='function')?await getActiveProgramId():'upper-priority';
+  const expLabel={beginner:'مبتدئ',intermediate:'متوسط',advanced:'متقدم'};
+  const goalLabel={bulk:'تضخيم',cut:'تنشيف',recomp:'إعادة تركيب',maintain:'حفاظ',strength:'قوة'};
+  wrap.innerHTML=programs.map(t=>{
+    const isActive=t.id===activeId;
+    const expTags=(t.experience||[]).map(e=>`<span class="pp-tag">${E(expLabel[e]||e)}</span>`).join('');
+    const goalTags=(t.goals||[]).map(g=>`<span class="pp-tag pp-tag-goal">${E(goalLabel[g]||g)}</span>`).join('');
+    return `
+      <div class="prof-program-card${isActive?' active':''}" data-program-id="${E(t.id)}">
+        <div class="ppc-head">
+          <div>
+            <div class="ppc-name">${E(t.name)}</div>
+            <div class="ppc-desc">${E(t.description)}</div>
+          </div>
+          ${isActive
+            ?'<span class="ppc-active-badge">✓ نشط</span>'
+            :`<button type="button" class="ppc-select-btn" onclick="selectProgram('${E(t.id)}')">اختيار</button>`}
+        </div>
+        <div class="ppc-meta">
+          <span class="pp-tag pp-tag-days">${E(t.daysPerWeek)} أيام/أسبوع</span>
+          <span class="pp-tag pp-tag-time">~${E(t.estMinutes)} دقيقة</span>
+          ${expTags}${goalTags}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function selectProgram(id){
+  if(typeof setActiveProgram!=='function') return;
+  // تحذير لو فيه جلسة نشطة
+  if(typeof currentSession!=='undefined' && currentSession){
+    const ok=(typeof customConfirm==='function')
+      ?await customConfirm('عندك جلسة نشطة الآن. تغيير البرنامج قد يربك بقية اليوم.<br><br>هل تريد المتابعة؟',{title:'جلسة نشطة',okText:'غيّر البرنامج',cancelText:'إلغاء',danger:true,icon:'⚠️'})
+      :confirm('عندك جلسة نشطة. تغيير البرنامج قد يربك بقية اليوم. متابعة؟');
+    if(!ok) return;
+  }
+  try{
+    await setActiveProgram(id);
+    showToast('✓ تم تبديل البرنامج','var(--grn)');
+    await refreshProgramList();
+  }catch(e){
+    console.error('selectProgram failed:',e);
+    showToast('⚠️ تعذّر تبديل البرنامج','var(--red)');
+  }
+}
+
+// زر "⚡ اقتراح ذكي" — يختار البرنامج الأنسب من بيانات النموذج الحالي
+async function applyRecommendedProgram(){
+  if(typeof recommendProgram!=='function') return;
+  const profileFromForm={
+    experience:document.getElementById('profExp').value,
+    goal:document.getElementById('profGoal').value,
+    weight:parseFloat(document.getElementById('profWeight').value)||null
+    // daysPerWeek غير موجود في النموذج — recommendProgram يعتمد على experience+goal
+  };
+  const recId=recommendProgram(profileFromForm);
+  if(!recId) return;
+  await selectProgram(recId);
 }
 
 // ============ TODAY HIGHLIGHT (V7) ============
@@ -816,6 +888,25 @@ async function saveDiagnosticProfile(){
     const existing=await db.get('settings',KEYS.USER_PROFILE);
     const merged={...(existing&&existing.value||{}),...profile,updatedAt:new Date().toISOString()};
     await db.put('settings',{key:KEYS.USER_PROFILE,value:merged});
+    // V9.1 (A.4) — اقترح برنامجاً مناسباً وفعّله إذا المستخدم لم يختر يدوياً
+    if(typeof recommendProgram==='function' && typeof setActiveProgram==='function'){
+      try{
+        const currentRec=await db.get('settings',KEYS.ACTIVE_PROGRAM_ID);
+        // فقط لو ما اختار برنامج صراحةً (أول مرة)
+        if(!currentRec || !currentRec.value){
+          const recId=recommendProgram(merged);
+          if(recId){
+            await setActiveProgram(recId);
+            // toast هادئ ليعرف المستخدم بالتغيير
+            const tpl=(typeof PROGRAM_TEMPLATES!=='undefined')?PROGRAM_TEMPLATES[recId]:null;
+            const name=(tpl&&tpl.meta&&tpl.meta.name)||recId;
+            setTimeout(()=>{
+              if(typeof showToast==='function') showToast(`💪 اخترنا لك: ${name}`,'var(--g1)',5000);
+            },1800);
+          }
+        }
+      }catch(e){console.warn('Program recommendation failed:',e)}
+    }
     // حدّث Dashboard + بطاقة بياناتك لو موجودين
     if(typeof refreshOverviewProfileCard==='function') refreshOverviewProfileCard();
     if(typeof refreshDashboard==='function') refreshDashboard();

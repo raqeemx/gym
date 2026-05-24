@@ -16,12 +16,25 @@
 (function(){
   // ألوان أساسية مطابقة لـ palette التطبيق (g1/blue/grn/purple/org)
   const CATEGORY_THEME = {
-    push:   {stroke:'#D4A853', glow:'#EDCA7A', bg:'#10131A', label:'PUSH'},
-    pull:   {stroke:'#5AB4FF', glow:'#7BC8FF', bg:'#10131A', label:'PULL'},
-    legs:   {stroke:'#5AE68A', glow:'#7AF0A0', bg:'#10131A', label:'LEGS'},
-    core:   {stroke:'#B08AFF', glow:'#C8A8FF', bg:'#10131A', label:'CORE'},
-    cardio: {stroke:'#FFB85A', glow:'#FFCD80', bg:'#10131A', label:'CARDIO'},
-    default:{stroke:'#9CA4B5', glow:'#BCC3D2', bg:'#10131A', label:'EXERCISE'}
+    push:   {stroke:'#D4A853', glow:'#EDCA7A', bg:'#10131A', label:'PUSH',   icon:'💪'},
+    pull:   {stroke:'#5AB4FF', glow:'#7BC8FF', bg:'#10131A', label:'PULL',   icon:'🦅'},
+    legs:   {stroke:'#5AE68A', glow:'#7AF0A0', bg:'#10131A', label:'LEGS',   icon:'🦵'},
+    core:   {stroke:'#B08AFF', glow:'#C8A8FF', bg:'#10131A', label:'CORE',   icon:'🔥'},
+    cardio: {stroke:'#FFB85A', glow:'#FFCD80', bg:'#10131A', label:'CARDIO', icon:'🚣'},
+    default:{stroke:'#9CA4B5', glow:'#BCC3D2', bg:'#10131A', label:'EXERCISE',icon:'🏋️'}
+  };
+
+  // أيقونة مخصصة لتمارين معروفة (override للـ category default)
+  const EXERCISE_ICONS = {
+    'Chest Press':'🏋️','Pectoral Fly':'🦋','Crossover Cables':'⚡',
+    'Shoulder Press':'⬆️','Delts Machine':'🪽','Reverse Fly':'🦋',
+    'Lat Machine':'🦅','Vertical Traction':'⬇️','Low Row':'➡️','Upper Back':'💪','Pulley':'🔗',
+    'Arm Curl':'💪','Arm Extension':'🔻','Pulley Curl':'💪','Pulley Pushdown':'🔻',
+    'Chin Ups':'🆙','Dips':'🆙',
+    'Leg Press':'🦵','Leg Extension':'🦵','Prone Leg Curl':'🦵',
+    'Abductor':'↔️','Adductor':'↔️','Calf Raise':'👟',
+    'Lower Back':'🪑','Rotary Torso':'🔄','Abdominal Crunch':'🔥','Hanging Leg Raise':'🆙',
+    'Skillrow':'🚣'
   };
 
   // SVG shapes — كل واحد ثابت بتحريك CSS بسيط (يلوّن حسب الفئة)
@@ -113,13 +126,47 @@
     default:_svgPushArrow
   };
 
-  // يولّد SVG كنص data URI (يُسند مباشرة لـ img.src)
+  // helpers لاستخراج إيموجي مناسب
+  function _iconFor(exName,category){
+    if(exName && EXERCISE_ICONS[exName]) return EXERCISE_ICONS[exName];
+    const theme=CATEGORY_THEME[category]||CATEGORY_THEME.default;
+    return theme.icon;
+  }
+
+  // escape XML للنصوص داخل SVG
+  function _xml(s){
+    return String(s==null?'':s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  }
+
+  // يولّد SVG كنص data URI — V9.1 (A.2) محسّن: shape + emoji كبير + اسم بارز
   function renderPlaceholderDataURI(category,exName){
     const theme=CATEGORY_THEME[category]||CATEGORY_THEME.default;
     const shape=(SHAPE_FOR[category]||SHAPE_FOR.default)(theme);
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" width="480" height="280" role="img" aria-label="${(exName||'').replace(/"/g,'')}">${shape}</svg>`;
-    // encodeURIComponent يحوّل # ﻷمان data URI
+    const icon=_iconFor(exName,category);
+    const displayName=_xml(exName||theme.label);
+    // overlay طبقة فوق shape مع icon كبير على اليمين + اسم التمرين تحت
+    const overlay=`
+      <g>
+        <rect x="0" y="0" width="480" height="55" fill="${theme.bg}" opacity=".75"/>
+        <text x="240" y="34" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="800" font-size="20" fill="${theme.glow}" letter-spacing=".5">${displayName}</text>
+      </g>
+      <g transform="translate(420 50)" opacity=".82">
+        <circle cx="0" cy="0" r="26" fill="${theme.stroke}" opacity=".18"/>
+        <circle cx="0" cy="0" r="26" fill="none" stroke="${theme.stroke}" stroke-width="2"/>
+        <text x="0" y="9" text-anchor="middle" font-size="28">${_xml(icon)}</text>
+      </g>
+    `;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 280" width="480" height="280" role="img" aria-label="${_xml(exName||'')}">${shape}${overlay}</svg>`;
     return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  }
+
+  // يبني رابط بحث YouTube لشرح الـ form للتمرين (احتياط للـ video الفعلي)
+  function buildYouTubeSearchURL(exName){
+    if(!exName) return null;
+    const query=`${exName} proper form technique tutorial`;
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
   }
 
   // الواجهة العامة: يعطي مصدر media جاهز للاستخدام في img.src
@@ -135,4 +182,6 @@
   // expose
   window.renderPlaceholderDataURI=renderPlaceholderDataURI;
   window.getExerciseMediaSrc=getExerciseMediaSrc;
+  window.buildYouTubeSearchURL=buildYouTubeSearchURL;
+  window.EXERCISE_ICONS=EXERCISE_ICONS;
 })();

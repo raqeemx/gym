@@ -271,8 +271,8 @@ function showToast(msg,color='var(--grn)',duration=2500,opts={}){
 // ============ INDEXEDDB WRAPPER ============
 // مغلّف مبسّط للوصول لـ IndexedDB بطريقة async/await
 const DB_NAME='bulkmode_db';
-const DB_VERSION=4; // V8 — bumped from 3: progressPhotos indexes (date, category)
-const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings','dailyLog'];
+const DB_VERSION=5; // V9.1 — bumped from 4: foodEntries store (nutrition tracking)
+const STORES=['workouts','sets','exercises','bodyMetrics','prs','progressPhotos','settings','dailyLog','foodEntries'];
 
 // V7 (#29) — Namespaced settings keys (app:, session:, subs:)
 const KEYS={
@@ -317,7 +317,9 @@ const KEYS={
   GYM_PROFILES:'app:gym_profiles',           // { [id]: GymProfile }
   ACTIVE_GYM_ID:'app:active_gym_id',         // string
   GYM_HINT_SHOWN:'app:gym_hint_shown',       // first-time switcher hint flag
-  IOS_INSTALL_HINT_SHOWN:'app:ios_install_hint_shown'
+  IOS_INSTALL_HINT_SHOWN:'app:ios_install_hint_shown',
+  // V9.1 (A.4) — Multi-program templates
+  ACTIVE_PROGRAM_ID:'app:active_program_id'  // string id matching PROGRAM_TEMPLATES key
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة
@@ -393,6 +395,15 @@ function migrateV3toV4(d, tx){
   if(!store.indexNames.contains('category')) store.createIndex('category','category');
 }
 
+// V9.1 (A.3) — foodEntries store لتتبع الوجبات الفعلية مع macros محسوبة
+function migrateV4toV5(d){
+  if(!d.objectStoreNames.contains('foodEntries')){
+    const s=d.createObjectStore('foodEntries',{keyPath:'id',autoIncrement:true});
+    s.createIndex('date','date');          // ISO YYYY-MM-DD — أهم استعلام
+    s.createIndex('foodId','foodId');      // لمعرفة أكثر طعام مأكول
+  }
+}
+
 const db={
   _h:null,
   async open(){
@@ -409,6 +420,7 @@ const db={
         if(e.oldVersion<2) migrateV1toV2(d);
         if(e.oldVersion<3) migrateV2toV3(d);
         if(e.oldVersion<4) migrateV3toV4(d,tx);
+        if(e.oldVersion<5) migrateV4toV5(d);
       };
     });
   },

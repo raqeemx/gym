@@ -640,7 +640,11 @@ function dispatchProgressTab(pt){
     if(typeof renderCharts==='function') renderCharts();
     if(typeof renderHistory==='function') renderHistory();
   }else if(pt==='metrics') renderBodyMetrics();
-  else if(pt==='daily') renderDailyLog();
+  else if(pt==='daily'){
+    renderDailyLog();
+    // V9.1 (A.3) — حدّث Food Log panel
+    if(typeof refreshFoodLogPanel==='function') refreshFoodLogPanel();
+  }
   else if(pt==='photos') renderProgressPhotos();
   else if(pt==='recovery') renderRecovery();
 }

@@ -91,6 +91,12 @@
     };
   }
 
+  // V9.1 (A.3) — يقرأ totals الفعلية من foodEntries اليوم (يطغى على protein اليدوي لو موجود)
+  async function _todayNutritionTotals(){
+    if(typeof getNutritionTotals!=='function') return null;
+    try{ return await getNutritionTotals(_todayISO()); }catch(e){return null}
+  }
+
   async function _proteinTarget(){
     try{
       const rec=await db.get('settings',KEYS.USER_PROFILE);
@@ -218,13 +224,15 @@
       </div>`;
   }
 
-  function _dailyBlock(daily,proteinTarget){
-    const proteinPct=proteinTarget?Math.round((daily.protein/proteinTarget)*100):null;
+  function _dailyBlock(daily,proteinTarget,nutrition){
+    // V9.1 (A.3) — لو فيه foodEntries، استخدم البروتين الفعلي بدل اليدوي
+    const proteinShown = (nutrition && nutrition.count>0) ? nutrition.protein : daily.protein;
+    const proteinPct=proteinTarget?Math.round((proteinShown/proteinTarget)*100):null;
     const items=[
       {ic:'💧',lbl:'ماء',v:daily.water+'/8',pct:Math.round(daily.water/8*100)},
       {ic:'😴',lbl:'نوم',v:daily.sleep+'/8 س',pct:Math.round(daily.sleep/8*100)},
       {ic:'🍽️',lbl:'وجبات',v:daily.meals+'/6',pct:Math.round(daily.meals/6*100)},
-      {ic:'🥩',lbl:'بروتين',v:proteinTarget?`${daily.protein}/${proteinTarget}g`:`${daily.protein}g`,pct:proteinPct||0}
+      {ic:'🥩',lbl:'بروتين',v:proteinTarget?`${proteinShown}/${proteinTarget}g`:`${proteinShown}g`,pct:proteinPct||0}
     ];
     return `
       <div class="dash-card">
@@ -240,6 +248,36 @@
             </div>`).join('')}
         </div>
         <button class="dash-card-more" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'daily\\']');if(b)b.click()},120)">سجّل يومك ›</button>
+      </div>`;
+  }
+
+  // V9.1 (A.3) — بطاقة Nutrition منفصلة لو فيه food entries اليوم
+  function _nutritionBlock(nutrition,targets){
+    if(!nutrition || nutrition.count===0) return '';
+    const t=targets;
+    const items = t ? [
+      {lbl:'سعرات', v:`${nutrition.kcal}/${t.calories}`, pct:Math.round(nutrition.kcal/t.calories*100), unit:''},
+      {lbl:'بروتين',v:`${nutrition.protein}/${t.protein}`, pct:Math.round(nutrition.protein/t.protein*100), unit:'g'},
+      {lbl:'كارب',  v:`${nutrition.carbs}/${t.carb}`,     pct:Math.round(nutrition.carbs/t.carb*100), unit:'g'},
+      {lbl:'دهون',  v:`${nutrition.fat}/${t.fat}`,        pct:Math.round(nutrition.fat/t.fat*100), unit:'g'}
+    ] : [
+      {lbl:'سعرات',v:`${nutrition.kcal}`,pct:null,unit:''},
+      {lbl:'بروتين',v:`${nutrition.protein}`,pct:null,unit:'g'},
+      {lbl:'كارب',v:`${nutrition.carbs}`,pct:null,unit:'g'},
+      {lbl:'دهون',v:`${nutrition.fat}`,pct:null,unit:'g'}
+    ];
+    return `
+      <div class="dash-card">
+        <div class="dash-card-head">🥩 التغذية اليوم (${E(nutrition.count)} وجبة)</div>
+        <div class="dash-nutrition-grid">
+          ${items.map(it=>`
+            <div class="dn-cell">
+              <div class="dn-cell-lbl">${E(it.lbl)}</div>
+              <div class="dn-cell-val"><b>${E(it.v)}</b>${E(it.unit)}</div>
+              ${it.pct!=null?`<div class="dn-cell-bar"><div class="dn-cell-fill ${it.pct>110?'over':it.pct>=70?'ok':'low'}" style="width:${Math.min(100,it.pct)}%"></div></div>`:''}
+            </div>`).join('')}
+        </div>
+        <button class="dash-card-more" onclick="openFoodSearch&&openFoodSearch()">+ أضف وجبة جديدة</button>
       </div>`;
   }
 
@@ -284,6 +322,9 @@
       const week=_weekStats(data.sets,data.workouts);
       const daily=_todayDaily(data.dailyLogs);
       const proteinTarget=await _proteinTarget();
+      // V9.1 (A.3) — nutrition totals + targets
+      const nutrition=await _todayNutritionTotals();
+      const nutritionTargets=(typeof getNutritionTargets==='function')?await getNutritionTargets():null;
 
       // اكتشف يوم تدريب فات (آخر ٧ أيام)
       let missedDay=null;
@@ -308,7 +349,8 @@
         ${_quickActionsBlock()}
         ${_programProgressBlock(wp)}
         ${_prsBlock(data.prs)}
-        ${_dailyBlock(daily,proteinTarget)}
+        ${_nutritionBlock(nutrition,nutritionTargets)}
+        ${_dailyBlock(daily,proteinTarget,nutrition)}
       `;
     }catch(e){
       console.error('Dashboard refresh failed:',e);

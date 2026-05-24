@@ -745,6 +745,9 @@
         <button class="bm-save" onclick="saveDailyLog()">💾 احفظ يومك</button>
       </div>
 
+      <!-- V9.1 (A.3) — Food Log: تتبع الوجبات الفعلية بقاعدة بيانات أطعمة -->
+      <div id="foodLogPanel" class="food-log-panel"><div class="chart-loading">جاري تحميل الوجبات...</div></div>
+
       <div class="dl-stats" id="dlStats"></div>
 
       <div class="bm-history-title">📊 آخر ١٤ يوم</div>
@@ -963,6 +966,15 @@
           <option value="intermediate">متوسط (٦ شهر - ٢ سنة)</option>
           <option value="advanced">متقدم (أكثر من ٢ سنة)</option>
         </select>
+      </div>
+
+      <!-- V9.1 (A.4) — Program selector: اختيار البرنامج النشط من بين templates -->
+      <div class="prof-program-section">
+        <div class="prof-program-head">
+          <span>💪 البرنامج النشط</span>
+          <button type="button" class="prof-program-suggest" onclick="applyRecommendedProgram()" title="اختر بناءً على بياناتك">⚡ اقتراح ذكي</button>
+        </div>
+        <div id="profProgramList" class="prof-program-list"><div class="chart-loading">جاري تحميل البرامج...</div></div>
       </div>
 
       <!-- V8.3 (3.12) — Weight Goal Tracker -->
@@ -1326,6 +1338,7 @@
 <script src="js/version.js"></script>
 <script src="js/data.js"></script>
 <script src="js/program-data.js"></script>
+<script src="js/program-templates.js"></script>
 <script src="js/exercise-media.js"></script>
 <script src="js/program-render.js"></script>
 <script src="js/program-editor.js"></script>
@@ -1342,6 +1355,8 @@
 <script src="js/exercise-history.js"></script>
 <script src="js/smart-recovery.js"></script>
 <script src="js/auto-backup.js"></script>
+<script src="js/foods-database.js"></script>
+<script src="js/nutrition.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/weekly-review.js"></script>
 <script src="js/app.js"></script>

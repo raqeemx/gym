@@ -45,7 +45,15 @@ function _splitStepInfo(info){
 async function renderProgram(){
   const container=document.getElementById('programContainer');
   if(!container){console.warn('programContainer not found — skipping renderProgram');return}
-  if(typeof PROGRAM_DATA==='undefined'){console.warn('PROGRAM_DATA not loaded');return}
+  // V9.1 (A.4) — استخدم getActiveProgram() لو متاح (multi-template)، وإلا PROGRAM_DATA الافتراضي
+  let baseProgram=null;
+  if(typeof getActiveProgram==='function'){
+    try{ baseProgram = await getActiveProgram(); }catch(e){console.warn('getActiveProgram failed:',e)}
+  }
+  if(!baseProgram){
+    if(typeof PROGRAM_DATA==='undefined'){console.warn('PROGRAM_DATA not loaded');return}
+    baseProgram = PROGRAM_DATA;
+  }
   // V8.3 (3.3) — ادمج التخصيصات لكل يوم (لو حُفظ override يستبدل اليوم الافتراضي بالكامل)
   let overrides={};
   try{
@@ -54,8 +62,8 @@ async function renderProgram(){
       overrides=(rec&&rec.value)||{};
     }
   }catch(e){console.warn('Failed to load program overrides:',e)}
-  const days=PROGRAM_DATA.days.map(d=>overrides[d.id]?{...overrides[d.id],_isCustom:true}:d);
-  EFFECTIVE_PROGRAM={...PROGRAM_DATA,days};
+  const days=baseProgram.days.map(d=>overrides[d.id]?{...overrides[d.id],_isCustom:true}:d);
+  EFFECTIVE_PROGRAM={...baseProgram,days};
   container.innerHTML=days.map(renderDay).join('\n');
 }
 
@@ -238,9 +246,29 @@ function openFormNoteModal(exName){
     gifEl.removeAttribute('src');
     gifWrap.style.display='none';
   }
+  // V9.1 (A.2) — رابط YouTube لشرح فيديو حقيقي
+  injectVideoLink(exName);
   modal.classList.add('open');
   modal.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
+}
+
+// V9.1 (A.2) — يضمن وجود زر "🎬 شاهد فيديو شرح" أسفل form-note body
+function injectVideoLink(exName){
+  const body=document.getElementById('formNoteBody');
+  if(!body) return;
+  // أزل أي رابط قديم
+  const existing=body.parentElement.querySelector('.form-note-video-link');
+  if(existing) existing.remove();
+  if(typeof buildYouTubeSearchURL!=='function') return;
+  const url=buildYouTubeSearchURL(exName);
+  if(!url) return;
+  const wrap=document.createElement('div');
+  wrap.className='form-note-video-link';
+  // noopener+noreferrer لحماية window.opener + لا تسريب مرجع
+  wrap.innerHTML=`<a href="${url}" target="_blank" rel="noopener noreferrer">🎬 شاهد فيديو شرح على YouTube ›</a>
+    <small>يفتح بحث في YouTube — لا اتصال خارجي من التطبيق نفسه</small>`;
+  body.parentElement.appendChild(wrap);
 }
 
 function closeFormNoteModal(){
