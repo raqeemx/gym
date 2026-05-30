@@ -38,6 +38,7 @@ const ASSETS = [
   './js/streak-page.js',
   './js/voice-input.js',
   './js/auto-rest.js',
+  './js/mobile-fixes.js',
   './js/app.js',
   './vendor/chart.umd.min.js',
   // V8.4 — Exercise demonstration assets (form notes modal)

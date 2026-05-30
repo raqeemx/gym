@@ -2142,3 +2142,395 @@ body.sess-active .nav{top:50px}
 .form-note-body b{color:#fff;font-weight:700}
 .form-note-hint{margin-top:14px;padding:10px 14px;background:rgba(212,168,83,.05);border:1px dashed rgba(212,168,83,.18);border-radius:9px;font-size:11.5px;color:var(--tx2);line-height:1.6;text-align:center}
 .form-note-hint b{color:var(--g2)}
+
+/* ============================================================
+ * V9.4 — MOBILE OPTIMIZATION (Comprehensive)
+ * ============================================================
+ * يطبّق Best practices للموبايل:
+ *  • iOS auto-zoom prevention (inputs >= 16px)
+ *  • Safe-area-inset للـ floating elements (iPhone X+)
+ *  • text-size-adjust لمنع iOS من تكبير عشوائي
+ *  • touch-action: manipulation للأزرار (يلغي 300ms delay)
+ *  • تحسين spacing للشاشات الصغيرة (32px → 16px → 12px)
+ *  • Modals full-screen عند < 480px
+ *  • track-input redesign للهاتف (priority للوزن/التكرار)
+ *  • Equipment grid يتكيّف حتى 320px
+ *  • Landscape mode للهواتف الأفقية
+ * ============================================================ */
+
+/* ---------- A. CSS variables للـ safe-area ---------- */
+:root{
+  --sai-top: env(safe-area-inset-top, 0px);
+  --sai-bottom: env(safe-area-inset-bottom, 0px);
+  --sai-left: env(safe-area-inset-left, 0px);
+  --sai-right: env(safe-area-inset-right, 0px);
+}
+
+/* ---------- B. منع iOS auto-zoom + إصلاحات عامة ---------- */
+html{
+  -webkit-text-size-adjust:100%; /* منع iOS من تكبير النص في landscape */
+  text-size-adjust:100%;
+}
+button, a, [role="button"]{
+  touch-action:manipulation; /* يلغي 300ms tap delay */
+  -webkit-tap-highlight-color:rgba(212,168,83,.12); /* فيدباك لمسي ذهبي خفيف */
+}
+input, select, textarea{
+  font-size:16px !important; /* iOS لا يُكبّر inputs >= 16px */
+  -webkit-appearance:none; appearance:none;
+  -webkit-text-size-adjust:100%;
+}
+/* لكن نريد visual size أصغر — استخدم transform أو خفّف الـ font في desktop فقط */
+@media (min-width:768px){
+  input, select, textarea{font-size:14px !important}
+}
+
+/* ---------- C. Safe-area للعناصر العائمة ---------- */
+.fab{
+  bottom:calc(24px + var(--sai-bottom));
+  left:calc(24px + var(--sai-left));
+}
+.fab-menu{
+  bottom:calc(88px + var(--sai-bottom));
+  left:calc(24px + var(--sai-left));
+}
+.btt{
+  bottom:calc(90px + var(--sai-bottom));
+  left:calc(20px + var(--sai-left));
+}
+.install-btn{
+  bottom:calc(24px + var(--sai-bottom));
+  right:calc(24px + var(--sai-right));
+}
+.sess-bar{
+  padding-bottom:max(12px, var(--sai-bottom)) !important;
+}
+.tf, .ttrig{ /* rest timer floating */
+  bottom:calc(var(--bottom-anchor, 24px) + var(--sai-bottom));
+}
+
+/* ---------- D. تحسينات track-input للموبايل (الأهم) ---------- */
+/* الـ inputs أصبحت 16px (لمنع zoom) — نُكبّر width و padding ليبدو متناسقاً
+   ونرتّب العناصر بحيث في الموبايل: [وزن] [تكرار] [حفظ] في صف، الباقي تحت */
+@media (max-width:600px){
+  .track-input{
+    gap:6px;
+    padding:10px 8px;
+    align-items:stretch;
+  }
+  .track-input label{
+    font-size:9.5px;
+    align-self:center;
+  }
+  .track-input input{
+    width:68px;          /* أوسع من 55px */
+    padding:10px 8px;     /* أعلى — لمس أسهل */
+    font-size:16px !important;  /* iOS no-zoom */
+    min-height:42px;
+  }
+  .track-input .save-btn{
+    padding:10px 16px;
+    font-size:12px;
+    min-height:42px;
+    flex-shrink:0;
+  }
+  .track-input .last{
+    flex-basis:100%;
+    text-align:right;
+    margin-top:4px;
+    font-size:10.5px;
+  }
+}
+
+/* ---------- E. تقليل padding للشاشات الصغيرة ---------- */
+@media (max-width:600px){
+  .sec{padding:18px 14px}
+  .card{padding:16px 14px; margin-bottom:14px}
+  .ch{gap:10px; margin-bottom:14px}
+  .ci{width:38px; height:38px; font-size:17px; border-radius:11px}
+  .ct{font-size:15.5px}
+  .cs{font-size:11px}
+  .tip{padding:9px 10px; gap:8px; font-size:11.5px}
+  .tip .ti{font-size:14px}
+}
+
+/* ---------- F. Hero مضغوط على الموبايل ---------- */
+@media (max-width:600px){
+  .hero{padding:32px 16px 28px}
+  .hero h1{font-size:clamp(26px,8vw,40px); margin-bottom:8px}
+  .hero .hl{font-size:9px; letter-spacing:3px; padding:6px 16px; margin-bottom:14px}
+  .hero .hsub{font-size:12.5px; margin-bottom:20px; line-height:1.65}
+  .sbar{gap:5px}
+  .sp{padding:7px 13px; font-size:11px}
+  .sp .n{font-size:13px}
+  .sp .l{font-size:10px}
+}
+
+/* ---------- G. Nav tabs ---------- */
+@media (max-width:600px){
+  .nav{padding:0 8px}
+  .nav-brand{font-size:12px; padding:12px 6px 12px 0}
+  .nb{padding:12px 10px; font-size:11px}
+  .ni{padding:0 2px; gap:0}
+}
+@media (max-width:380px){
+  .nav-brand{display:none} /* وفّر مساحة في الشاشات الضيقة */
+  .nb{padding:12px 8px}
+}
+
+/* ---------- H. Equipment grid يتكيّف حتى 320px ---------- */
+@media (max-width:600px){
+  .eg{grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:7px}
+  .ei{padding:10px 10px; font-size:11.5px; border-radius:10px}
+  .ei .ec{font-size:8.5px; margin-top:2px}
+}
+@media (max-width:380px){
+  .eg{grid-template-columns:repeat(2,1fr); gap:6px}
+  .ei{padding:9px 8px; font-size:11px}
+}
+
+/* ---------- I. Tables (تحول لـ horizontal scroll بدل crush) ---------- */
+.bm-table-wrap, .pt{
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+}
+@media (max-width:600px){
+  .bm-table-wrap{overflow-x:auto; margin:0 -14px; padding:0 14px}
+  .pt{font-size:11.5px}
+  .pt th, .pt td{padding:8px 6px}
+}
+
+/* ---------- J. Day cards (الأهم: تمارين) ---------- */
+@media (max-width:600px){
+  .dy{margin-bottom:10px; border-radius:14px}
+  .dh{padding:14px 12px; gap:10px}
+  .db{width:44px; height:44px; font-size:11px}
+  .dn{font-size:13px; line-height:1.4}
+  .df{font-size:10.5px}
+  .dt{font-size:9px; padding:3px 8px}
+  .dbi{padding:14px 10px 16px}
+  .phase-bar{padding:9px 12px; margin:12px 0 6px}
+  .phase-bar .pn{font-size:12.5px}
+  .phase-bar .pl{font-size:8.5px; padding:2px 7px}
+  .phase-bar .pmeta{font-size:10px}
+  .step{margin:4px 0}
+  .step-num{width:34px; font-size:12px}
+  .step-body{padding:8px 12px}
+  .step-name{font-size:12.5px}
+  .step-info .si-main{font-size:12px}
+  .step-info .si-sub{font-size:10px}
+  .step-body.has-form-note .step-name{padding-left:30px}
+}
+
+/* ---------- K. Modals full-screen على الموبايل ---------- */
+@media (max-width:600px){
+  .stats-modal{padding:0; align-items:stretch}
+  .stats-modal.open{align-items:stretch}
+  .stats-content{
+    max-width:100%; width:100%; max-height:100vh; height:100vh;
+    border-radius:0; padding:18px 16px;
+    padding-top:calc(18px + var(--sai-top));
+    padding-bottom:calc(18px + var(--sai-bottom));
+    border:none;
+  }
+  .close-modal{
+    top:calc(10px + var(--sai-top)); left:10px;
+    width:38px; height:38px; font-size:22px;
+    border-radius:50%; background:rgba(255,255,255,.06);
+    display:flex; align-items:center; justify-content:center
+  }
+  .stats-content h2{font-size:18px; letter-spacing:1px; margin-bottom:14px; padding-top:30px}
+}
+
+/* Bottom sheet modals (alt, form-note, ex-history) — يبقى bottom-sheet لكن full-width */
+@media (max-width:600px){
+  .alt-sheet, .form-note-sheet, .exh-sheet{
+    max-height:90vh;
+    padding-bottom:calc(20px + var(--sai-bottom)) !important;
+  }
+}
+
+/* ---------- L. FAB menu على الموبايل ---------- */
+@media (max-width:600px){
+  .fab{width:52px; height:52px; font-size:22px}
+  .fab-menu button{padding:11px 14px; font-size:12.5px; min-height:44px}
+}
+
+/* ---------- M. Session bar mobile ---------- */
+@media (max-width:600px){
+  .sess-bar{padding:10px 12px !important; gap:8px}
+  .sb-info{min-width:0}
+  .sb-day{font-size:13px}
+  .sb-meta{font-size:10.5px}
+  .sb-end{padding:8px 14px !important; font-size:11.5px}
+  .sb-min{width:32px; height:32px}
+}
+
+/* ---------- N. Dashboard mobile ---------- */
+@media (max-width:600px){
+  .dash-hero{padding:18px 16px 16px; border-radius:14px}
+  .dash-hero .dh-title{font-size:22px}
+  .dash-hero .dh-sub{font-size:12px; margin-bottom:14px}
+  .dash-hero .dh-cta{padding:12px 22px; font-size:12.5px}
+  .dash-card{padding:12px 14px; border-radius:12px}
+  .dash-card-head{font-size:11.5px; margin-bottom:8px}
+  .dash-stats-grid .dss-cell{padding:7px 4px}
+  .dash-stats-grid .dss-cell b{font-size:14px}
+  .dash-stats-grid .dss-cell span{font-size:9px}
+}
+
+/* ---------- O. Daily Log + Food Log mobile ---------- */
+@media (max-width:600px){
+  .dl-row{flex-wrap:wrap; gap:8px}
+  .dl-label{flex-basis:100%; font-size:12px}
+  .dl-counter{margin-right:0}
+  .dl-step{min-width:38px; min-height:38px; font-size:14px}
+  .dl-num-input{font-size:16px !important; min-height:38px; width:80px}
+  .dl-chips{gap:5px}
+  .dl-chip{font-size:11px; padding:6px 10px}
+  .flp-entry{padding:9px 10px}
+  .flp-entry-name{font-size:12px}
+  .flp-entry-meta{font-size:10px}
+  .flp-add{padding:8px 12px; font-size:11px; min-height:38px}
+}
+
+/* ---------- P. Plate Calculator + Profile mobile ---------- */
+@media (max-width:600px){
+  .bm-grid{gap:8px}
+  .bm-field input, .bm-field select{font-size:16px !important; padding:11px 12px}
+  .bm-field label{font-size:11px}
+  .bm-save{padding:13px; font-size:13px; min-height:48px}
+  .pc-plate-chips{gap:5px}
+  .prof-program-card{padding:11px 12px; border-radius:10px}
+  .ppc-name{font-size:13px}
+  .ppc-desc{font-size:10.5px}
+  .ppc-select-btn{padding:6px 11px; font-size:10.5px}
+}
+
+/* ---------- Q. Footer mobile ---------- */
+@media (max-width:600px){
+  .footer{padding:32px 16px 90px}
+  .footer-brand{font-size:18px}
+  .footer-text{font-size:11px}
+  .footer-stats{gap:10px; margin-top:14px}
+  .footer-stat{padding:5px 11px; font-size:10px}
+}
+
+/* ---------- R. Toast mobile (تجنب تداخل مع session bar) ---------- */
+@media (max-width:600px){
+  #toast{
+    bottom:calc(80px + var(--sai-bottom)) !important;
+    left:14px !important; right:14px !important;
+    max-width:none !important; width:auto !important;
+    font-size:12.5px;
+  }
+}
+
+/* ---------- S. Onboarding mobile ---------- */
+@media (max-width:600px){
+  .onb-card{padding:24px 18px 18px; border-radius:18px; max-height:94vh}
+  .onb-icon{font-size:42px}
+  .onb-title{font-size:22px; line-height:1.25}
+  .onb-sub{font-size:12.5px; line-height:1.6}
+  .onb-nav{gap:8px; margin-top:14px}
+  .onb-btn-prev, .onb-btn-next, .onb-btn-skip{padding:11px 16px; font-size:12px; min-height:44px}
+}
+
+/* ---------- T. شاشات صغيرة جداً (< 360px) ---------- */
+@media (max-width:359px){
+  .sec{padding:14px 10px}
+  .card{padding:14px 10px}
+  .hero{padding:24px 12px 22px}
+  .hero h1{font-size:24px}
+  .track-input{flex-direction:column; align-items:stretch; padding:10px 8px}
+  .track-input input{width:100%; min-height:46px}
+  .track-input .save-btn{width:100%; margin-right:0; min-height:46px}
+  .track-input label{display:none} /* وفّر مساحة */
+  .nav-brand{display:none}
+  .nb{padding:12px 7px; font-size:10.5px}
+  .dh-grid{gap:8px}
+  .footer-stats{flex-direction:column; gap:6px}
+}
+
+/* ---------- U. Landscape phones (height < 500px) ---------- */
+@media (max-height:500px) and (orientation:landscape){
+  .hero{padding:18px 18px 14px}
+  .hero h1{font-size:22px; margin-bottom:4px}
+  .hero .hsub{margin-bottom:10px; font-size:11.5px}
+  .sbar{margin-top:6px}
+  .sec{padding:14px 18px}
+  .card{margin-bottom:10px; padding:12px 16px}
+  .ch{margin-bottom:10px}
+  /* اخفِ floating progress bar في landscape ضيق */
+  .progress-bar{display:none}
+  /* hero-toggle position أيمن لتجنب التداخل */
+  .hero-toggle{top:8px; left:8px}
+  /* modals: أعلى الـ viewport للوصول السريع */
+  .stats-content{max-height:96vh}
+}
+
+/* ---------- V. RTL fixes للموبايل (overscroll, momentum) ---------- */
+body{
+  overscroll-behavior-y:contain; /* يمنع pull-to-refresh accidental */
+  -webkit-overflow-scrolling:touch;
+}
+.ni, .food-cat-filter, .prog-tabs, .bmt-chart-tabs{
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;
+}
+.nb, .fc-chip, .prog-tab, .bmt-tab{
+  scroll-snap-align:start;
+}
+
+/* ---------- W. Voice button positioning fix on mobile ---------- */
+@media (max-width:600px){
+  .voice-btn{width:38px; height:38px; font-size:15px; margin-right:2px}
+}
+
+/* ---------- X. منع select text accidental ---------- */
+.hero, .nav, .sess-bar, .sess-pill, .fab, .fab-menu, .dh-tag, .dh-title, .dh-sub,
+.day-summary, .phase-bar, .step-num, .dt, .badge, .today-badge, .week-pill,
+.dash-stats-head, .ds-icon, .ds-current span, .ds-best, .sp-fire, .sp-current-lbl{
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* ---------- Y. Status bar colour matching (iOS standalone PWA) ---------- */
+@media (display-mode:standalone){
+  body{padding-top:var(--sai-top)} /* تجنّب الـ status bar في PWA mode */
+  .nav{top:0; padding-top:var(--sai-top)}
+}
+
+/* ---------- Z. تحسينات chart canvases على الموبايل ---------- */
+@media (max-width:600px){
+  .chart-wrap{padding:12px 10px}
+  .chart-wrap h3{font-size:12.5px; margin-bottom:8px}
+  .chart-wrap canvas{max-height:240px !important}
+  .bmt-chart-wrap{padding:10px 8px}
+  #bmtChart{max-height:220px !important}
+}
+
+/* ---------- AA. Tap feedback class (مكمّل لـ :active على iOS) ---------- */
+.is-pressing{
+  transform:scale(.96) !important;
+  opacity:.85 !important;
+  transition:transform .08s, opacity .08s !important;
+}
+.dash-action.is-pressing,
+.guide-hub-card.is-pressing,
+.fpp-chip.is-pressing{
+  transform:scale(.97) !important;
+}
+
+/* ---------- BB. Real viewport height (iOS Safari) ---------- */
+/* استخدم --real-vh عبر calc حيث 100vh لا يكفي.
+   مثال: max-height: calc(var(--real-vh, 1vh) * 100); */
+.stats-content, .alt-sheet, .vo-card{
+  max-height: calc(var(--real-vh, 1vh) * 92);
+}
+@media (max-width:600px){
+  .stats-content{
+    max-height: calc(var(--real-vh, 1vh) * 100);
+    height: calc(var(--real-vh, 1vh) * 100);
+  }
+}

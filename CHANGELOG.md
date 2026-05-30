@@ -5,6 +5,83 @@
 
 ---
 
+## [V9.4 — تحسين شامل لتجربة الموبايل] — 2026-05-30
+
+تحسينات mobile-first شاملة — حلّ ٨ مشاكل أساسية في تجربة الهاتف.
+
+### ✨ تحسينات CSS (1952→2400 سطر)
+
+#### 1. منع iOS auto-zoom على inputs
+- كل `<input>`، `<select>`، `<textarea>` صار `font-size: 16px !important` (iOS لا يُكبّر >= 16px)
+- استثناء `@media (min-width: 768px)` يُعيدها لـ 14px للديسكتوب
+
+#### 2. Safe-area-inset support كامل (iPhone X+ مع notch/home-indicator)
+- `viewport-fit=cover` في الـ meta tag (شرط لتفعيل الـ safe-area)
+- CSS variables: `--sai-top/bottom/left/right`
+- FAB، btt، install-btn، toast، session-bar كلها تستخدم `calc(... + var(--sai-...))`
+- في PWA standalone، `<body>` يحصل على `padding-top: var(--sai-top)`
+
+#### 3. تحسين track-input للموبايل (الأهم — قلب التمرين)
+- inputs أعرض (55→68px)، أطول (32→42px height)
+- save-btn أكبر (42px min-height)
+- على شاشات < 360px: full-width يتراص عمودياً للوصول الأسهل
+
+#### 4. Spacing/padding system متدرّج
+- `.sec`: 28px → 18px → 14px (مع نقص الشاشة)
+- `.card`: 24px → 16px → 14px
+- `.hero`: 60px → 32px → 24px (مع تصغير `h1` font-size)
+- `.dy` و `.step` و `.phase-bar` كلها مضغوطة
+
+#### 5. Modals full-screen على الموبايل (< 600px)
+- `.stats-content`: 100vw × 100vh، بدون border-radius، padding مع safe-area
+- `.close-modal` صار 38×38 دائري أوضح
+- Bottom-sheet modals (alt، form-note، exh): max-height 90vh + safe-area bottom
+
+#### 6. Equipment grid يتكيّف حتى 320px
+- 135px → 120px minmax على الموبايل
+- < 380px: عمودين ثابتين (`repeat(2, 1fr)`)
+
+#### 7. Tables horizontal-scroll (لمنع تكسير الجدول)
+- `.bm-table-wrap` و `.pt` مع `-webkit-overflow-scrolling: touch`
+
+#### 8. Landscape + tiny screens
+- `@media (max-height: 500px) and (orientation: landscape)`: hero مضغوط، charts صغيرة
+- `@media (max-width: 359px)`: hide labels، nav-brand مخفي، عمود واحد لكل شيء
+
+#### 9. Touch-action + tap-highlight
+- `touch-action: manipulation` على كل الأزرار (يلغي 300ms tap delay)
+- `tap-highlight-color` ذهبي خفيف للفيدباك اللمسي
+
+#### 10. تحسينات بصرية متفرقة
+- `text-size-adjust: 100%` لمنع iOS من تكبير عشوائي
+- `user-select: none` على عناصر UI غير قابلة للنسخ (تجنّب accidental selection)
+- `overscroll-behavior: contain` للـ modals
+- `scroll-snap` على nav tabs و prog-tabs (تجربة أفضل عند swipe)
+
+### ✨ JS مكمّل ([`js/mobile-fixes.js`](js/mobile-fixes.js))
+
+1. **`--real-vh` CSS variable** — يصلح مشكلة `100vh` على iOS Safari مع شريط العنوان المتحرّك
+2. **Auto-scroll للـ input عند focus** — يضمن ظهور الـ input فوق الكيبورد
+3. **Auto-select content** عند focus على weight/reps/rpe inputs (يبدأ يكتب فوراً بدون مسح يدوي)
+4. **Modal scroll lock فعّال** — `body{position:fixed}` يمنع scroll body خلف الـ modal، ويُعيد الموضع عند الإغلاق
+5. **Pull-to-refresh تخفيف** — يمنع السحب العَرَضي أثناء الكتابة
+6. **Orientation change re-render** — Dashboard و body timeline charts تُعاد رسمها عند تدوير الجهاز
+7. **Double-tap zoom prevention** على الأزرار (مكمّل لـ touch-action)
+8. **Tap visual feedback** — class `.is-pressing` يُضاف مؤقتاً عند اللمس (iOS `:active` غير موثوق)
+
+### 📝 ملف جديد
+- `js/mobile-fixes.js` (~150 سطر)
+
+### ✏️ ملفات مُعدّلة
+- `index.html` — viewport محدث + script tag
+- `css/styles.css` — ~٤٥٠ سطر CSS جديد للموبايل
+- `service-worker.js` — تضمين `mobile-fixes.js`
+
+### 🛡️ Service Worker
+- `bulkmode-v9-4-0`
+
+---
+
 ## [V9.3 — تظليل آخر جلسة بدل اليوم الحالي] — 2026-05-30
 
 ### ✏️ تعديل سلوكي

@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- V9.4 — viewport-fit=cover ضروري لـ safe-area-inset على iPhone X+
+     السماح للتكبير (user-scalable=yes) لـ accessibility — منعه يكسر زر التكبير في iOS Safari -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <!-- V8.4 (P1-#5) — Content Security Policy (transitional: unsafe-inline لأن inline onclick + style بداخل HTML/SVG، نخفّضها تدريجياً في P2) -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; child-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
@@ -1361,6 +1364,7 @@
 <script src="js/streak-page.js"></script>
 <script src="js/voice-input.js"></script>
 <script src="js/auto-rest.js"></script>
+<script src="js/mobile-fixes.js"></script>
 <script src="js/auto-backup.js"></script>
 <script src="js/foods-database.js"></script>
 <script src="js/nutrition.js"></script>
