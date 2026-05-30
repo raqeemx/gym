@@ -659,42 +659,124 @@ async function applyRecommendedProgram(){
   await selectProgram(recId);
 }
 
-// ============ TODAY HIGHLIGHT (V7) ============
-// تظليل بطاقة اليوم في تبويب التمارين + شبكة الأسبوع في نظرة عامة
-// + فتح اليوم تلقائياً، أو عرض خيارات الاستبدال إذا كان يوم راحة
-function highlightToday(){
-  const dayIdx=new Date().getDay(); // 0=الأحد ... 6=السبت
+// ============ LAST-SESSION HIGHLIGHT (V9.3 — تعديل من TODAY) ============
+// تظليل البطاقة التي تطابق آخر جلسة بدأها المستخدم (وليس اليوم في التقويم).
+// المنطق:
+//   1. لو فيه جلسة نشطة الآن  → ظلل يومها  + شارة "الجلسة النشطة"
+//   2. لو فيه workouts سابقة → ظلل آخر يوم تدرب فيه + شارة "آخر جلسة"
+//   3. لو مستخدم جديد بدون أي workouts → fallback لليوم في التقويم + شارة "اليوم"
+//
+// السبب: المستخدم لا يلتزم دائماً بالجدول الأسبوعي الحرفي — التركيز على
+// "أين توقفت" أكثر فائدة من "ما هو اليوم في التقويم".
+//
+// يبحث عن البطاقة المطابقة بـ data-day-id (موجود في كل .dy من program-render)
+// أو بـ dayType النصي.
+async function highlightToday(){
   const days=document.querySelectorAll('#t1 .dy');
   if(days.length<7) return; // الكروت ما حُمّلت بعد
 
-  // ١. تظليل بطاقة اليوم في تبويب التمارين
-  const todayCard=days[dayIdx];
-  if(!todayCard) return;
-  todayCard.classList.add('today-day');
+  // ١. حدّد اليوم المستهدف للتظليل
+  let targetIdx=-1;
+  let badgeText='اليوم';
+  let source='calendar'; // 'session' | 'last-workout' | 'calendar'
 
-  // ٢. شارة "اليوم ⭐" بجانب اسم اليوم
+  try{
+    // أ. جلسة نشطة الآن؟
+    if(typeof currentSession!=='undefined' && currentSession && currentSession.dayType){
+      targetIdx=_findDayIdxByType(currentSession.dayType, days);
+      if(targetIdx>=0){badgeText='الجلسة النشطة';source='session'}
+    }
+    // ب. آخر workout مكتمل؟
+    if(targetIdx<0 && typeof db!=='undefined'){
+      const workouts=await db.getAll('workouts').catch(()=>[]);
+      if(workouts.length){
+        // sort descending by startTime
+        const sorted=[...workouts].sort((a,b)=>new Date(b.startTime||0)-new Date(a.startTime||0));
+        const last=sorted[0];
+        if(last && last.dayType){
+          targetIdx=_findDayIdxByType(last.dayType, days);
+          if(targetIdx>=0){badgeText='آخر جلسة';source='last-workout'}
+        }
+      }
+    }
+  }catch(e){console.warn('highlightToday lookup failed:',e)}
+
+  // ج. fallback: اليوم في التقويم (للمستخدم الجديد فقط)
+  if(targetIdx<0){
+    targetIdx=new Date().getDay();
+    badgeText='اليوم';
+    source='calendar';
+  }
+
+  // ٢. أزل تظليل قديم (لو reapply بعد تبديل برنامج)
+  days.forEach(d=>{
+    d.classList.remove('today-day','last-session-day');
+    delete d.dataset.isToday;
+    const oldBadge=d.querySelector('.today-badge');
+    if(oldBadge) oldBadge.remove();
+  });
+  document.querySelectorAll('.wg .wc.today-cell,.wg .wc.last-session-cell').forEach(c=>{
+    c.classList.remove('today-cell','last-session-cell');
+  });
+
+  // ٣. تظليل البطاقة المستهدفة
+  const todayCard=days[targetIdx];
+  if(!todayCard) return;
+  const cardClass = (source==='calendar')?'today-day':'last-session-day';
+  todayCard.classList.add(cardClass);
+
+  // ٤. شارة بنص حسب المصدر
   const dn=todayCard.querySelector('.dn');
   if(dn && !dn.querySelector('.today-badge')){
     const badge=document.createElement('span');
     badge.className='today-badge';
-    badge.textContent='اليوم';
+    if(source!=='calendar') badge.classList.add('last-session-badge');
+    badge.textContent=badgeText;
     dn.prepend(badge);
   }
 
-  // ٣. فتح البطاقة تلقائياً (إلا إذا يوم راحة — كرت الراحة بدون body)
+  // ٥. فتح البطاقة تلقائياً (إلا إذا يوم راحة — كرت الراحة بدون body)
   const isRestDay=todayCard.querySelector('.db.rest');
   if(!isRestDay){
     todayCard.classList.add('open');
   }else{
-    injectRestDaySwap(todayCard,dayIdx);
+    injectRestDaySwap(todayCard,targetIdx);
   }
 
-  // ٤. تظليل الخلية المقابلة في شبكة "نظرة عامة"
+  // ٦. تظليل الخلية المقابلة في شبكة "نظرة عامة"
   const cells=document.querySelectorAll('.wg .wc');
-  if(cells[dayIdx]) cells[dayIdx].classList.add('today-cell');
+  if(cells[targetIdx]){
+    cells[targetIdx].classList.add(source==='calendar'?'today-cell':'last-session-cell');
+  }
 
-  // ٥. سكروول هادئ للبطاقة لو في تبويب التمارين (لاحقاً عند فتح التبويب)
-  todayCard.dataset.isToday='1';
+  // ٧. علامة على البطاقة
+  todayCard.dataset.isToday=source==='calendar'?'1':'0';
+  todayCard.dataset.highlightSource=source;
+}
+
+// يبحث عن index البطاقة في #t1 .dy التي تطابق dayType النصي
+function _findDayIdxByType(dayType, days){
+  if(!dayType) return -1;
+  const target=String(dayType).trim().toUpperCase();
+  for(let i=0;i<days.length;i++){
+    const dn=days[i].querySelector('.dn');
+    if(!dn) continue;
+    // اسحب نوع اليوم من نص .dn (قبل "—" لو موجود)
+    const txt=dn.textContent.split('—')[0].trim().toUpperCase();
+    if(txt===target || txt.includes(target) || target.includes(txt)) return i;
+  }
+  // بديل: ابحث في EFFECTIVE_PROGRAM
+  if(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM && EFFECTIVE_PROGRAM.days){
+    const idx=EFFECTIVE_PROGRAM.days.findIndex(d=>{
+      const t=String(d.type||'').trim().toUpperCase();
+      return t===target;
+    });
+    if(idx>=0){
+      const dayOfWeek=EFFECTIVE_PROGRAM.days[idx].dayOfWeek;
+      if(dayOfWeek!=null && dayOfWeek>=0 && dayOfWeek<days.length) return dayOfWeek;
+    }
+  }
+  return -1;
 }
 
 // عرض خيارات الاستبدال داخل يوم الراحة
@@ -973,7 +1055,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(typeof maybeShowGymHint==='function'){
       maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة
     }
-    highlightToday();          // تظليل بطاقة اليوم + فتحها تلقائياً (V7)
+    await highlightToday();    // V9.3 — async الآن: يقرأ آخر workout من DB
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)
     await updateWeekUI();      // شارة الأسبوع + بانر deload (V7 — #15)
     await checkOnboarding();  // فحص أول فتح وعرض الـ onboarding (V7)

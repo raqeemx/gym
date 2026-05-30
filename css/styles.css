@@ -189,6 +189,16 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 /* Weekly grid TODAY cell */
 .wc.today-cell{position:relative;transform:scale(1.08);box-shadow:0 0 0 2px var(--g1),0 8px 22px rgba(212,168,83,.25);background:linear-gradient(145deg,rgba(212,168,83,.16),rgba(212,168,83,.04));border-color:var(--g1);animation:glow 2.4s infinite;z-index:2}
 .wc.today-cell::after{content:'⭐';position:absolute;top:-9px;right:-5px;font-size:14px;animation:pulse 1.6s infinite}
+
+/* V9.3 — "Last session" variant: نفس بنية today-day لكن بلون مختلف (أزرق هادئ بدل الذهبي)
+   ليفرّق المستخدم بين "اليوم في التقويم" و "آخر جلسة بدأتها" */
+.dy.last-session-day{position:relative;border-color:rgba(90,180,255,.5);background:linear-gradient(145deg,rgba(90,180,255,.05),var(--s2));box-shadow:0 0 0 1px rgba(90,180,255,.2),0 10px 28px rgba(90,180,255,.08)}
+.dy.last-session-day::before{content:'';position:absolute;top:0;right:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--blue),#7BC8FF,var(--blue));box-shadow:0 0 12px rgba(90,180,255,.6);z-index:1}
+.dy.last-session-day .db{transform:scale(1.04);box-shadow:0 0 0 2px var(--blue),0 6px 14px rgba(90,180,255,.25)}
+.today-badge.last-session-badge{background:linear-gradient(135deg,var(--blue),#7BC8FF);color:#000;box-shadow:0 2px 8px rgba(90,180,255,.4);animation:none}
+.today-badge.last-session-badge::before{content:'✓';font-size:10px}
+.wc.last-session-cell{position:relative;transform:scale(1.06);box-shadow:0 0 0 2px var(--blue),0 6px 18px rgba(90,180,255,.2);background:linear-gradient(145deg,rgba(90,180,255,.12),rgba(90,180,255,.03));border-color:var(--blue);z-index:2}
+.wc.last-session-cell::after{content:'✓';position:absolute;top:-9px;right:-5px;font-size:14px;color:var(--blue);font-weight:bold;background:var(--bg);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--blue)}
 .dh{display:flex;align-items:center;padding:18px 22px;cursor:pointer;gap:15px;transition:.25s;-webkit-tap-highlight-color:transparent}
 .dh:active{transform:scale(.995)}
 .db{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;flex-shrink:0;transition:.3s}
