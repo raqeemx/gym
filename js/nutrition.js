@@ -22,6 +22,17 @@
  * يُحمَّل بعد foods-database.js و data.js.
  * ============================================================ */
 
+// V9.6 (#5) — Labels للـ mealSlot (تستخدم في breakdown + toasts)
+const MEAL_SLOT_LABELS = {
+  breakfast:'الفطور', lunch:'الغداء', snack:'السناك',
+  pre:'قبل التمرين', post:'بعد التمرين', late:'قبل النوم'
+};
+const MEAL_SLOT_ICONS = {
+  breakfast:'🥚', lunch:'🍗', snack:'🥜',
+  pre:'⚡', post:'🥩', late:'🥛'
+};
+const MEAL_SLOT_ORDER = ['breakfast','lunch','snack','pre','post','late'];
+
 (function(){
   const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
 
@@ -75,6 +86,30 @@
     t.fat    =Math.round(t.fat*10)/10;
     t.fiber  =Math.round(t.fiber*10)/10;
     return t;
+  }
+
+  // V9.6 (#5) — breakdown حسب mealSlot لتاريخ معيّن
+  // يرجّع: {breakfast:{kcal,protein,...,count}, lunch:{...}, ..., unassigned:{...}}
+  async function getNutritionBreakdown(date){
+    const entries=await getFoodEntriesForDate(date);
+    const slots={};
+    for(const slot of MEAL_SLOT_ORDER) slots[slot]={kcal:0,protein:0,carbs:0,fat:0,count:0};
+    slots.unassigned={kcal:0,protein:0,carbs:0,fat:0,count:0};
+    for(const e of entries){
+      const bucket=MEAL_SLOT_LABELS[e.mealSlot]?e.mealSlot:'unassigned';
+      slots[bucket].kcal    += e.kcal||0;
+      slots[bucket].protein += e.protein||0;
+      slots[bucket].carbs   += e.carbs||0;
+      slots[bucket].fat     += e.fat||0;
+      slots[bucket].count++;
+    }
+    // round
+    Object.values(slots).forEach(s=>{
+      s.protein=Math.round(s.protein*10)/10;
+      s.carbs=Math.round(s.carbs*10)/10;
+      s.fat=Math.round(s.fat*10)/10;
+    });
+    return slots;
   }
 
   // يقرأ هدف المستخدم لحساب progress %
@@ -239,7 +274,21 @@
     if(!_selectedFood || !_selectedGrams) return;
     try{
       const entry=await addFoodEntry({foodId:_selectedFood.id, grams:_selectedGrams, mealSlot:_activeMealSlot});
-      showToast(`✓ أُضيفت: ${entry.name}`,'var(--grn)');
+      const slotLbl=_activeMealSlot?(' للـ '+MEAL_SLOT_LABELS[_activeMealSlot]||_activeMealSlot):'';
+      showToast(`✓ أُضيفت: ${entry.name}${slotLbl}`,'var(--grn)');
+      // V9.6 (#5) — لو كان mealSlot محدد، علّم الـ checkbox المطابق في Daily Log
+      if(_activeMealSlot){
+        const slotToMealIdx={breakfast:0, lunch:1, snack:2, pre:3, post:4, late:5};
+        const idx=slotToMealIdx[_activeMealSlot];
+        if(idx!=null){
+          const cb=document.querySelector(`#dlMeals input[data-meal="${idx}"]`);
+          if(cb && !cb.checked){
+            cb.checked=true;
+            // احفظ تلقائياً للتزامن
+            if(typeof saveDailyLog==='function') saveDailyLog();
+          }
+        }
+      }
       closeFoodSearch();
       // حدّث Daily Log & Dashboard
       if(typeof refreshFoodLogPanel==='function') refreshFoodLogPanel();
@@ -362,6 +411,7 @@
   window.removeFoodEntry=removeFoodEntry;
   window.getFoodEntriesForDate=getFoodEntriesForDate;
   window.getNutritionTotals=getNutritionTotals;
+  window.getNutritionBreakdown=getNutritionBreakdown;
   window.getNutritionTargets=getNutritionTargets;
   window.openFoodSearch=openFoodSearch;
   window.closeFoodSearch=closeFoodSearch;

@@ -97,6 +97,12 @@
     try{ return await getNutritionTotals(_todayISO()); }catch(e){return null}
   }
 
+  // V9.6 (#5) — breakdown حسب mealSlot
+  async function _todayNutritionBreakdown(){
+    if(typeof getNutritionBreakdown!=='function') return null;
+    try{ return await getNutritionBreakdown(_todayISO()); }catch(e){return null}
+  }
+
   async function _proteinTarget(){
     try{
       const rec=await db.get('settings',KEYS.USER_PROFILE);
@@ -269,8 +275,8 @@
       </div>`;
   }
 
-  // V9.1 (A.3) — بطاقة Nutrition منفصلة لو فيه food entries اليوم
-  function _nutritionBlock(nutrition,targets){
+  // V9.1 (A.3) + V9.6 (#5, #8) — بطاقة Nutrition: totals + fiber + breakdown حسب الوجبة
+  function _nutritionBlock(nutrition,targets,breakdown){
     if(!nutrition || nutrition.count===0) return '';
     const t=targets;
     const items = t ? [
@@ -284,6 +290,47 @@
       {lbl:'كارب',v:`${nutrition.carbs}`,pct:null,unit:'g'},
       {lbl:'دهون',v:`${nutrition.fat}`,pct:null,unit:'g'}
     ];
+
+    // V9.6 (#8) — fiber row إذا فيه (>0)
+    const fiberRow = nutrition.fiber>0
+      ? `<div class="dn-fiber-row">🌾 ألياف: <b>${E(nutrition.fiber)}g</b> <small>(هدف ~٢٥-٣٥g/يوم)</small></div>`
+      : '';
+
+    // V9.6 (#5) — breakdown حسب mealSlot (لو فيه على الأقل وجبتين في slots مختلفة)
+    let breakdownHtml='';
+    if(breakdown){
+      const labels=(typeof MEAL_SLOT_LABELS!=='undefined')?MEAL_SLOT_LABELS:{};
+      const icons=(typeof MEAL_SLOT_ICONS!=='undefined')?MEAL_SLOT_ICONS:{};
+      const order=(typeof MEAL_SLOT_ORDER!=='undefined')?MEAL_SLOT_ORDER:[];
+      const active=order.filter(s=>breakdown[s] && breakdown[s].count>0);
+      if(active.length>=1){
+        breakdownHtml=`
+          <div class="dn-breakdown">
+            <div class="dn-breakdown-head">⏱ التوزيع على الوجبات</div>
+            <div class="dn-breakdown-grid">
+              ${active.map(s=>{
+                const b=breakdown[s];
+                return `<div class="dn-bd-cell">
+                  <span class="dn-bd-icon">${icons[s]||'🍽️'}</span>
+                  <div class="dn-bd-text">
+                    <b>${E(labels[s]||s)}</b>
+                    <small>${E(b.kcal)} سعرة · ${E(b.protein)}g بروتين</small>
+                  </div>
+                </div>`;
+              }).join('')}
+              ${breakdown.unassigned && breakdown.unassigned.count>0?`
+                <div class="dn-bd-cell dn-bd-unassigned">
+                  <span class="dn-bd-icon">❓</span>
+                  <div class="dn-bd-text">
+                    <b>غير محدّد</b>
+                    <small>${E(breakdown.unassigned.count)} وجبة · حدّد التوقيت لتحليل أفضل</small>
+                  </div>
+                </div>`:''}
+            </div>
+          </div>`;
+      }
+    }
+
     return `
       <div class="dash-card">
         <div class="dash-card-head">🥩 التغذية اليوم (${E(nutrition.count)} وجبة)</div>
@@ -295,6 +342,8 @@
               ${it.pct!=null?`<div class="dn-cell-bar"><div class="dn-cell-fill ${it.pct>110?'over':it.pct>=70?'ok':'low'}" style="width:${Math.min(100,it.pct)}%"></div></div>`:''}
             </div>`).join('')}
         </div>
+        ${fiberRow}
+        ${breakdownHtml}
         <button class="dash-card-more" onclick="openFoodSearch&&openFoodSearch()">+ أضف وجبة جديدة</button>
       </div>`;
   }
@@ -343,6 +392,8 @@
       // V9.1 (A.3) — nutrition totals + targets
       const nutrition=await _todayNutritionTotals();
       const nutritionTargets=(typeof getNutritionTargets==='function')?await getNutritionTargets():null;
+      // V9.6 (#5) — breakdown حسب mealSlot
+      const nutritionBreakdown=await _todayNutritionBreakdown();
       // V9.2 (B.7) — Smart Next Workout recommendation
       const smartReco=(typeof recommendNextWorkout==='function')?await recommendNextWorkout():null;
 
@@ -369,7 +420,7 @@
         ${_quickActionsBlock()}
         ${_programProgressBlock(wp)}
         ${_prsBlock(data.prs)}
-        ${_nutritionBlock(nutrition,nutritionTargets)}
+        ${_nutritionBlock(nutrition,nutritionTargets,nutritionBreakdown)}
         ${_dailyBlock(daily,proteinTarget,nutrition)}
       `;
     }catch(e){

@@ -227,12 +227,14 @@ async function renderPhotoGallery(){
   });
   gallery.innerHTML=sorted.map(p=>{
     const url=_trackURL(URL.createObjectURL(p.blob));
-    const wTxt=p.weight?` · ${p.weight}كجم`:'';
+    // V9.6 (#7) — badge بارز للوزن (top-left على الصورة)
+    const wBadge=p.weight?`<div class="pp-thumb-weight-badge">⚖️ ${p.weight}<small>كجم</small></div>`:'';
     return `<div class="pp-thumb" onclick="openPhotoFullscreen(${p.id})">
       <img src="${url}" alt="صورة ${p.date}" loading="lazy">
+      ${wBadge}
       <div class="pp-thumb-overlay">
         <div class="pp-thumb-cat">${_catIcon(p.category)} ${_catLabel(p.category)}</div>
-        <div class="pp-thumb-date">${fmtDate(p.date)}${wTxt}</div>
+        <div class="pp-thumb-date">${fmtDate(p.date)}</div>
       </div>
     </div>`;
   }).join('');
@@ -351,13 +353,31 @@ async function renderCompareView(){
   if(!before||!after){view.innerHTML='<div class="ss-empty">اختر صورتين</div>';return}
   const beforeUrl=_trackURL(URL.createObjectURL(before.blob));
   const afterUrl=_trackURL(URL.createObjectURL(after.blob));
-  // فرق الوزن (لو الاثنين عندهم)
+  // V9.6 (#7) — فرق الوزن + المدة الزمنية (لو الاثنين عندهم weight)
   let weightDelta='';
   if(before.weight!=null && after.weight!=null){
     const d=Math.round((after.weight-before.weight)*10)/10;
     const sign=d>0?'+':'';
     const cls=d>0?'pp-w-up':(d<0?'pp-w-down':'pp-w-flat');
-    weightDelta=`<div class="pp-cmp-delta ${cls}">فرق الوزن: ${sign}${d} كجم</div>`;
+    // المدة بين الصورتين
+    const daysBetween=Math.abs(Math.round((new Date(after.date)-new Date(before.date))/86400000));
+    const periodTxt = daysBetween===0?'نفس اليوم'
+                    : daysBetween<7?`خلال ${daysBetween} يوم`
+                    : daysBetween<60?`خلال ${Math.round(daysBetween/7)} أسبوع`
+                    : `خلال ${Math.round(daysBetween/30)} شهر`;
+    // معدل التغيير الأسبوعي (مفيد للتضخيم/التنشيف)
+    let rateTxt='';
+    if(daysBetween>=14 && d!==0){
+      const ratePerWeek=Math.round((d/daysBetween)*7*100)/100;
+      const rateSign=ratePerWeek>0?'+':'';
+      rateTxt=` <small>(${rateSign}${ratePerWeek} كجم/أسبوع)</small>`;
+    }
+    weightDelta=`<div class="pp-cmp-delta ${cls}">
+      <div class="pp-cmp-delta-main">
+        <span class="pp-cmp-delta-icon">${d>0?'📈':(d<0?'📉':'➖')}</span>
+        <b>${sign}${d}</b> كجم ${periodTxt}${rateTxt}
+      </div>
+    </div>`;
   }
   view.innerHTML=`
     <div class="pp-compare-grid">

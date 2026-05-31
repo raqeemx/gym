@@ -8,6 +8,25 @@ function _isoDayShift(isoDay,deltaDays){
 function _daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d}
 function _msInDay(){return 86400000}
 
+// V9.6 (#6) — أيقونات/labels لأنواع PR (٥ أنواع)
+const PR_TYPE_META = {
+  weight: {icon:'⚖️', label:'وزن',     short:'W',  cls:'pr-t-weight'},
+  reps:   {icon:'🔁', label:'تكرار',   short:'R',  cls:'pr-t-reps'},
+  volume: {icon:'📦', label:'حجم',     short:'V',  cls:'pr-t-volume'},
+  '1rm':  {icon:'🎯', label:'1RM',     short:'1', cls:'pr-t-1rm'},
+  effort: {icon:'💪', label:'جهد',     short:'E',  cls:'pr-t-effort'}
+};
+// يحوّل prType (مثلاً "weight,volume") لـ HTML chips ملوّنة
+function _renderPRTypeChips(prType){
+  if(!prType) return '';
+  const types=String(prType).split(',').map(t=>t.trim()).filter(Boolean);
+  if(!types.length) return '';
+  return ` <span class="pr-type-chips">${types.map(t=>{
+    const m=PR_TYPE_META[t]||{icon:'🏆',label:t,cls:''};
+    return `<span class="pr-type-chip ${m.cls}" title="PR ${m.label}">${m.icon}</span>`;
+  }).join('')}</span>`;
+}
+
 // V9.5 (#1) — متوسط الراحة الفعلية لـ workout واحد (من actualRestSeconds في sets)
 // يرجّع رقم أو null لو لا بيانات كافية
 function _avgRestForWorkout(sets){
@@ -411,7 +430,7 @@ async function openStats(){
         if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
         const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
         const warmMark=s.isWarmup?'<span class="set-warmup-mark" title="سيت تسخين">🔥</span>':''; // V8.3
-        byEx[s.exerciseName].push(`${warmMark}${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
+        byEx[s.exerciseName].push(`${warmMark}${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
       });
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
@@ -650,6 +669,7 @@ function dispatchProgressTab(pt){
     if(typeof renderPRs==='function') renderPRs();
   }else if(pt==='analytics'){
     if(typeof renderCharts==='function') renderCharts();
+    if(typeof renderSubsPatterns==='function') renderSubsPatterns(); // V9.6 (#4)
     if(typeof renderHistory==='function') renderHistory();
   }else if(pt==='metrics') renderBodyMetrics();
   else if(pt==='daily'){
@@ -1505,17 +1525,33 @@ async function renderPRs(){
     const isBetter=!cur || (p.type==='effort'?p.value<cur.value:p.value>cur.value);
     if(isBetter) byEx[p.exerciseName][p.type]=p;
   });
-  // V7.3 — أضيف نوع 'effort' (Effort PR: نفس الوزن×التكرار بـ RPE أقل)
-  const typeLbl={weight:'وزن',volume:'حجم',reps:'تكرار','1rm':'1RM',effort:'جهد @RPE'};
+
+  // V9.6 (#6) — ترتيب الأنواع حسب الأهمية: weight > 1rm > volume > reps > effort
+  const TYPE_ORDER=['weight','1rm','volume','reps','effort'];
+
+  // V9.6 (#6) — Filter tabs لعرض نوع واحد فقط (اختياري)
+  // counts per type
+  const typeCounts={};
+  prs.forEach(p=>{typeCounts[p.type]=(typeCounts[p.type]||0)+1});
+
   const items=Object.entries(byEx).sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([ex,types])=>{
     const lastDate=Math.max(...Object.values(types).map(t=>new Date(t.date).getTime()));
-    const typesHtml=Object.entries(types).map(([t,p])=>{
-      // عرض القيمة حسب النوع
+    // مرتب حسب TYPE_ORDER
+    const sortedTypes=Object.entries(types).sort((a,b)=>TYPE_ORDER.indexOf(a[0])-TYPE_ORDER.indexOf(b[0]));
+    const typesHtml=sortedTypes.map(([t,p])=>{
+      const meta=PR_TYPE_META[t]||{icon:'🏆',label:t,cls:''};
       const suffix=t==='weight'||t==='1rm'?'كجم':'';
-      return `<span>${typeLbl[t]||t}: <b>${p.value}${suffix}</b></span>`;
+      return `<span class="pr-type-row ${meta.cls}" title="PR ${meta.label}">
+        <span class="prt-icon">${meta.icon}</span>
+        <span class="prt-label">${meta.label}</span>
+        <b>${p.value}${suffix}</b>
+      </span>`;
     }).join('');
-    return `<div class="pr-item">
-      <div class="pr-icon">🏆</div>
+    // الـ icon الرئيسي = أعلى نوع
+    const mainType=sortedTypes[0]?sortedTypes[0][0]:'weight';
+    const mainMeta=PR_TYPE_META[mainType]||{icon:'🏆'};
+    return `<div class="pr-item" data-pr-types="${sortedTypes.map(t=>t[0]).join(',')}">
+      <div class="pr-icon">${mainMeta.icon}</div>
       <div class="pr-body">
         <div class="pr-name">${ex}</div>
         <div class="pr-types">${typesHtml}</div>
@@ -1523,7 +1559,31 @@ async function renderPRs(){
       <div class="pr-date">${fmtDate(new Date(lastDate).toISOString())}</div>
     </div>`;
   });
-  body.innerHTML=`<div class="pr-list">${items.join('')}</div>`;
+
+  // Filter chips
+  const filterChips=`<div class="pr-filter">
+    <button class="pr-filter-chip active" data-filter="all">الكل (${prs.length})</button>
+    ${TYPE_ORDER.filter(t=>typeCounts[t]).map(t=>{
+      const m=PR_TYPE_META[t];
+      return `<button class="pr-filter-chip ${m.cls}" data-filter="${t}">${m.icon} ${m.label} (${typeCounts[t]})</button>`;
+    }).join('')}
+  </div>`;
+
+  body.innerHTML=filterChips+`<div class="pr-list">${items.join('')}</div>`;
+
+  // Filter behavior
+  body.querySelectorAll('.pr-filter-chip').forEach(btn=>{
+    btn.onclick=()=>{
+      body.querySelectorAll('.pr-filter-chip').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const f=btn.dataset.filter;
+      body.querySelectorAll('.pr-item').forEach(item=>{
+        if(f==='all'){item.style.display='';return}
+        const types=(item.dataset.prTypes||'').split(',');
+        item.style.display=types.includes(f)?'':'none';
+      });
+    };
+  });
 }
 
 async function renderHistory(){
@@ -1541,7 +1601,7 @@ async function renderHistory(){
     ws.forEach(s=>{
       if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
       const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
-      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?' 🏆':''}${noteMark}`);
+      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
     });
     const exHtml=Object.entries(byEx).map(([ex,arr])=>
       `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
@@ -1558,6 +1618,139 @@ async function renderHistory(){
     </div>`);
   }
   body.innerHTML=items.join('');
+}
+
+// V9.6 (#4) — أنماط الاستبدال: تحليل subs:history
+async function renderSubsPatterns(){
+  const body=document.getElementById('subsPatternsBody');
+  if(!body) return;
+  body.innerHTML='<div class="chart-loading">جاري التحميل...</div>';
+
+  const histRec=await db.get('settings',KEYS.SUBS_HISTORY).catch(()=>null);
+  const hist=(histRec&&histRec.value)||[];
+
+  if(hist.length===0){
+    body.innerHTML=`<div class="empty-state empty-state-soft">
+      <div class="es-icon">🔄</div>
+      <div class="es-text">
+        <b>لم تستبدل أي تمرين بعد</b><br>
+        <small>عند الضغط على «⇄ بديل؟» في صفحة التمارين، ستظهر إحصائيات هنا.</small>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // 1. Top 5 استبدالات (most-substituted originals)
+  const origCounts={};
+  hist.forEach(h=>{
+    origCounts[h.original]=(origCounts[h.original]||0)+1;
+  });
+  const top5=Object.entries(origCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // 2. للـ top original، البدائل الأكثر استخداماً
+  const topOriginal=top5[0]?top5[0][0]:null;
+  const topSubs=topOriginal
+    ? Object.entries(
+        hist.filter(h=>h.original===topOriginal).reduce((acc,h)=>{
+          acc[h.substitute]=(acc[h.substitute]||0)+1;
+          return acc;
+        },{})
+      ).sort((a,b)=>b[1]-a[1])
+    : [];
+
+  // 3. Trend شهري (آخر ٣ أشهر)
+  const now=Date.now();
+  const monthBuckets=[
+    {label:'هذا الشهر',start:now-30*86400000,count:0},
+    {label:'الشهر الماضي',start:now-60*86400000,end:now-30*86400000,count:0},
+    {label:'قبله',start:now-90*86400000,end:now-60*86400000,count:0}
+  ];
+  hist.forEach(h=>{
+    const t=new Date(h.date).getTime();
+    if(isNaN(t)) return;
+    for(const b of monthBuckets){
+      if(t>=b.start && (b.end?t<b.end:true)){b.count++;break}
+    }
+  });
+
+  // 4. اكتشاف ازدحام (نمو > 50% بين الشهرين الأخيرين)
+  const [m0,m1]=monthBuckets;
+  let trendHint='';
+  if(m1.count>=3 && m0.count > m1.count*1.5){
+    const pct=Math.round(((m0.count-m1.count)/m1.count)*100);
+    trendHint=`<div class="sp-trend-hint sp-trend-up">⚠️ <b>+${pct}%</b> استبدالات هذا الشهر — هل الجيم أصبح أزحم؟ جرّب وقتاً مختلفاً.</div>`;
+  }else if(m0.count<m1.count && m1.count>=3){
+    const pct=Math.round(((m1.count-m0.count)/m1.count)*100);
+    trendHint=`<div class="sp-trend-hint sp-trend-down">✓ <b>-${pct}%</b> استبدالات هذا الشهر — الجيم أصبح أهدأ أو تكيّفت مع الازدحام.</div>`;
+  }
+
+  const E=escHTML;
+  body.innerHTML=`
+    <div class="subs-patterns">
+      <div class="sp-stats-row">
+        <div class="sp-stat-cell">
+          <div class="sp-stat-num">${E(hist.length)}</div>
+          <div class="sp-stat-lbl">إجمالي الاستبدالات</div>
+        </div>
+        <div class="sp-stat-cell">
+          <div class="sp-stat-num">${E(Object.keys(origCounts).length)}</div>
+          <div class="sp-stat-lbl">تمرين مختلف</div>
+        </div>
+        <div class="sp-stat-cell">
+          <div class="sp-stat-num">${E(m0.count)}</div>
+          <div class="sp-stat-lbl">هذا الشهر</div>
+        </div>
+      </div>
+
+      ${trendHint}
+
+      <div class="sp-section">
+        <div class="sp-section-head">🔝 أكثر ٥ تمارين استبدالاً</div>
+        <div class="sp-top-list">
+          ${top5.map(([orig,count],i)=>{
+            const max=top5[0][1];
+            const pct=Math.round((count/max)*100);
+            return `<div class="sp-row">
+              <div class="sp-rank">${i+1}</div>
+              <div class="sp-row-body">
+                <div class="sp-row-head"><span class="sp-row-name">${E(orig)}</span><b>${E(count)}×</b></div>
+                <div class="sp-row-bar"><div class="sp-row-fill" style="width:${pct}%"></div></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      ${topOriginal&&topSubs.length?`
+        <div class="sp-section">
+          <div class="sp-section-head">🎯 بدائلك المفضّلة لـ <b>${E(topOriginal)}</b></div>
+          <div class="sp-subs-list">
+            ${topSubs.slice(0,3).map(([sub,c])=>{
+              const isMost=c===topSubs[0][1];
+              return `<div class="sp-sub-chip${isMost?' sp-sub-fav':''}">
+                ${isMost?'⭐ ':''}<b>${E(sub)}</b> <small>${E(c)}× مرات</small>
+              </div>`;
+            }).join('')}
+          </div>
+          ${topSubs[0][1]>=3?`<div class="sp-recommend">💡 جرّب جعل <b>${E(topSubs[0][0])}</b> بديلاً دائماً — يوفّر وقت البحث في كل جلسة.</div>`:''}
+        </div>
+      `:''}
+
+      <div class="sp-section">
+        <div class="sp-section-head">📅 آخر ٣ أشهر</div>
+        <div class="sp-months">
+          ${monthBuckets.map(b=>{
+            const max=Math.max(1,...monthBuckets.map(x=>x.count));
+            const pct=Math.round((b.count/max)*100);
+            return `<div class="sp-month">
+              <div class="sp-month-lbl">${E(b.label)}</div>
+              <div class="sp-month-bar"><div class="sp-month-fill" style="width:${pct}%">${b.count?E(b.count):''}</div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // V8.4 (P1-#6) — escHTML نُقل لـ data.js (global) ليتاح للملفات الأخرى — هذا التعليق احتفاظ بالـ history

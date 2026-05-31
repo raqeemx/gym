@@ -5,6 +5,62 @@
 
 ---
 
+## [V9.6 — استثمار البيانات المخفية: subs/meal-slot/PR-types/fiber/photo-weight] — 2026-05-31
+
+حلّ ٥ مشاكل **🟡 متوسطة الأولوية** من تقرير Data Audit (#4 → #8). كلها بيانات كانت مخزّنة لكن غير ظاهرة.
+
+### ✨ #4 — بطاقة «🔄 أنماط الاستبدال» في تحليلات
+بدلاً من ترك `subs:history` لـ smart-suggestion فقط (٢٠٠ entry مدفون)، الآن:
+- **3 stat cells**: إجمالي الاستبدالات، تمارين مختلفة، هذا الشهر
+- **Trend hint ذكي**: «⚠️ +٧٥٪ استبدالات هذا الشهر — هل الجيم أصبح أزحم؟» أو «✓ −٤٠٪ — الجيم أهدأ»
+- **Top 5 list** بشريط نسبي (rank + count + bar)
+- **بدائلك المفضّلة لـ {أكثر تمرين مستبدل}** ـ ٣ chips، الأكثر ⭐
+- **توصية make-permanent**: «💡 جرّب جعل X بديلاً دائماً — يوفّر وقت البحث في كل جلسة»
+- **Bar chart شهري**: هذا الشهر vs الماضي vs ما قبله
+
+### ✨ #5 — mealSlot routing + breakdown في Dashboard
+الحقل كان موجود لكن لا UI يربط الوجبات بـ slots محددة:
+- **في Daily Log**: كل meal chip له زر «+» جنبه يفتح Food Search مع `mealSlot` محدد (`breakfast/lunch/snack/pre/post/late`)
+- **عند إضافة وجبة بـ slot**: علامة auto-tick على checkbox المطابق + auto-save
+- **في Dashboard nutrition**: قسم جديد «⏱ التوزيع على الوجبات» يعرض grid لكل slot نشط (icon + label + kcal + protein)
+- **قسم خاص للوجبات غير المُصنّفة**: «❓ غير محدّد · ٣ وجبات · حدّد التوقيت لتحليل أفضل»
+
+### ✨ #6 — أيقونات PR types (5 أنواع مميزة)
+بدلاً من 🏆 موحّد للـ ٥ أنواع:
+- **History**: chips ملوّنة `⚖️ R` / `🔁 B` / `📦 P` / `🎯 R` / `💪 G` بدل 🏆 (مع tooltip للنوع)
+- **prsBody**: 
+  - **Filter chips** فوق القائمة: «الكل (٤٥) · ⚖️ وزن (١٢) · 🎯 1RM (٨)...» للتصفية حسب النوع
+  - كل PR item يعرض الأنواع كـ rows ملوّنة مرتبة بالأهمية (weight > 1rm > volume > reps > effort)
+  - أيقونة الـ item الرئيسية = أعلى نوع للـ PR
+- **ثوابت** `PR_TYPE_META` و `_renderPRTypeChips()` للاتساق عبر التطبيق
+
+### ✨ #7 — photo.weight badge + compare diff محسّن
+- **Gallery thumbnails**: badge بصري بارز top-right على كل صورة `⚖️ 78كجم` (glass-blur + ذهبي)
+- **Compare view**: 
+  - بدل «فرق الوزن: +4 كجم»: «📈 +4 كجم خلال 8 أسبوع <small>(+0.5 كجم/أسبوع)</small>»
+  - حساب معدل التغيير الأسبوعي (مهم للمتابعة العلمية للتضخيم 0.25-0.5kg/أسبوع)
+  - ٣ ألوان: ذهبي للزيادة، أزرق للنقص، رمادي للثبات
+
+### ✨ #8 — fiber row في Dashboard nutrition
+- row صغير تحت macros الأساسية: `🌾 ألياف: 28g (هدف ~٢٥-٣٥g/يوم)`
+- يظهر فقط لو `nutrition.fiber > 0` (لا يزعج لو ما فيه foodEntries)
+- بدون progress bar — مساحة قليلة، إشارة سريعة
+
+### 📁 ملفات معدّلة (٧)
+- `js/progress.js` — `renderSubsPatterns` + `PR_TYPE_META` + `_renderPRTypeChips` + تحديث `renderPRs` بـ filter chips
+- `js/dashboard.js` — `_todayNutritionBreakdown` + تحديث `_nutritionBlock` بـ fiber + breakdown
+- `js/nutrition.js` — ثوابت `MEAL_SLOT_LABELS/ICONS/ORDER` + `getNutritionBreakdown` + auto-tick checkbox عند slot
+- `js/progress-photos.js` — weight badge على gallery + compare delta محسّن مع period/rate
+- `index.html` — meal chips بأزرار `+` (٦ × `openFoodSearch(slot)`) + subsPatternsBody section
+- `css/styles.css` — ~١٤٠ سطر CSS جديد (subs-patterns + dl-meal-add + dn-fiber-row + dn-breakdown + pr-type-chips + pr-filter + pp-thumb-weight-badge + pp-cmp-delta enhanced)
+
+### 🛡️ توافق
+- لا migration. كل التحسينات backward-compatible.
+- لا حقول جديدة في DB — استثمار حقول موجودة (`subs:history`, `mealSlot`, `prType`, `fiber`, `photo.weight`).
+- Service Worker: `bulkmode-v9-6-0`
+
+---
+
 ## [V9.5 — توحيد مصادر البيانات + استثمار actualRestSeconds] — 2026-05-31
 
 حلّ ٣ مشاكل **🔴 عالية الأولوية** من تقرير Data Audit.

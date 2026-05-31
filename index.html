@@ -663,6 +663,11 @@
           <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--tx3)">المستهدف ~٦٠ث في زوج APS · أعلى من ٩٠ث = راحة طويلة تُطيل الجلسة.</div>
         </div>
       </div>
+      <!-- V9.6 (#4) — Substitution Patterns Card -->
+      <div class="pp-subsection">
+        <div class="pp-subhead">🔄 أنماط الاستبدال</div>
+        <div id="subsPatternsBody"><div class="chart-loading">جاري التحميل...</div></div>
+      </div>
       <div class="pp-subsection">
         <div class="pp-subhead">📜 سجل الجلسات</div>
         <div id="historyBody2"><div class="chart-loading">جاري التحميل...</div></div>
@@ -744,15 +749,34 @@
           </div>
         </div>
         <!-- Meals -->
+        <!-- V9.6 (#5) — كل وجبة لها زر "+" يفتح Food Search مع mealSlot محدد -->
         <div class="dl-section">
-          <div class="dl-section-title">🍽️ الوجبات <small>(الهدف 6/يوم)</small></div>
-          <div class="dl-chips" id="dlMeals">
-            <label class="dl-chip"><input type="checkbox" data-meal="0"><span>فطور</span></label>
-            <label class="dl-chip"><input type="checkbox" data-meal="1"><span>غداء</span></label>
-            <label class="dl-chip"><input type="checkbox" data-meal="2"><span>سناك</span></label>
-            <label class="dl-chip"><input type="checkbox" data-meal="3"><span>طاقة (قبل التمرين)</span></label>
-            <label class="dl-chip"><input type="checkbox" data-meal="4"><span>بناء (بعد التمرين)</span></label>
-            <label class="dl-chip"><input type="checkbox" data-meal="5"><span>قبل النوم</span></label>
+          <div class="dl-section-title">🍽️ الوجبات <small>(الهدف 6/يوم · اضغط + لإضافة طعام فعلي)</small></div>
+          <div class="dl-chips dl-meals-chips" id="dlMeals">
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="0"><span>فطور</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('breakfast')" aria-label="أضف طعاماً للفطور">+</button>
+            </div>
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="1"><span>غداء</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('lunch')" aria-label="أضف طعاماً للغداء">+</button>
+            </div>
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="2"><span>سناك</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('snack')" aria-label="أضف طعاماً للسناك">+</button>
+            </div>
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="3"><span>طاقة (قبل التمرين)</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('pre')" aria-label="أضف طعاماً قبل التمرين">+</button>
+            </div>
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="4"><span>بناء (بعد التمرين)</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('post')" aria-label="أضف طعاماً بعد التمرين">+</button>
+            </div>
+            <div class="dl-meal-row">
+              <label class="dl-chip"><input type="checkbox" data-meal="5"><span>قبل النوم</span></label>
+              <button type="button" class="dl-meal-add" onclick="openFoodSearch('late')" aria-label="أضف طعاماً قبل النوم">+</button>
+            </div>
           </div>
         </div>
         <button class="bm-save" onclick="saveDailyLog()">💾 احفظ يومك</button>
