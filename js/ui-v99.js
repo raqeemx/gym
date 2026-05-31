@@ -620,11 +620,171 @@
     });
   });
 
+  // ============================================================
+  // V9.10 ADDITIONS — #11 tips collapsible · #14 colors · #15 bilingual
+  // ============================================================
+
+  // #11 — tips collapsible
+  // أي .tip يحوي نص أطول من ~110 حرف، احقن زر "اقرأ المزيد"
+  function applyTipsCollapsible(){
+    document.querySelectorAll('.tip:not([data-tip-collapsed])').forEach(tip=>{
+      tip.dataset.tipCollapsed='1';
+      const tt=tip.querySelector('.tt');
+      if(!tt) return;
+      // إذا النص قصير، تجاهل
+      const len=(tt.textContent||'').length;
+      // إذا فيه <br><br> أو طول > 130 → اعتبره طويلاً
+      const isLong = len>130 || /<br\s*\/?>\s*<br/i.test(tt.innerHTML);
+      if(!isLong) return;
+      tip.classList.add('collapsible');
+      // أضف زر "اقرأ المزيد" بعد .tt مباشرة
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='tip-more-btn';
+      btn.textContent='اقرأ المزيد';
+      btn.onclick=(e)=>{
+        e.stopPropagation();
+        const isExpanded=tip.classList.toggle('expanded');
+        btn.textContent=isExpanded?'اطوِ':'اقرأ المزيد';
+      };
+      tt.parentNode.appendChild(btn);
+    });
+  }
+
+  // #14 — ضف data-day-type لكل خلية في wg + day strip
+  // map من نوع اليوم النصي إلى category
+  function _categorizeDayType(typeText){
+    const t=String(typeText||'').toUpperCase();
+    if(/REST|راحة/.test(t)) return 'rest';
+    if(/UPPER|PUSH|CHEST/.test(t)) return 'push';
+    if(/BACK|PULL|WINGS/.test(t)) return 'pull';
+    if(/LEGS?|أرجل|سمانة/.test(t)) return 'legs';
+    if(/ARMS?|BICEP|TRICEP|ذراع/.test(t)) return 'arms';
+    return 'push'; // default fallback
+  }
+
+  function applyDayTypeColors(){
+    // Week grid
+    document.querySelectorAll('.fu2 .wg .wc').forEach(cell=>{
+      const wt=cell.querySelector('.wt');
+      if(!wt) return;
+      const cat=_categorizeDayType(wt.textContent);
+      cell.dataset.dayType=cat;
+    });
+    // Day strip chips
+    document.querySelectorAll('.day-strip .ds-chip').forEach(chip=>{
+      const t=chip.querySelector('.ds-chip-type');
+      if(!t) return;
+      const cat=_categorizeDayType(t.textContent);
+      chip.dataset.dayType=cat;
+    });
+    // Day cards in t1: .db يحصل push/pull/legs بالفعل من program-render
+    // فقط أعد classify .db.pull إلى arms لو dayType فعلاً arms (Arms A/B في البرنامج)
+    document.querySelectorAll('#t1 .dy').forEach(day=>{
+      const dn=day.querySelector('.dn');
+      if(!dn) return;
+      const cat=_categorizeDayType(dn.textContent);
+      day.dataset.dayType=cat;
+    });
+  }
+
+  // #15 — Bilingual exercise names (English — Arabic)
+  // EXERCISE_FORM_NOTES يحوي title بصيغة "Chest Press — ضغط صدر"
+  // نُعدّل .step-name إلى <span class="sn-en">Chest Press</span><span class="sn-ar">ضغط صدر</span>
+  function _buildArabicNameMap(){
+    const map={};
+    if(typeof EXERCISE_FORM_NOTES==='undefined') return map;
+    for(const [key,val] of Object.entries(EXERCISE_FORM_NOTES)){
+      if(!val || !val.title) continue;
+      const t=String(val.title);
+      const dashIdx=t.indexOf('—');
+      if(dashIdx<0) continue;
+      const en=t.slice(0,dashIdx).trim();
+      const ar=t.slice(dashIdx+1).trim();
+      if(en && ar){
+        map[en]=ar;
+        // اسم الجهاز بدون parens
+        const cleanEn=en.replace(/\s*\([^)]+\)/g,'').trim();
+        if(cleanEn!==en) map[cleanEn]=ar;
+      }
+    }
+    return map;
+  }
+  let _arNameMap=null;
+
+  function applyBilingualNames(){
+    if(!_arNameMap) _arNameMap=_buildArabicNameMap();
+    if(Object.keys(_arNameMap).length===0) return;
+    document.querySelectorAll('#t1 .step:not(.rest) .step-name').forEach(nameEl=>{
+      if(nameEl.dataset.bilingual==='1') return;
+      // النص الأصلي
+      const raw=nameEl.textContent.trim();
+      // استخرج اسم الإنجليزي: ابحث عن match في raw
+      let enName=null, arName=null;
+      // أولاً، حاول بـ normalizeExName (لو متاحة)
+      const norm=(typeof normalizeExName==='function')?normalizeExName(raw):raw;
+      // بحث مباشر
+      for(const [en,ar] of Object.entries(_arNameMap)){
+        if(raw.includes(en)){
+          enName=en;arName=ar;break;
+        }
+      }
+      // بحث بالـ norm
+      if(!enName && norm && _arNameMap[norm]){
+        enName=norm;arName=_arNameMap[norm];
+      }
+      if(!enName || !arName) return;
+      // احتفظ بـ children موجودة (مثل زر ℹ️) — لا نلمسهم
+      const preserved=Array.from(nameEl.childNodes).filter(n=>n.nodeType!==3);
+      // أزل كل text nodes
+      Array.from(nameEl.childNodes).forEach(n=>{
+        if(n.nodeType===3) nameEl.removeChild(n);
+      });
+      // أنشئ span للإنجليزي + العربي
+      const enSpan=document.createElement('span');
+      enSpan.className='sn-en';
+      enSpan.textContent=enName;
+      const arSpan=document.createElement('span');
+      arSpan.className='sn-ar';
+      arSpan.textContent=arName;
+      // ضع spans قبل children المحفوظة
+      nameEl.insertBefore(arSpan,nameEl.firstChild);
+      nameEl.insertBefore(enSpan,arSpan);
+      nameEl.dataset.bilingual='1';
+    });
+  }
+
+  // hook in على lifecycle
+  function _applyV910Enhancements(){
+    try{applyTipsCollapsible()}catch(e){}
+    try{applyDayTypeColors()}catch(e){}
+    try{applyBilingualNames()}catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    setTimeout(_applyV910Enhancements,400);
+  });
+  // أعد التطبيق عند بناء day strip أو تغيير برنامج
+  const _origScheduleStripBuild=_scheduleStripBuild;
+  // wrap للأمان (override الـ closure)
+  // بدلاً من override، أضف observer ثانٍ
+  if(typeof window!=='undefined'){
+    const ob2=new MutationObserver(()=>{
+      _applyV910Enhancements();
+    });
+    setTimeout(()=>{
+      const pc=document.getElementById('programContainer');
+      if(pc) try{ob2.observe(pc,{childList:true,subtree:false})}catch(e){}
+    },1500);
+  }
+
   // expose
   window.toggleFocusMode=toggleFocusMode;
   window.injectAllWeightChips=injectAllWeightChips;
   window.buildDayStrip=buildDayStrip;
   window.applyWeekGridStatus=applyWeekGridStatus;
   window.applyHeroCompact=applyHeroCompact;
-  window._uiV99={initFocusMode,initGuideCollapsible,initDailyLogSubtabs,applyHeroCompact,applyWeekGridStatus,buildDayStrip,injectAllWeightChips,toggleFocusMode};
+  window.applyTipsCollapsible=applyTipsCollapsible;
+  window.applyDayTypeColors=applyDayTypeColors;
+  window.applyBilingualNames=applyBilingualNames;
+  window._uiV99={initFocusMode,initGuideCollapsible,initDailyLogSubtabs,applyHeroCompact,applyWeekGridStatus,buildDayStrip,injectAllWeightChips,toggleFocusMode,applyTipsCollapsible,applyDayTypeColors,applyBilingualNames};
 })();

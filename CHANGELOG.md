@@ -5,6 +5,70 @@
 
 ---
 
+## [V9.10 — UI/UX Sprint 2: FAB + Set Row + Progress + Bilingual] — 2026-05-31
+
+تنفيذ ٨ مشاكل UI/UX (من #8 إلى #15). الهدف: تقليل التكدّس البصري + تحفيز نفسي + توحيد ألوان + احترام اللغة الأم.
+
+### ✨ #8 — FAB تبسيط (٩ → ٥ + "مزيد")
+- ٥ عناصر شائعة مكشوفة مباشرة: 👤 ملف · 🧮 بليتات · 🏋️ جيمات · 🌙 ثيم · 💾 تصدير
+- ٢ نادرة الاستخدام داخل `<details>⋯ مزيد</details>`: 🎯 جولة · 📥 استيراد
+- إزالة الـ `fab-group-title` المكرّرة (٣ عناوين → بنية مسطّحة)
+
+### ✨ #9 — Set Row تصميم جديد (صفّان)
+- الصف الأول: `كجم [input] 🧮 | تكرار [input] | حفظ | 📝 🎤`
+- الصف الثاني: `[RPE 6 7 8 9 10]` (chips ملوّنة full-width)
+- الصف الثالث (lazy): "آخر/أفضل" (`.last`)
+- 📝 و 🎤 صاروا icons `30×30` بـ border خفيف بدل أزرار كبيرة
+
+### ✨ #10 — Workout Progress Bar في Session Bar
+- شريط أفقي `5px` تحت "⏱ 0:00 · 💪 0 سيت · 🏆 0 PR"
+- متن: `12/22 سيت · تبقى 55٪`
+- ألوان متغيّرة: ذهبي (افتراضي) → أخضر مع `pulse` (≥٨٠٪) → ذهبي-أبيض `shine` (١٠٠٪)
+- `updateSessionProgress()` يُستدعى بعد كل `saveSet` تلقائياً
+
+### ✨ #11 — Tips Collapsible (سطر واحد + اقرأ المزيد)
+- أي `.tip` نصها >١٣٠ حرف أو يحوي `<br><br>` يصير collapsible
+- يُعرض السطرين الأولين فقط + زر `اقرأ المزيد ›` ذهبي
+- النقر → التوسعة + تغيير النص إلى `اطوِ ‹`
+- يطبَّق على كل `.tip` في كل الصفحات تلقائياً عبر MutationObserver
+
+### ✨ #12 — Modals Mobile Polish (Profile + Food Search + GymManager + PlateCalc)
+- كل `.stats-modal` كانت تستخدم full-screen في الموبايل (V9.4)، الآن:
+  - `font-size:16px` لكل inputs (يمنع iOS auto-zoom)
+  - `padding-top` يحترم `safe-area-inset-top` (notch)
+  - `padding-bottom` يحترم `safe-area-inset-bottom`
+  - `#foodSearchResults` بـ `max-height:55vh` بدل overflow غير محدود
+
+### ✨ #13 — Last Sets Alert (تنبيه آخر سيتين / آخر سيت)
+- عند تبقي `2 sets`: toast `🔥 آخر سيتين! ركّز` + `lastSetsPulse` (background ذهبي خفيف ينبض)
+- عند تبقي `1 set`: toast `💪 آخر سيت! اعطه كل ما عندك` + `lastSetFinal` (background أحمر ينبض + 🔥 يقفز)
+- vibration patterns مميّزة: `[100,40,100]` لـ ٢، `[120,50,120,50,120]` لـ ١
+- flag-once لكل جلسة (`_lastSetsAlerts.two`, `_lastSetsAlerts.one`)
+
+### ✨ #14 — Unified Day Type Colors
+- نظام لوني موحّد عبر CSS variables:
+  - Push = ذهبي (`--g1`)
+  - Pull / Arms = بنفسجي (`--purple`)
+  - Legs = أخضر (`--grn`)
+  - Rest = رمادي ذهبي خفيف
+- يُطبَّق على: `.wg .wc` (Dashboard) + `.dt` (شارات t1) + `.db` (مربع نوع اليوم) + `.ds-chip` (Day Strip)
+- `data-day-type` يُضاف ديناميكياً عبر `_categorizeDayType(text)` بـ regex على النص العربي/الإنجليزي
+
+### ✨ #15 — Bilingual Exercise Names
+- كل `.step-name` في t1 يُعاد بناؤه تلقائياً من `EXERCISE_FORM_NOTES[ex].title`:
+  - `<span class="sn-en">Chest Press</span>`
+  - `<span class="sn-ar">ضغط صدر</span>`
+- الإنجليزي bold أبيض (`13.5px`)، العربي أصغر رمادي مع نقطة فاصلة (`11px`)
+- يحافظ على `injectFormNoteButtons` و سائر children داخل step-name (لا يستخدم innerHTML)
+
+### 🛠 ملفات معدّلة
+- `js/ui-v99.js` — إضافة `applyTipsCollapsible`، `applyDayTypeColors`، `applyBilingualNames` (~180 سطر إضافية)
+- `js/session.js` — `updateSessionProgress`، `_findActiveSessionDayCard`، `maybeShowLastSetsAlert` (~75 سطر)
+- `css/styles.css` — قسم V9.10 (~250 سطر)
+- `index.html` — FAB إعادة هيكلة + `<div id="sessProgress">` داخل sess-bar
+
+---
+
 ## [V9.9 — UI/UX Overhaul Sprint 1: Focus Mode + Weight Chip + Day Strip] — 2026-05-31
 
 تنفيذ ٧ أولويات من تقرير تحليل UI/UX. الهدف: تقليل التشتيت أثناء التمرين + جعل البيانات الحرجة بارزة + تكثيف الشاشات المزدحمة.

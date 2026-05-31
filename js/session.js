@@ -692,6 +692,7 @@ function updateSessionUI(){
     document.getElementById('sessPrCount').textContent=currentSession.prCount;
     updateSessionPillUI(); // V7 #17
     updateWeekUI(); // V7 #15 — حدّث شارة الأسبوع/deload
+    updateSessionProgress(); // V9.10 (#10) — workout progress bar
     startBtns.forEach(b=>{
       const dt=b.dataset.day;
       if(dt===currentSession.dayType){
@@ -786,6 +787,80 @@ function updateSessionPillUI(){
     t.textContent=fmtDuration(Math.floor(ms/1000));
   }
   if(s) s.textContent=`${currentSession.setsCount} سيت`;
+}
+
+// V9.10 (#10) — Workout Progress Bar داخل sess-bar
+// يحسب: setsDone / totalTrackableSteps في اليوم النشط
+function updateSessionProgress(){
+  const wrap=document.getElementById('sessProgress');
+  if(!wrap) return;
+  if(!currentSession){wrap.style.display='none';return}
+  // ابحث عن اليوم المطابق في t1 وعدّ steps القابلة للتتبع
+  const dayCard=_findActiveSessionDayCard();
+  if(!dayCard){wrap.style.display='none';return}
+  // إجمالي steps القابلة للتتبع (تشمل completed + remaining، تستثني rest + warmup + done مسبقاً)
+  const allTrackable=dayCard.querySelectorAll('.step:not(.rest):not(.warmup):not(.done):not(.skipped)');
+  const trackableTotal=allTrackable.length;
+  if(trackableTotal===0){wrap.style.display='none';return}
+  // عد المكتملة (step.completed يُضاف في saveSet)
+  const done=dayCard.querySelectorAll('.step.completed:not(.rest):not(.warmup):not(.skipped)').length;
+  const pct=Math.min(100,Math.round((done/trackableTotal)*100));
+  const fill=document.getElementById('sessProgressFill');
+  const meta=document.getElementById('sessProgressMeta');
+  if(fill) fill.style.width=pct+'%';
+  if(meta){
+    const remain=Math.max(0,trackableTotal-done);
+    meta.innerHTML=`<b>${done}</b>/${trackableTotal} سيت · تبقى <b>${100-pct}٪</b>`;
+  }
+  wrap.style.display='block';
+  // أضف class عند ٨٠٪+ للون مختلف
+  wrap.classList.toggle('almost-done',pct>=80);
+  wrap.classList.toggle('done',pct>=100);
+}
+
+function _findActiveSessionDayCard(){
+  if(!currentSession) return null;
+  const days=document.querySelectorAll('#t1 .dy');
+  const target=String(currentSession.dayType||'').trim().toUpperCase();
+  for(const d of days){
+    const dn=d.querySelector('.dn');
+    if(dn && dn.textContent.toUpperCase().includes(target)) return d;
+  }
+  return null;
+}
+
+// V9.10 (#13) — تنبيه آخر سيتين / آخر سيت
+// يُستدعى بعد saveSet. يحسب steps المتبقية في اليوم النشط.
+// يُطلق إشعاراً واحداً فقط لكل حد (٢ / ١) لكل جلسة.
+function maybeShowLastSetsAlert(savedStep){
+  if(!currentSession) return;
+  const dayCard=savedStep?savedStep.closest('.dy'):_findActiveSessionDayCard();
+  if(!dayCard) return;
+  const remaining=dayCard.querySelectorAll('.step:not(.rest):not(.warmup):not(.completed):not(.done):not(.skipped)');
+  const n=remaining.length;
+  if(!currentSession._lastSetsAlerts) currentSession._lastSetsAlerts={};
+  const al=currentSession._lastSetsAlerts;
+
+  if(n===2 && !al.two){
+    al.two=true;
+    if(typeof showToast==='function') showToast('🔥 آخر سيتين! ركّز — أنت قريب من النهاية','var(--g2)',3800);
+    try{navigator.vibrate&&navigator.vibrate([100,40,100])}catch(e){}
+    // animation على الخطوات المتبقية
+    remaining.forEach(s=>s.classList.add('last-sets-pulse'));
+  } else if(n===1 && !al.one){
+    al.one=true;
+    if(typeof showToast==='function') showToast('💪 آخر سيت! اعطه كل ما عندك','var(--red)',4500);
+    try{navigator.vibrate&&navigator.vibrate([120,50,120,50,120])}catch(e){}
+    remaining.forEach(s=>{
+      s.classList.remove('last-sets-pulse');
+      s.classList.add('last-set-final');
+    });
+  } else if(n===0){
+    // كل الخطوات اكتملت — نظّف animations
+    dayCard.querySelectorAll('.last-sets-pulse, .last-set-final').forEach(s=>{
+      s.classList.remove('last-sets-pulse','last-set-final');
+    });
+  }
 }
 
 // V7 (#26) — Light/Dark theme toggle
@@ -1439,6 +1514,9 @@ async function saveSet(btn){
     if(typeof checkAchievements==='function'){
       checkAchievements({lastSession:currentSession,afterPR:prs.length>0});
     }
+
+    // V9.10 (#13) — تنبيه آخر سيتين / آخر سيت
+    maybeShowLastSetsAlert(step);
 
     // ابدأ مؤقت الراحة تلقائياً
     const restDur=getRestDuration(step);

@@ -834,6 +834,11 @@
   <div class="sb-info">
     <div class="sb-day"><span id="sessDayType">UPPER A</span><span class="week-pill" id="sessWeekPill" style="display:none"></span></div>
     <div class="sb-meta">⏱ <b id="sessElapsed">0:00</b> · 💪 <b id="sessSetsCount">0</b> سيت · 🏆 <b id="sessPrCount">0</b> PR</div>
+    <!-- V9.10 (#10) — Workout Progress Bar: يعرض التقدّم في الجلسة -->
+    <div class="sb-progress" id="sessProgress" style="display:none">
+      <div class="sbp-track"><div class="sbp-fill" id="sessProgressFill"></div></div>
+      <div class="sbp-meta" id="sessProgressMeta"></div>
+    </div>
   </div>
   <button class="sb-min" onclick="toggleSessionMinimize()" title="تصغير">−</button>
   <button class="sb-end" onclick="endSession()">إنهاء</button>
@@ -873,22 +878,22 @@
 <div style="height:80px"></div>
 
 <!-- Tracking Floating Action Button -->
+<!-- V9.10 (#8) — تبسيط: ٥ عناصر شائعة + قسم "مزيد" قابل للطي -->
 <button class="fab" id="fabBtn" title="القائمة" aria-label="قائمة التتبع">📊</button>
 <div class="fab-menu" id="fabMenu">
-  <!-- V9.0 (P5) — تنظيف FAB: عناصر مكررة (الإحصائيات أصبحت في tab تقدمي، أول مرة في tab الدليل) أُزيلت.
-       باقي العناصر مجموعة في ٣ أقسام مرئية بفواصل. -->
-  <div class="fab-group-title">⚙️ الملف</div>
+  <!-- العناصر الأكثر استخداماً -->
   <button onclick="openProfile()">👤 ملفي الشخصي</button>
-  <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
-
-  <div class="fab-group-title">🧮 أدوات</div>
   <button onclick="openPlateCalc()">🧮 حاسبة بليتات</button>
+  <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
-  <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
-
-  <div class="fab-group-title">💾 البيانات</div>
   <button onclick="exportData()">💾 تصدير البيانات</button>
-  <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
+
+  <!-- قسم "مزيد" قابل للطي -->
+  <details class="fab-more">
+    <summary>⋯ مزيد</summary>
+    <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
+    <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
+  </details>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 </div>
 
