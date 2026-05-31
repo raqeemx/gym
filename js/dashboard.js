@@ -89,13 +89,15 @@
   function _todayDaily(dailyLogs){
     const t=_todayISO();
     const log=dailyLogs.find(d=>d.date===t)||{};
-    const meals=Array.isArray(log.meals)?log.meals.filter(Boolean).length:0;
+    const mealsArr=Array.isArray(log.meals)?log.meals:[];
+    const meals=mealsArr.filter(Boolean).length;
     const supps=log.supplements?Object.values(log.supplements).filter(Boolean).length:0;
     return {
       water:log.water||0,
       sleep:log.sleep||0,
       protein:log.protein||0,
       meals,
+      mealsArr, // V9.13 (#8) — array الأصلي لمعرفة أيها مُسجّل
       supps,
       hasAny:!!(log.water||log.sleep||log.protein||meals||supps)
     };
@@ -524,6 +526,68 @@
       </div>`;
   }
 
+  // V9.13 (#9) — Top Progress Card: أسبوع N/6 + آخر PR + الالتزام
+  // يظهر بعد Primary Hero مباشرة لإحساس يومي بالتقدم
+  function _topProgressCard(workouts,prs,dailyLogs,sets){
+    // أ. هذا الأسبوع: عدد أيام التمرين / الهدف (٦)
+    const cutoff=Date.now()-7*86400000;
+    const recentWorkouts=workouts.filter(w=>new Date(w.startTime||0).getTime()>=cutoff);
+    const target=6;
+    const sessionsDone=Math.min(recentWorkouts.length,target);
+    const sessionsPct=Math.round(sessionsDone/target*100);
+    // ب. آخر PR (أحدث)
+    let lastPr=null;
+    if(prs && prs.length){
+      const sorted=[...prs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+      lastPr=sorted[0];
+    }
+    // ج. الالتزام (آخر ٧ أيام: % أيام مع dailyLog فيها بيانات)
+    let complianceDays=0;
+    const today=new Date();today.setHours(0,0,0,0);
+    for(let i=0;i<7;i++){
+      const dt=new Date(today);dt.setDate(dt.getDate()-i);
+      const iso=dt.toISOString().split('T')[0];
+      const log=dailyLogs.find(d=>d.date===iso);
+      if(log && (log.water||log.sleep||log.protein||(Array.isArray(log.meals)&&log.meals.some(Boolean)))){
+        complianceDays++;
+      }
+    }
+    const compliancePct=Math.round(complianceDays/7*100);
+    // PR delta نص جميل
+    const prLabel = lastPr ? _prDeltaLabel(lastPr) : null;
+
+    return `
+      <div class="dash-top-progress">
+        <div class="dtp-row dtp-sessions">
+          <div class="dtp-head"><span class="dtp-ic">📅</span><span class="dtp-lbl">هذا الأسبوع</span><b class="dtp-val">${sessionsDone}/${target} تمارين</b></div>
+          <div class="dtp-track"><div class="dtp-fill dtp-fill-sessions" style="width:${sessionsPct}%"></div></div>
+        </div>
+        ${prLabel?`<div class="dtp-row dtp-pr">
+          <span class="dtp-ic">🏆</span>
+          <span class="dtp-lbl">آخر رقم قياسي:</span>
+          <b class="dtp-val">${E(prLabel)}</b>
+        </div>`:''}
+        <div class="dtp-row dtp-compliance">
+          <div class="dtp-head"><span class="dtp-ic">✅</span><span class="dtp-lbl">الالتزام</span><b class="dtp-val">${compliancePct}%</b></div>
+          <div class="dtp-track"><div class="dtp-fill dtp-fill-${compliancePct>=70?'good':compliancePct>=40?'ok':'low'}" style="width:${compliancePct}%"></div></div>
+        </div>
+      </div>`;
+  }
+
+  function _prDeltaLabel(pr){
+    if(!pr) return '';
+    // اعرض شيء مثل: Lat Machine +2.5kg
+    const typeAbbr={weight:'كجم',volume:'كجم·حجم','1rm':'1RM','reps':'تكرار','effort':'جهد'};
+    const typeUnit=typeAbbr[pr.type]||'';
+    let val=pr.value;
+    // لو delta متاح
+    if(pr.delta!=null && pr.delta!==0){
+      const sign=pr.delta>0?'+':'';
+      val=`${sign}${pr.delta}${typeUnit}`;
+    }
+    return `${pr.exerciseName} ${val}`;
+  }
+
   // 3. QUICK STATS — ٣ بطاقات: Streak، Week PRs، Week Volume
   function _quickStats3(streak,week){
     const cur=streak&&streak.current||0;
@@ -632,7 +696,33 @@
       </div>`;
   }
 
-  // 7. TODAY NUTRITION — ٣ progress bars: سعرات، بروتين، ماء
+  // V9.13 (#8) — احسب الوجبة التالية المتوقّعة حسب الجدول الافتراضي
+  // الجدول: ٨ص فطور، ١ظ غداء، ٤ع سناك، ٨م طاقة، ١٠:٣٠م بناء، ١٢ص قبل النوم
+  function _nextMealHint(daily){
+    const meals=[
+      {t:8.0,  name:'الفطور',           slotIdx:0, icon:'🥚'},
+      {t:13.0, name:'الغداء',           slotIdx:1, icon:'🍗'},
+      {t:16.0, name:'السناك',           slotIdx:2, icon:'🥜'},
+      {t:20.0, name:'وجبة الطاقة',     slotIdx:3, icon:'⚡'},
+      {t:22.5, name:'وجبة البناء',     slotIdx:4, icon:'🌙'},
+      {t:24.0, name:'قبل النوم',       slotIdx:5, icon:'🥛'}
+    ];
+    const now=new Date();
+    const nowHr=now.getHours()+now.getMinutes()/60;
+    const loggedMeals = (daily && Array.isArray(daily.mealsArr))
+      ? daily.mealsArr
+      : null;
+    // ابحث عن أول وجبة لم تُسجَّل بعد:
+    //   1. لم يأتِ وقتها بعد (t > now)، OR
+    //   2. أتى وقتها لكن لم تُسجَّل (slot index غير محدد)
+    for(const m of meals){
+      const isLogged = loggedMeals?loggedMeals[m.slotIdx]===true:false;
+      if(!isLogged) return m;
+    }
+    return null;
+  }
+
+  // 7. TODAY NUTRITION — ٣ progress bars: سعرات، بروتين، ماء + الوجبة التالية
   function _nutritionBars(nutrition,targets,daily){
     const tCals = (targets&&targets.calories) || 2500;
     const tProt = (targets&&targets.protein) || 150;
@@ -645,6 +735,11 @@
       {ic:'🥩',lbl:'بروتين',cur:prot,tgt:tProt,unit:'g',pct:Math.round(prot/tProt*100),color:'protein'},
       {ic:'💧',lbl:'ماء',cur:water,tgt:tWater,unit:'',pct:Math.round(water/tWater*100),color:'water'}
     ];
+    // V9.13 (#8) — next meal hint
+    const nextMeal=_nextMealHint(daily);
+    const nextMealRow = nextMeal
+      ? `<div class="dash-next-meal"><span class="dnm-ic">${nextMeal.icon}</span><span>الوجبة التالية: <b>${E(nextMeal.name)}</b></span><button type="button" class="dnm-btn" onclick="openFoodSearch&&openFoodSearch()">+ سجّل</button></div>`
+      : `<div class="dash-next-meal dnm-done">✓ سجّلت كل وجباتك اليوم!</div>`;
     return `
       <div class="dash-card dash-nutrition-card">
         <div class="dash-card-head dash-card-head-mini">🥗 تغذية اليوم</div>
@@ -659,7 +754,8 @@
               <div class="dnb-track"><div class="dnb-fill dnb-${b.color} ${b.pct>=100?'full':b.pct>=70?'ok':'low'}" style="width:${Math.min(100,Math.max(0,b.pct))}%"></div></div>
             </div>`).join('')}
         </div>
-        <button class="dash-card-more" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'daily\\']');if(b)b.click()},120)">سجّل وجباتك ›</button>
+        ${nextMealRow}
+        <button class="dash-card-more" onclick="switchToTab(3)">قسم التغذية الكامل ›</button>
       </div>`;
   }
 
@@ -720,10 +816,11 @@
         profileMissing=!p || (!p.age && !p.weight && !p.height);
       }catch(e){}
 
-      // V9.11 — البنية الجديدة (Status Strip → Hero → Stats → Grid → ...)
+      // V9.11/V9.13 — البنية: Status Strip → Primary Hero → Top Progress → Quick Stats → Week Grid → Next Ach → PRs → Nutrition → Quick Actions
       container.innerHTML=`
         ${_statusStrip(wp,streak,todayProg,profileMissing)}
         ${_primaryHero(todayProg,activeSession,missedDay,smartReco,streak)}
+        ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets)}
         ${_quickStats3(streak,week)}
         ${_weekGridBlock()}
         ${_nextAchievementBlockFiltered(nextAch)}

@@ -868,6 +868,42 @@
 </div>
 <div style="height:80px"></div>
 
+<!-- V9.13 (#6) — Bottom Nav on mobile (5 quick destinations) -->
+<nav class="bottom-nav" id="bottomNav" aria-label="التنقل السريع">
+  <button class="bn a" data-bn="0" type="button" aria-label="اليوم">
+    <span class="bn-ic">🏠</span><span class="bn-lbl">اليوم</span>
+  </button>
+  <button class="bn" data-bn="1" type="button" aria-label="التمارين">
+    <span class="bn-ic">💪</span><span class="bn-lbl">التمارين</span>
+  </button>
+  <button class="bn" data-bn="7" type="button" aria-label="التقدم">
+    <span class="bn-ic">📈</span><span class="bn-lbl">التقدم</span>
+  </button>
+  <button class="bn" data-bn="3" type="button" aria-label="التغذية">
+    <span class="bn-ic">🥗</span><span class="bn-lbl">التغذية</span>
+  </button>
+  <button class="bn bn-more" id="bnMoreBtn" type="button" aria-label="المزيد">
+    <span class="bn-ic">⋯</span><span class="bn-lbl">المزيد</span>
+  </button>
+</nav>
+
+<!-- "More" drawer -->
+<div class="bn-drawer" id="bnDrawer" aria-hidden="true">
+  <div class="bn-drawer-handle"></div>
+  <div class="bn-drawer-title">المزيد</div>
+  <div class="bn-drawer-items">
+    <button type="button" class="bn-d-item" data-bn="8"><span>📅</span><b>التقويم</b></button>
+    <button type="button" class="bn-d-item" data-bn="5"><span>📖</span><b>الدليل</b></button>
+    <button type="button" class="bn-d-item" data-bn="2"><span>📈</span><b>زيادة الأوزان</b></button>
+    <button type="button" class="bn-d-item" data-bn="4"><span>💡</span><b>نصائح</b></button>
+    <button type="button" class="bn-d-item" data-bn="6"><span>🎯</span><b>أول مرة بالجيم</b></button>
+    <button type="button" class="bn-d-item" onclick="openProfile();closeBnDrawer()"><span>👤</span><b>ملفي الشخصي</b></button>
+    <button type="button" class="bn-d-item" onclick="openPlateCalc();closeBnDrawer()"><span>🧮</span><b>حاسبة بليتات</b></button>
+    <button type="button" class="bn-d-item" onclick="openGymManager();closeBnDrawer()"><span>🏋️</span><b>إدارة الجيمات</b></button>
+  </div>
+</div>
+<div class="bn-drawer-backdrop" id="bnDrawerBackdrop" onclick="closeBnDrawer()"></div>
+
 <!-- Tracking Floating Action Button -->
 <!-- V9.10 (#8) — تبسيط: ٥ عناصر شائعة + قسم "مزيد" قابل للطي -->
 <button class="fab" id="fabBtn" title="القائمة" aria-label="قائمة التتبع">📊</button>
@@ -1387,5 +1423,6 @@
 <script src="js/weekly-review.js"></script>
 <script src="js/app.js"></script>
 <script src="js/ui-v99.js"></script>
+<script src="js/gym-mode.js"></script>
 </body>
 </html>

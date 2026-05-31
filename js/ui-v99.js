@@ -63,17 +63,34 @@
   function _ensureFocusButton(){
     const bar=document.getElementById('sessBar');
     if(!bar) return;
-    if(bar.querySelector('.sb-focus')) return;
-    const btn=document.createElement('button');
-    btn.className='sb-focus';
-    btn.type='button';
-    btn.title='Focus Mode';
-    btn.textContent='◎';
-    btn.onclick=(e)=>{e.stopPropagation();toggleFocusMode()};
-    // ضع زر Focus قبل زر إنهاء الجلسة
-    const endBtn=bar.querySelector('.sb-end');
-    if(endBtn) bar.insertBefore(btn,endBtn);
-    else bar.appendChild(btn);
+    // زر Focus
+    if(!bar.querySelector('.sb-focus')){
+      const btn=document.createElement('button');
+      btn.className='sb-focus';
+      btn.type='button';
+      btn.title='Focus Mode';
+      btn.textContent='◎';
+      btn.onclick=(e)=>{e.stopPropagation();toggleFocusMode()};
+      const endBtn=bar.querySelector('.sb-end');
+      if(endBtn) bar.insertBefore(btn,endBtn);
+      else bar.appendChild(btn);
+    }
+    // V9.13 (#5) — زر Gym Mode
+    if(!bar.querySelector('.sb-gym') && typeof toggleGymMode==='function'){
+      const gb=document.createElement('button');
+      gb.className='sb-gym';
+      gb.type='button';
+      gb.title='Gym Mode — تمرين واحد في كل مرة';
+      gb.textContent='🎯';
+      gb.onclick=(e)=>{e.stopPropagation();toggleGymMode()};
+      const focusBtn=bar.querySelector('.sb-focus');
+      if(focusBtn) bar.insertBefore(gb,focusBtn);
+      else {
+        const endBtn=bar.querySelector('.sb-end');
+        if(endBtn) bar.insertBefore(gb,endBtn);
+        else bar.appendChild(gb);
+      }
+    }
   }
 
   function _ensureExitHint(){
@@ -168,27 +185,61 @@
     if(deloadActive || chipKind==='deload') cls.push('deload-mode');
     if(isFirstTime && !suggestion) cls.push('first-time');
 
+    // V9.13 (#7) — أضف "آخر مرة" + أزرار +/- لتعديل سريع
+    const lastValue = (stats && stats.lastSessionBest)?stats.lastSessionBest.weight:null;
+    const lastReps = (stats && stats.lastSessionBest)?stats.lastSessionBest.reps:null;
+
     const chip=document.createElement('div');
     chip.className=cls.join(' ');
+    chip.dataset.weight = (chipW!=null)?chipW:'';
     chip.innerHTML=`
       <div class="wc-icon">⚖</div>
       <div class="wc-body">
         <div class="wc-label">${E(chipLabel)}</div>
-        <div class="wc-val"><b>${chipW!=null?E(chipW):'—'}</b><small>كجم</small></div>
+        <div class="wc-val-row">
+          <button type="button" class="wc-step wc-minus" aria-label="نقص ٢.٥">−</button>
+          <div class="wc-val"><b class="wc-num">${chipW!=null?E(chipW):'—'}</b><small>كجم</small></div>
+          <button type="button" class="wc-step wc-plus" aria-label="زد ٢.٥">+</button>
+        </div>
         ${repsText?`<div class="wc-reps">🎯 الهدف: <b>${E(repsText)}</b> تكرار</div>`:''}
+        ${lastValue!=null?`<div class="wc-last">آخر مرة: <b>${E(lastValue)}</b> كجم${lastReps?` × ${E(lastReps)}`:''}</div>`:''}
       </div>
-      ${(chipW!=null && !isFirstTime)?`<button type="button" class="wc-apply">تطبيق</button>`:''}
+      ${(chipW!=null && !isFirstTime)?`<button type="button" class="wc-apply">تطبيق</button>`:(chipW!=null?`<button type="button" class="wc-apply wc-apply-first">طبّق</button>`:'')}
     `;
+    const numEl=chip.querySelector('.wc-num');
     const applyBtn=chip.querySelector('.wc-apply');
+    const minus=chip.querySelector('.wc-minus');
+    const plus=chip.querySelector('.wc-plus');
+    const getCurW=()=>parseFloat(chip.dataset.weight||'0')||0;
+    const setCurW=(v)=>{
+      const safe=Math.max(0,Math.round(v*2)/2); // step 0.5
+      chip.dataset.weight=safe;
+      if(numEl) numEl.textContent=safe;
+      chip.classList.remove('applied');
+      if(applyBtn){applyBtn.disabled=false;applyBtn.textContent='تطبيق'}
+    };
+    if(minus) minus.onclick=(e)=>{e.stopPropagation();setCurW(getCurW()-2.5)};
+    if(plus) plus.onclick=(e)=>{e.stopPropagation();setCurW(getCurW()+2.5)};
+    // long-press على ± يقفز ٥ كجم
+    [minus,plus].forEach(b=>{
+      if(!b) return;
+      let lpTimer=null;
+      const lpStart=(delta)=>{
+        if(lpTimer) clearTimeout(lpTimer);
+        lpTimer=setTimeout(()=>setCurW(getCurW()+delta),420);
+      };
+      b.addEventListener('touchstart',()=>lpStart(b===minus?-5:5),{passive:true});
+      b.addEventListener('touchend',()=>{if(lpTimer)clearTimeout(lpTimer)},{passive:true});
+    });
     if(applyBtn){
       applyBtn.onclick=(e)=>{
         e.stopPropagation();
+        const w=getCurW();
         const wInput=trackDiv.querySelector('.weight-input');
         if(wInput){
-          wInput.value=chipW;
+          wInput.value=w;
           wInput.dispatchEvent(new Event('input',{bubbles:true}));
           wInput.focus();
-          // اقفز إلى reps
           const rInput=trackDiv.querySelector('.reps-input');
           if(rInput) setTimeout(()=>rInput.focus(),150);
         }
@@ -782,6 +833,67 @@
   // V9.12 ADDITIONS — Daily Start Card + Progressive Disclosure + Step Ops Row
   // ============================================================
 
+  // V9.13 (#4) — Plan B داخل كل step
+  // يقرأ أول بديل من EXERCISE_ALTERNATIVES ويضع سطر:
+  //   📋 الجهاز مشغول؟ استخدم: X [بدّل]
+  function injectInlinePlanB(){
+    if(typeof EXERCISE_ALTERNATIVES==='undefined') return;
+    document.querySelectorAll('#t1 .step:not(.rest):not(.warmup)').forEach(step=>{
+      if(step.dataset.planbInjected==='1') return;
+      const stepBody=step.querySelector('.step-body');
+      if(!stepBody) return;
+      const exName=(typeof getExerciseName==='function')?getExerciseName(step):null;
+      if(!exName) return;
+      const norm=(typeof normalizeExName==='function')?normalizeExName(exName):exName;
+      const alts=EXERCISE_ALTERNATIVES[norm];
+      if(!alts || !alts.length) {step.dataset.planbInjected='1';return}
+      // فلتر حسب الجيم النشط
+      let filtered=alts;
+      if(typeof getEffectiveAlternativesSync==='function'){
+        const f=getEffectiveAlternativesSync(norm);
+        if(f && f.length) filtered=f;
+      }
+      // اختر الأول، أو peakFriendly في ساعة الذروة
+      const hour=new Date().getHours();
+      const isPeak=hour>=18 && hour<21;
+      let best=filtered[0];
+      if(isPeak){
+        const pa=filtered.find(a=>a.peakFriendly);
+        if(pa) best=pa;
+      }
+      if(!best || !best.name) {step.dataset.planbInjected='1';return}
+      const peakIcon=best.peakFriendly?' ⚡':'';
+      const stepId=step.id || step.dataset.id || '';
+      const row=document.createElement('div');
+      row.className='inline-planb';
+      row.innerHTML=`
+        <span class="ipb-icon">🔄</span>
+        <div class="ipb-body">
+          <span class="ipb-q">الجهاز مشغول؟ استخدم:</span>
+          <b class="ipb-name">${E(best.name)}${peakIcon}</b>
+        </div>
+        <button type="button" class="ipb-swap" data-step-id="${E(stepId)}" data-sub="${E(best.name)}">بدّل</button>
+      `;
+      const btn=row.querySelector('.ipb-swap');
+      btn.onclick=(e)=>{
+        e.stopPropagation();
+        if(typeof applySubstitution==='function' && stepId){
+          applySubstitution(stepId,best.name);
+          // hide row بعد التبديل
+          row.style.display='none';
+          if(typeof showToast==='function') showToast(`🔄 تم التبديل إلى ${best.name}`,'var(--grn)',2500);
+        } else if(typeof showAlternatives==='function'){
+          showAlternatives(step);
+        }
+      };
+      // ضع الـ row بعد step-info
+      const info=stepBody.querySelector('.step-info');
+      if(info) info.after(row);
+      else stepBody.appendChild(row);
+      step.dataset.planbInjected='1';
+    });
+  }
+
   // #1 — Plan B Hint: من Dashboard، يفتح t1 + يضيء أزرار ⇄ + toast
   function openPlanBHint(){
     if(typeof switchToTab==='function') switchToTab(1);
@@ -920,10 +1032,73 @@
     return null;
   }
 
+  // ============================================================
+  // V9.13 (#6) — Bottom Nav (mobile only)
+  // ============================================================
+  function _initBottomNav(){
+    const bn=document.getElementById('bottomNav');
+    if(!bn) return;
+    if(bn.dataset.bnInit==='1') return;
+    bn.dataset.bnInit='1';
+    bn.querySelectorAll('.bn:not(.bn-more)').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const t=btn.dataset.bn;
+        if(t==null) return;
+        if(typeof switchToTab==='function') switchToTab(parseInt(t,10));
+        // mark active
+        bn.querySelectorAll('.bn').forEach(b=>b.classList.remove('a'));
+        btn.classList.add('a');
+        closeBnDrawer();
+      });
+    });
+    const moreBtn=document.getElementById('bnMoreBtn');
+    if(moreBtn){
+      moreBtn.addEventListener('click',()=>{
+        const dr=document.getElementById('bnDrawer');
+        const bd=document.getElementById('bnDrawerBackdrop');
+        if(dr){dr.classList.add('open');dr.setAttribute('aria-hidden','false')}
+        if(bd) bd.classList.add('open');
+        bn.querySelectorAll('.bn').forEach(b=>b.classList.remove('a'));
+        moreBtn.classList.add('a');
+      });
+    }
+    // drawer items
+    document.querySelectorAll('#bnDrawer .bn-d-item[data-bn]').forEach(it=>{
+      it.addEventListener('click',()=>{
+        const t=it.dataset.bn;
+        if(t==null) return;
+        if(typeof switchToTab==='function') switchToTab(parseInt(t,10));
+        closeBnDrawer();
+      });
+    });
+    // مزامنة active state عند تبديل tab من أي مكان آخر
+    document.addEventListener('click',(e)=>{
+      const navBtn=e.target.closest('.nb[data-t]');
+      if(navBtn) _syncBottomNavActive(navBtn.dataset.t);
+    });
+  }
+
+  function _syncBottomNavActive(tabId){
+    const bn=document.getElementById('bottomNav');
+    if(!bn) return;
+    bn.querySelectorAll('.bn').forEach(b=>b.classList.remove('a'));
+    const match=bn.querySelector(`.bn[data-bn="${tabId}"]`);
+    if(match) match.classList.add('a');
+  }
+
+  window.closeBnDrawer=function(){
+    const dr=document.getElementById('bnDrawer');
+    const bd=document.getElementById('bnDrawerBackdrop');
+    if(dr){dr.classList.remove('open');dr.setAttribute('aria-hidden','true')}
+    if(bd) bd.classList.remove('open');
+  };
+
   // ربط lifecycle
   function _applyV912Enhancements(){
     try{initT1ProgressiveDisclosure()}catch(e){}
     try{injectStepOpsRow()}catch(e){}
+    try{injectInlinePlanB()}catch(e){}
+    try{_initBottomNav()}catch(e){}
   }
   document.addEventListener('DOMContentLoaded',()=>{
     setTimeout(_applyV912Enhancements,650);

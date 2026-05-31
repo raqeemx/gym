@@ -42,6 +42,7 @@ const ASSETS = [
   './js/mobile-fixes.js',
   './js/app.js',
   './js/ui-v99.js',
+  './js/gym-mode.js',
   './vendor/chart.umd.min.js',
   // V8.4 — Exercise demonstration assets (form notes modal)
   './assets/gifs/chest-press.svg',
