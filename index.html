@@ -77,24 +77,11 @@
   </defs>
 </svg>
 
-<div class="hero" id="heroEl">
-  <button class="hero-toggle" id="heroToggle" onclick="toggleHero()" title="طي/فتح" aria-label="طي أو فتح الترحيب">−</button>
-  <div class="hl fu"><span class="dot"></span>BULK V4 · PEAK-HOUR OPTIMIZED · 12 WEEKS</div>
-  <h1 class="fu fu1">برنامج <em>التضخيم</em> النهائي</h1>
-  <p class="hsub fu fu2">إصدار <strong style="color:var(--g2)">محسّن لذروة الجيم (٦-٩م)</strong><br>أزواج بنفس المنطقة · 60 ث راحة · Plan B لكل تمرين</p>
-  <div class="sbar fu fu3">
-    <div class="sp"><span class="n">6</span><span class="l">أيام تمرين</span></div>
-    <div class="sp"><span class="n">52-57</span><span class="l">دقيقة/جلسة</span></div>
-    <div class="sp"><span class="n">60s</span><span class="l">راحة موحّدة</span></div>
-    <div class="sp"><span class="n">175g</span><span class="l">بروتين</span></div>
-  </div>
-  <!-- V7 (#24) — Compact view shown when collapsed -->
-  <div class="hero-compact" id="heroCompact">
-    <span class="hc-brand">💪 BULK MODE</span>
-    <span class="hc-week" id="heroCompactWeek"></span>
-    <button class="hc-expand" onclick="toggleHero()" title="عرض الترحيب الكامل">⤓</button>
-  </div>
-</div>
+<!-- V9.14.1 — حُذف Hero الخارجي. النسخة الجديدة في Dashboard (داخل #dashboardContainer):
+     - Hero Section تفسيري (collapsible للنشطين)
+     - Today's Workout Card
+     - Program Quick Summary
+     في صفحات أخرى غير t0، يظهر BULK في nav-brand كافٍ. -->
 
 <nav class="nav">
   <div class="nav-brand" onclick="scrollTop()">💪 BULK</div>
