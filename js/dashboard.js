@@ -214,6 +214,29 @@
       </div>`;
   }
 
+  // V9.8 (#16) — widget: الإنجاز القادم
+  function _nextAchievementBlock(next){
+    if(!next) return '';
+    const pct=Math.round(next.pct*100);
+    const remaining=next.remaining;
+    const unit=next.unit||'';
+    return `
+      <div class="dash-card dash-next-ach">
+        <div class="dash-card-head">🏅 إنجاز قادم</div>
+        <button type="button" class="dna-row" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'achievements\\']');if(b)b.click()},120)">
+          <div class="dna-icon">${E(next.ach.icon)}</div>
+          <div class="dna-body">
+            <div class="dna-name">${E(next.ach.title)}</div>
+            <div class="dna-desc">${E(next.ach.desc)}</div>
+            <div class="dna-progress">
+              <div class="dna-track"><div class="dna-fill" style="width:${pct}%"></div></div>
+              <div class="dna-meta">باقي <b>${E(remaining)}</b>${unit?' '+E(unit):''} · ${E(pct)}%</div>
+            </div>
+          </div>
+        </button>
+      </div>`;
+  }
+
   function _prsBlock(prs){
     if(!prs.length){
       return `
@@ -406,6 +429,8 @@
       const nutritionBreakdown=await _todayNutritionBreakdown();
       // V9.2 (B.7) — Smart Next Workout recommendation
       const smartReco=(typeof recommendNextWorkout==='function')?await recommendNextWorkout():null;
+      // V9.8 (#16) — الإنجاز القادم (الأقرب للفتح)
+      const nextAch=(typeof getNextAchievement==='function')?await getNextAchievement():null;
 
       // اكتشف يوم تدريب فات (آخر ٧ أيام)
       let missedDay=null;
@@ -429,6 +454,7 @@
         </div>
         ${_quickActionsBlock()}
         ${_programProgressBlock(wp)}
+        ${_nextAchievementBlock(nextAch)}
         ${_prsBlock(data.prs)}
         ${_nutritionBlock(nutrition,nutritionTargets,nutritionBreakdown)}
         ${_dailyBlock(daily,proteinTarget,nutrition)}

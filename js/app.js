@@ -750,6 +750,68 @@ async function selectProgram(id){
   }
 }
 
+// V9.8 (#22) — Welcome-back toast لو غاب المستخدم >7 أيام
+// يقرأ LAST_ACTIVE_AT قبل تحديثه، ويعرض رسالة شخصية
+async function checkWelcomeBack(){
+  try{
+    const last=await db.get('settings',KEYS.LAST_ACTIVE_AT);
+    const lastISO=last && last.value;
+    const now=new Date();
+    // حدّث LAST_ACTIVE_AT فوراً لتسجيل هذه الزيارة
+    await db.put('settings',{key:KEYS.LAST_ACTIVE_AT,value:now.toISOString()});
+    if(!lastISO) return; // أول فتح — لا "welcome back"
+    const lastTs=new Date(lastISO).getTime();
+    const daysSince=Math.floor((now.getTime()-lastTs)/86400000);
+    if(daysSince<7) return;
+    // اختر toast حسب طول الغياب
+    let msg, color='var(--blue)';
+    if(daysSince<14){
+      msg=`👋 أهلاً بعودتك! غبت ${daysSince} أيام — لنرجع للروتين`;
+    }else if(daysSince<30){
+      msg=`💪 اشتقنا لك! ${daysSince} يوم بدون تمرين — ابدأ بأخف وزن لاستعادة العادة`;
+      color='var(--org)';
+    }else{
+      const months=Math.floor(daysSince/30);
+      msg=`🌅 رحلة جديدة — ${months} شهر بدون تمرين. ابدأ بـ ٦٠٪ من آخر أوزانك لتجنّب الإصابة`;
+      color='var(--org)';
+    }
+    setTimeout(()=>{
+      if(typeof showToast==='function'){
+        showToast(msg, color, 8000, {
+          action:{label:'ابدأ الآن', handler:()=>{
+            if(typeof switchToTab==='function') switchToTab(1);
+          }}
+        });
+      }
+    },2200);
+  }catch(e){console.warn('Welcome back check failed:',e)}
+}
+
+// V9.8 (#21) — Equipment grid يقرأ من الجيم النشط (بدل hardcoded قائمة Technogym)
+async function refreshEquipmentGrid(){
+  const list=document.getElementById('equipmentGridList');
+  const title=document.getElementById('equipmentGridTitle');
+  const sub=document.getElementById('equipmentGridSub');
+  if(!list) return;
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+  let gym=null;
+  try{if(typeof getActiveGym==='function') gym=await getActiveGym()}catch(e){}
+  if(!gym){
+    list.innerHTML='<div class="ei" style="grid-column:1/-1">—</div>';
+    return;
+  }
+  const eq=(gym.equipment||[]).filter(e=>e && e.trim());
+  if(title) title.textContent=`${gym.icon||'🏋️'} ${gym.name||'الجيم النشط'} — ${eq.length} ${gym.bodyweightOnly?'عنصر':'جهاز'}`;
+  if(sub) sub.textContent = gym.bodyweightOnly
+    ? 'وضع وزن الجسم — معدّات محدودة'
+    : 'بدّل الجيم من 🏋️ إدارة الجيمات في القائمة';
+  if(!eq.length){
+    list.innerHTML='<div class="ei" style="grid-column:1/-1;text-align:center;opacity:.6">لا معدّات مسجّلة. أضف من إدارة الجيمات.</div>';
+    return;
+  }
+  list.innerHTML=eq.map(e=>`<div class="ei">${E(e)}</div>`).join('');
+}
+
 // V9.7 (#10) — تنبيه عند عدم توفر تمارين البرنامج في الجيم النشط
 async function updateGymMismatchBanner(){
   const banner=document.getElementById('gymMismatchBanner');
@@ -1245,6 +1307,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(typeof refreshDashboard==='function'){
       refreshDashboard(); // V9.0 (P2) — املأ Dashboard في tab الرئيسية
     }
+    if(typeof refreshEquipmentGrid==='function'){
+      refreshEquipmentGrid(); // V9.8 (#21) — equipment grid ديناميكي
+    }
+    // V9.8 (#22) — welcome back toast لو غاب >7 أيام
+    if(typeof checkWelcomeBack==='function') checkWelcomeBack();
     if(typeof maybeAutoOpenWeeklyReview==='function'){
       maybeAutoOpenWeeklyReview(); // V9.0 (P6) — toast يوم السبت لفتح ملخص الأسبوع
     }

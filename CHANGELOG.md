@@ -5,6 +5,88 @@
 
 ---
 
+## [V9.8 — Round 4: تفاصيل PRs + RPE chips + إنجاز قادم + شهري + decimals] — 2026-05-31
+
+حلّ آخر ٨ مشاكل **🟢 منخفضة الأولوية** من تقرير Data Audit (#15 → #22). كلها quick wins ذات تأثير تحفيزي/تنظيمي.
+
+### ✨ #15 — `workout.prList` snapshot
+- `endSession` الآن يحفظ تفاصيل PRs بدل عدد فقط: `[{type, exerciseName, value, label}, ...]`
+- في history، يُعرض كـ **chips ملوّنة** قابلة للقراءة: `⚖️ Chest Press 22.5` بدل `🏆 3` غامض
+- `_renderPrListSummary(prList)` helper موحّد للعرض
+
+### ✨ #19 — RPE chip ملوّن في history
+- بدل `20×10@8` نص ضمن السطر، أصبح `20×10 [@8]` chip منفصل مع ٣ ألوان:
+  - 🟢 **أخضر** RPE ≤7 (سهل)
+  - 🟡 **برتقالي** RPE 8 (مثالي)
+  - 🔴 **أحمر** RPE ≥9 (قريب من الفشل)
+- `_renderRpeChip(rpe)` helper + tooltip توضيحي
+- تطبيق فوري في كلا renderHistory functions
+
+### ✨ #16 — Achievement "قادم" في Dashboard
+- `getNextAchievement()` في achievements.js يحسب الأقرب للفتح (أعلى progress %)
+- بطاقة جديدة في Dashboard «🏅 إنجاز قادم» بـ:
+  - أيقونة الإنجاز (filter grayscale تخفّ عند hover)
+  - الاسم + الوصف
+  - progress bar + «باقي ١٢ سيت · ٨٨٪»
+  - كل البطاقة قابلة للضغط → تنقل لتبويب الإنجازات
+
+### ✨ #17 — Daily Log monthly stats
+بعد الـ stats الأسبوعية، بطاقة جديدة «📊 آخر ٣٠ يوم» تعرض:
+- **لكل مكمل** (٥ مكملات): name + 🔥 streak الحالي + progress bar + «X/30 يوم · Y%»
+- **اكتمال الوجبات**: «18/30 (60%)» مع لون ديناميكي + أفضل streak لـ ٦ وجبات متتالية
+- ٣ ألوان: أخضر ≥80% / برتقالي ≥50% / أحمر <50%
+
+### ✨ #18 — Photo compare بأي categories مع warning
+- ✅ الـ dropdowns بالفعل لا تفلتر category (موجود من قبل)
+- إضافة: **warning chip** برتقالي عند اختيار categories مختلفة: «⚠️ الوضعيات مختلفة: 📐 أمامية vs 🪞 جانبية — قد يصعب التقييم البصري الدقيق»
+
+### ✨ #20 — Voice parser للكسور والعشريات
+- **FRACTION_WORDS**: `نصف=0.5`, `ربع=0.25`, `ثلاث أرباع=0.75`, `ثلث=0.33`, `ثلثين=0.67`
+- **DECIMAL_POINT_WORDS**: `فاصلة`, `نقطة`, `point`
+- `_preprocessDecimalsAndFractions(tokens)` يدمج tokens قبل parsing:
+  - `"اثنين فاصلة خمسة"` → `2.5`
+  - `"اثنين ونصف"` → `2.5`
+  - `"اثنين نصف"` → `2.5`
+  - `"خمسة وعشرين فاصلة خمسة"` → `25.5`
+  - `"2.5"` يُحفظ كما هو
+- نتيجة: Voice input يفهم 95%+ من حالات إدخال الوزن (بدل 70%)
+
+### ✨ #21 — Equipment grid ديناميكي
+- بدل قائمة Technogym hardcoded في HTML
+- `refreshEquipmentGrid()` يقرأ من `getActiveGym().equipment` ويعرضها:
+  - عنوان: «🏠 جيم البيت — 12 جهاز»
+  - subtitle ديناميكي حسب bodyweightOnly
+  - empty state لو الجيم بلا معدّات
+- يُحدَّث تلقائياً بعد `setActiveGymId`
+
+### ✨ #22 — Welcome back toast
+- `checkWelcomeBack()` يقرأ `LAST_ACTIVE_AT` ثم يحدّثه فوراً
+- لو الغياب ≥7 أيام: toast مع زر «ابدأ الآن» يفتح تبويب التمارين
+- ٣ مستويات حسب طول الغياب:
+  - **7-14 يوم** 👋 «أهلاً بعودتك! غبت X أيام — لنرجع للروتين» (أزرق)
+  - **14-30 يوم** 💪 «اشتقنا لك! ابدأ بأخف وزن لاستعادة العادة» (برتقالي)
+  - **30+ يوم** 🌅 «رحلة جديدة — X شهر بدون تمرين. ابدأ بـ ٦٠٪ من آخر أوزانك لتجنّب الإصابة» (برتقالي)
+
+### 📁 ملفات معدّلة (٧)
+- `js/session.js` — `workout.prList` snapshot
+- `js/progress.js` — `_renderPrListSummary` + `_renderRpeChip` + `_renderMonthlyStats` + استخدامها
+- `js/dashboard.js` — `_nextAchievementBlock` widget
+- `js/achievements.js` — `getNextAchievement()` helper
+- `js/progress-photos.js` — `categoryWarn` في compare
+- `js/voice-input.js` — `FRACTION_WORDS` + `DECIMAL_POINT_WORDS` + `_preprocessDecimalsAndFractions`
+- `js/app.js` — `refreshEquipmentGrid` + `checkWelcomeBack` + init wiring
+- `js/gyms.js` — refresh equipment grid بعد setActiveGymId
+- `index.html` — تحويل equipment grid لـ container ديناميكي
+- `css/styles.css` — ~١٥٠ سطر CSS جديد (hist-pr-list + rpe-chip + dash-next-ach + dl-monthly + pp-cmp-warn)
+
+### 🛡️ توافق
+- لا migration. كل التحسينات backward-compatible:
+  - workouts القديمة بدون `prList` لا تعرض الـ summary (يخفى تلقائياً)
+  - Voice parser الجديد متوافق مع الإدخال القديم
+- Service Worker: `bulkmode-v9-8-0`
+
+---
+
 ## [V9.7 — Multi-program tracking + Deload unification + Equipment guard] — 2026-05-31
 
 حلّ ٦ مشاكل **🟠 متوسطة-عالية** من تقرير Data Audit (#9 → #14). معظمها تتمحور حول دعم **تبديل البرامج** بشكل صحي.

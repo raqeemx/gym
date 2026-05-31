@@ -1176,6 +1176,16 @@ async function endSession(silent=false){
   }catch(e){}
 
   // احفظ الجلسة كـ workout كامل
+  // V9.8 (#15) — snapshot لـ prList كاملة (بدل عدّ فقط) — للعرض في history لاحقاً
+  const prListSnap = Array.isArray(currentSession.prList)
+    ? currentSession.prList.map(p=>({
+        type: p.type,
+        exerciseName: p.exerciseName,
+        value: p.value,
+        label: p.label
+      }))
+    : [];
+
   const workout={
     id:currentSession.id,
     date:currentSession.date,
@@ -1187,6 +1197,7 @@ async function endSession(silent=false){
     totalVolume:currentSession.totalVolume,
     setsCount:currentSession.setsCount,
     prCount:currentSession.prCount,
+    prList:prListSnap,                   // V9.8 (#15)
     notes:currentSession.notes||''
   };
   await db.put('workouts',workout);

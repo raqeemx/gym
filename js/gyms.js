@@ -110,6 +110,8 @@ async function setActiveGymId(id){
   // V9.7 (#10) — reset dismiss + reevaluate banner
   try{sessionStorage.removeItem('gymMismatchDismissed')}catch(e){}
   if(typeof updateGymMismatchBanner==='function') setTimeout(updateGymMismatchBanner, 300);
+  // V9.8 (#21) — حدّث Equipment grid في tab الرئيسية
+  if(typeof refreshEquipmentGrid==='function') setTimeout(refreshEquipmentGrid, 300);
 }
 
 async function getActiveGym(){

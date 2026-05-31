@@ -67,6 +67,17 @@
   const WEIGHT_KEYWORDS = ['كيلو','كجم','كيلوغرام','وزن','kilo','kg','weight'];
   const SEP_KEYWORDS = ['و','في','ضرب','×','x','*'];
 
+  // V9.8 (#20) — كسور عربية شائعة في الجيم (2.5/0.5/0.25 increments)
+  const FRACTION_WORDS = {
+    'نصف':0.5, 'نص':0.5, 'النص':0.5, 'النصف':0.5,
+    'ربع':0.25, 'الربع':0.25,
+    'ثلاث ارباع':0.75, 'ثلاثة ارباع':0.75, 'ثلاث أرباع':0.75,
+    'ثلث':0.333, 'الثلث':0.333,
+    'ثلثين':0.667, 'الثلثين':0.667
+  };
+  // كلمات الفاصلة العشرية ("اثنين فاصلة خمسة" = 2.5)
+  const DECIMAL_POINT_WORDS = ['فاصلة','فاصله','نقطة','نقطه','point'];
+
   // يحوّل كلمات عربية (مع "و") لأرقام: "خمسة وعشرين" → 25
   function _parseArabicNumber(words){
     // إذا الرقم ينتهي بـ "و<عقد>" مثل "خمسة وعشرين"
@@ -93,15 +104,73 @@
     return null;
   }
 
+  // V9.8 (#20) — يحوّل tokens مثل ["اثنين","فاصلة","خمسة"] → [2.5]
+  // أو ["اثنين","ونصف"] → [2.5]
+  function _preprocessDecimalsAndFractions(tokens){
+    const out=[];
+    for(let i=0;i<tokens.length;i++){
+      const t=tokens[i];
+      const next=tokens[i+1]||'';
+      const next2=tokens[i+2]||'';
+      // 1. "<num> فاصلة <num>"
+      if(DECIMAL_POINT_WORDS.includes(next)){
+        const a=_parseArabicNumber([t]);
+        const b=_parseArabicNumber([next2]);
+        if(a!=null && b!=null && b>=0 && b<10){
+          out.push(String(a+b/10));
+          i+=2;
+          continue;
+        }
+      }
+      // 2. "<num> و<fraction>" أو "<num> <fraction>"
+      // 2a. "اثنين ونصف"
+      if(next.startsWith('و') && next.length>1){
+        const fracKey=next.substring(1);
+        if(FRACTION_WORDS[fracKey]!=null){
+          const base=_parseArabicNumber([t]);
+          if(base!=null){
+            out.push(String(base+FRACTION_WORDS[fracKey]));
+            i++;
+            continue;
+          }
+        }
+      }
+      // 2b. "اثنين نصف"
+      if(FRACTION_WORDS[next]!=null){
+        const base=_parseArabicNumber([t]);
+        if(base!=null){
+          out.push(String(base+FRACTION_WORDS[next]));
+          i++;
+          continue;
+        }
+      }
+      // 3. كسر مفرد: "نصف" بدون رقم قبله = 0.5
+      if(FRACTION_WORDS[t]!=null){
+        out.push(String(FRACTION_WORDS[t]));
+        continue;
+      }
+      // 4. decimal مكتوب مباشرة (2.5, ٢.٥)
+      if(/^\d+\.\d+$/.test(t)){
+        out.push(t);
+        continue;
+      }
+      out.push(t);
+    }
+    return out;
+  }
+
   // الـ parser الرئيسي: يستخرج {weight, reps} من نص
   function parseVoiceInput(text){
     if(!text) return {};
-    // طبّع: lowercase + شيل علامات
+    // طبّع: lowercase + شيل علامات (نحفظ النقطة العشرية)
     const norm=text.toString().trim().toLowerCase()
-      .replace(/[،.,؟?!]/g,' ')
+      .replace(/[،,؟?!]/g,' ')
+      .replace(/\.(\D|$)/g,' $1')  // نقطة قبل حرف = فصل، نقطة قبل رقم = عشري
       .replace(/\s+/g,' ');
     // قسّم لكلمات
-    const tokens=norm.split(' ').filter(Boolean);
+    let tokens=norm.split(' ').filter(Boolean);
+    // V9.8 (#20) — preprocess: ادمج الكسور والعشريات لـ tokens رقمية واحدة
+    tokens=_preprocessDecimalsAndFractions(tokens);
 
     let weight=null, reps=null;
 

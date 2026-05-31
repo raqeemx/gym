@@ -353,6 +353,13 @@ async function renderCompareView(){
   if(!before||!after){view.innerHTML='<div class="ss-empty">اختر صورتين</div>';return}
   const beforeUrl=_trackURL(URL.createObjectURL(before.blob));
   const afterUrl=_trackURL(URL.createObjectURL(after.blob));
+  // V9.8 (#18) — تنبيه لو الـ categories مختلفة (وضعيات مختلفة = مقارنة صعبة)
+  let categoryWarn='';
+  if(before.category && after.category && before.category!==after.category){
+    categoryWarn=`<div class="pp-cmp-warn">
+      ⚠️ الوضعيات مختلفة: <b>${_catIcon(before.category)} ${_catLabel(before.category)}</b> vs <b>${_catIcon(after.category)} ${_catLabel(after.category)}</b> — قد يصعب التقييم البصري الدقيق.
+    </div>`;
+  }
   // V9.6 (#7) — فرق الوزن + المدة الزمنية (لو الاثنين عندهم weight)
   let weightDelta='';
   if(before.weight!=null && after.weight!=null){
@@ -392,6 +399,7 @@ async function renderCompareView(){
         <div class="pp-cmp-meta">${fmtDate(after.date)}${after.weight?' · '+after.weight+'كجم':''}</div>
       </div>
     </div>
+    ${categoryWarn}
     ${weightDelta}
   `;
 }

@@ -8,6 +8,30 @@ function _isoDayShift(isoDay,deltaDays){
 function _daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d}
 function _msInDay(){return 86400000}
 
+// V9.8 (#15) — summary بصري لـ workout.prList (تفاصيل بدل عدد فقط)
+function _renderPrListSummary(prList){
+  if(!Array.isArray(prList)||!prList.length) return '';
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+  const items=prList.slice(0,5).map(p=>{
+    const meta=(typeof PR_TYPE_META!=='undefined')?(PR_TYPE_META[p.type]||{icon:'🏆',label:p.type}):{icon:'🏆',label:p.type};
+    return `<span class="hist-pr-chip ${meta.cls||''}" title="${E(p.label||'')}">${meta.icon} ${E(p.exerciseName)} <b>${E(p.value)}</b></span>`;
+  }).join('');
+  const more=prList.length>5?`<span class="hist-pr-more">+${prList.length-5} آخرى</span>`:'';
+  return `<div class="hist-pr-list">${items}${more}</div>`;
+}
+
+// V9.8 (#19) — RPE chip ملوّن: 🟢 ≤7، 🟡 8، 🔴 ≥9
+function _renderRpeChip(rpe){
+  if(rpe==null||rpe==='') return '';
+  const r=Number(rpe);
+  if(isNaN(r)) return '';
+  let cls='rpe-chip';
+  if(r<=7) cls+=' rpe-easy';
+  else if(r<=8) cls+=' rpe-mid';
+  else cls+=' rpe-hard';
+  return ` <span class="${cls}" title="RPE = ${r} (صعوبة السيت)">${r}</span>`;
+}
+
 // V9.6 (#6) — أيقونات/labels لأنواع PR (٥ أنواع)
 const PR_TYPE_META = {
   weight: {icon:'⚖️', label:'وزن',     short:'W',  cls:'pr-t-weight'},
@@ -430,7 +454,7 @@ async function openStats(){
         if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
         const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
         const warmMark=s.isWarmup?'<span class="set-warmup-mark" title="سيت تسخين">🔥</span>':''; // V8.3
-        byEx[s.exerciseName].push(`${warmMark}${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
+        byEx[s.exerciseName].push(`${warmMark}${s.weight}×${s.reps}${_renderRpeChip(s.rpe)}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
       });
       const exHtml=Object.entries(byEx).map(([ex,arr])=>
         `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
@@ -440,9 +464,12 @@ async function openStats(){
       // V9.5 (#1) — متوسط زمن الراحة لهذه الجلسة (لو متاح)
       const restAvg=_avgRestForWorkout(ws);
       const restMeta=restAvg?` · ⏸ ${restAvg}ث راحة`:'';
+      // V9.8 (#15) — اعرض prList snapshot لو موجود (تفاصيل PRs بدل عدد فقط)
+      const prListHtml=_renderPrListSummary(w.prList);
       return `<div class="history-day">
         <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} · 📊 ${vol}${w.prCount?' · 🏆 '+w.prCount:''}${restMeta}</div>
         ${noteHtml}
+        ${prListHtml}
         ${exHtml}
       </div>`;
     }).join('');
@@ -1142,7 +1169,89 @@ function renderDailyLogStats(allRecords){
     <div class="dl-stat ${proteinCls}"><div class="dl-stat-val">${proteinValTxt}</div><div class="dl-stat-lbl">${proteinLblTxt}</div></div>
     <div class="dl-stat"><div class="dl-stat-val">${mealCompliance}%</div><div class="dl-stat-lbl">🍽️ التزام الوجبات</div></div>
     <div class="dl-stat"><div class="dl-stat-val">${suppCompliance}%</div><div class="dl-stat-lbl">💊 التزام المكملات</div></div>
-  </div>`;
+  </div>
+  ${_renderMonthlyStats(allRecords)}`;
+}
+
+// V9.8 (#17) — بطاقة شهرية: streak لكل مكمل + اكتمال الوجبات
+function _renderMonthlyStats(allRecords){
+  const today=new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+  const last30=allRecords.filter(r=>r.date>=thirtyDaysAgo && r.date<=today);
+  if(last30.length<3) return ''; // لا قيمة قبل ٣ أيام مسجّلة
+
+  const suppKeys=[
+    {k:'creatine', label:'كرياتين',   icon:'💊'},
+    {k:'protein',  label:'واي بروتين', icon:'🥛'},
+    {k:'multi',    label:'ملتي فيتامين',icon:'💊'},
+    {k:'vitd',     label:'فيتامين D',  icon:'☀️'},
+    {k:'omega3',   label:'أوميجا 3',   icon:'🐟'}
+  ];
+  // عدد الأيام المأخوذة + current streak لكل مكمل
+  const sortedAsc=[...last30].sort((a,b)=>a.date.localeCompare(b.date));
+  const suppStats=suppKeys.map(s=>{
+    let days=0;
+    let currentStreak=0;
+    let bestStreak=0;
+    let run=0;
+    sortedAsc.forEach(r=>{
+      const taken=r.supplements && r.supplements[s.k];
+      if(taken){days++;run++;if(run>bestStreak) bestStreak=run}
+      else{run=0}
+    });
+    // current streak = run في آخر سجل
+    currentStreak=run;
+    return {...s, days, total:sortedAsc.length, currentStreak, bestStreak};
+  });
+
+  // اكتمال الوجبات (يوم بـ ٦ وجبات)
+  const fullMealDays=last30.filter(r=>(r.meals||[]).filter(m=>m).length>=6).length;
+  const fullMealPct=Math.round((fullMealDays/last30.length)*100);
+
+  // streak الالتزام بـ ٦ وجبات
+  let mealStreak=0, mealRun=0;
+  sortedAsc.forEach(r=>{
+    const full=(r.meals||[]).filter(m=>m).length>=6;
+    if(full){mealRun++; if(mealRun>mealStreak) mealStreak=mealRun}
+    else{mealRun=0}
+  });
+
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+
+  return `
+    <div class="dl-monthly">
+      <div class="dl-monthly-head">📊 آخر ٣٠ يوم (${E(last30.length)} مسجّلة)</div>
+
+      <div class="dl-monthly-section">
+        <div class="dl-monthly-section-head">💊 المكملات</div>
+        <div class="dl-supp-grid">
+          ${suppStats.map(s=>{
+            const pct=Math.round((s.days/s.total)*100);
+            const cls=pct>=80?'good':pct>=50?'mid':'low';
+            const streakBadge=s.currentStreak>=3?`<span class="dl-supp-streak">🔥 ${E(s.currentStreak)}</span>`:'';
+            return `<div class="dl-supp-row dl-supp-${cls}">
+              <div class="dl-supp-name"><span>${s.icon}</span><b>${E(s.label)}</b>${streakBadge}</div>
+              <div class="dl-supp-stats">
+                <div class="dl-supp-bar"><div class="dl-supp-fill" style="width:${pct}%"></div></div>
+                <div class="dl-supp-meta"><b>${E(s.days)}</b>/${E(s.total)} يوم · ${E(pct)}%</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="dl-monthly-section">
+        <div class="dl-monthly-section-head">🍽️ اكتمال الوجبات (٦/يوم)</div>
+        <div class="dl-meals-monthly">
+          <div class="dl-meals-monthly-main">
+            <div class="dl-meals-monthly-num"><b>${E(fullMealDays)}</b>/<span>${E(last30.length)}</span></div>
+            <div class="dl-meals-monthly-pct ${fullMealPct>=70?'good':fullMealPct>=40?'mid':'low'}">${E(fullMealPct)}%</div>
+          </div>
+          ${mealStreak>=3?`<div class="dl-meals-monthly-streak">🔥 أفضل سلسلة: <b>${E(mealStreak)}</b> يوم متتالي</div>`:''}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ============ V7 — BODY METRICS (#14) ============
@@ -1601,7 +1710,7 @@ async function renderHistory(){
     ws.forEach(s=>{
       if(!byEx[s.exerciseName]) byEx[s.exerciseName]=[];
       const noteMark=s.note?` <span class="set-note-mark" title="${(s.note||'').replace(/"/g,'&quot;')}">📝</span>`:'';
-      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${s.rpe?'@'+s.rpe:''}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
+      byEx[s.exerciseName].push(`${s.weight}×${s.reps}${_renderRpeChip(s.rpe)}${s.isPR?_renderPRTypeChips(s.prType)||' 🏆':''}${noteMark}`);
     });
     const exHtml=Object.entries(byEx).map(([ex,arr])=>
       `<div class="h-ex"><b>${ex}</b><span>${arr.join(' · ')}</span></div>`
@@ -1611,9 +1720,12 @@ async function renderHistory(){
     // V9.5 (#1) — متوسط زمن الراحة الفعلي
     const restAvg=_avgRestForWorkout(ws);
     const restMeta=restAvg?` · ⏸ ${restAvg}ث راحة`:'';
+    // V9.8 (#15) — prList snapshot
+    const prListHtml=_renderPrListSummary(w.prList);
     items.push(`<div class="history-day">
       <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} سيت · 📊 ${Math.round(w.totalVolume||0)}${w.prCount?' · 🏆 '+w.prCount:''}${restMeta}</div>
       ${noteHtml}
+      ${prListHtml}
       ${exHtml}
     </div>`);
   }

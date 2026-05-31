@@ -106,6 +106,39 @@ async function checkAchievements(opts){
   }
 }
 
+// V9.8 (#16) — يرجّع أقرب إنجاز قادم للفتح (أعلى % progress من المقفلة)
+async function getNextAchievement(){
+  try{
+    const rec=await db.get('settings',KEYS.ACHIEVEMENTS);
+    const unlocked=(rec&&rec.value)||{};
+    const stats=await computeAchievementStats();
+    let best=null;
+    for(const ach of ACHIEVEMENTS){
+      if(unlocked[ach.id]) continue;
+      if(typeof ach.progress!=='function') continue;
+      try{
+        const p=ach.progress(stats);
+        if(!p || !isFinite(p.target) || p.target<=0) continue;
+        const cur=Math.max(0,Math.min(p.current,p.target));
+        const pct=cur/p.target;
+        if(pct>=1) continue; // فعلاً مفتوح لكن لم يُكتشف بعد — تجاهل
+        // اختر الأعلى pct (الأقرب للفتح)
+        if(!best || pct>best.pct){
+          best={
+            ach,
+            current:cur,
+            target:p.target,
+            unit:p.unit||'',
+            pct,
+            remaining:Math.ceil(p.target-cur)
+          };
+        }
+      }catch(e){}
+    }
+    return best;
+  }catch(e){return null}
+}
+
 // ============ Popup (مرآة celebratePR بلون مختلف) ============
 function celebrateAchievement(ach,moreCount){
   const overlay=document.createElement('div');
