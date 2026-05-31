@@ -5,6 +5,15 @@
 
 ---
 
+## [V9.14.1 — حذف الـ Hero الخارجي القديم] — 2026-05-31
+
+- حُذف `<div class="hero" id="heroEl">` الخارجي من index.html (كان يعرض "BULK V4 · PEAK-HOUR OPTIMIZED · برنامج التضخيم النهائي")
+- الـ Hero الجديد في V9.14 (داخل `#dashboardContainer`) يُغطّي نفس الغرض بصورة أنظف
+- دوال `toggleHero`, `setupHeroCollapse`, `updateHeroCompactWeek` في session.js تتحقّق `if(!hero) return` فلا تُسبّب أخطاء بعد الحذف
+- bump إلى 9.14.1 لتغيير CACHE_NAME وإجبار SW على تحميل النسخة الجديدة
+
+---
+
 ## [V9.14 — Homepage Redesign: Hero + Today's Workout Card + Program Summary] — 2026-05-31
 
 إعادة هيكلة الصفحة الرئيسية لتجيب على ٣ أسئلة فورية:
