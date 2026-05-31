@@ -3439,6 +3439,119 @@ button.dqs-card:hover{border-color:rgba(212,168,83,.2);transform:translateY(-2px
   display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px
 }
 
+/* ============================================================
+ * V9.12 — Daily Start + Disclosure + Step Ops Row
+ * ============================================================ */
+
+/* ============ #1 Primary Hero — First Exercise + Plan B button ============ */
+.dpr-first-ex{
+  display:flex;align-items:center;gap:8px;
+  margin:0 0 14px;padding:10px 13px;
+  background:rgba(255,255,255,.03);border:1px dashed rgba(212,168,83,.22);
+  border-radius:10px;font-family:'JetBrains Mono',monospace;
+  position:relative;z-index:1
+}
+.dpr-fe-lbl{font-size:10px;color:var(--g2);font-weight:700;letter-spacing:.8px;text-transform:uppercase;font-family:'Outfit',sans-serif;flex-shrink:0}
+.dpr-first-ex b{color:#fff;font-size:13px;font-weight:800;letter-spacing:.2px}
+[data-theme="light"] .dpr-first-ex b{color:#1A1D24}
+
+.dpr-actions-row{margin-top:10px;position:relative;z-index:1}
+.dpr-cta-row{
+  display:block;width:100%;
+  background:rgba(90,180,255,.08);color:var(--blue);
+  border:1px solid rgba(90,180,255,.25);
+  padding:11px 16px;border-radius:11px;
+  font-family:'Outfit',sans-serif;font-size:11.5px;font-weight:800;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:.2s;-webkit-tap-highlight-color:transparent
+}
+.dpr-cta-row:hover{background:rgba(90,180,255,.14);color:#7BC8FF;border-color:rgba(90,180,255,.45)}
+
+@media (max-width:600px){
+  .dpr-first-ex{padding:9px 11px;gap:7px}
+  .dpr-first-ex b{font-size:12px}
+}
+
+/* ============ Alt button flash (when Plan B hint fires) ============ */
+@keyframes altBtnFlash{
+  0%,100%{transform:scale(1);box-shadow:none}
+  50%{transform:scale(1.18);box-shadow:0 0 0 4px rgba(90,180,255,.25),0 0 16px rgba(90,180,255,.5)}
+}
+.alt-btn.alt-btn-flash{
+  animation:altBtnFlash 1s ease-in-out 3;
+  background:rgba(90,180,255,.18);border-color:var(--blue);color:var(--blue)
+}
+
+/* ============ #2 t1 Progressive Disclosure ============ */
+.t1-disclosure{
+  margin:0 0 12px;border-radius:12px;
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);
+  overflow:hidden;transition:.25s
+}
+.t1-disclosure[open]{background:transparent;border-color:rgba(212,168,83,.12)}
+.t1-disclosure summary{
+  list-style:none;cursor:pointer;
+  display:flex;align-items:center;gap:9px;
+  padding:12px 14px;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;
+  color:var(--tx2);letter-spacing:.3px;
+  transition:.2s;-webkit-tap-highlight-color:transparent
+}
+.t1-disclosure summary::-webkit-details-marker{display:none}
+.t1-disclosure summary:hover{color:#fff;background:rgba(255,255,255,.02)}
+.t1-disclosure[open] summary{color:var(--g2);background:rgba(212,168,83,.04)}
+.t1-disclosure summary::before{
+  content:'▶';font-size:9px;color:var(--g2);transition:.3s;
+  flex-shrink:0
+}
+.t1-disclosure[open] summary::before{transform:rotate(90deg)}
+.t1d-icon{font-size:15px;flex-shrink:0;opacity:.9}
+.t1d-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t1d-hint{
+  font-size:9.5px;color:var(--tx3);font-weight:600;
+  letter-spacing:.5px;flex-shrink:0;
+  font-family:'Outfit',sans-serif
+}
+.t1-disclosure[open] .t1d-hint{display:none}
+.t1-disclosure > .card{
+  border-radius:0;border-top:1px dashed rgba(255,255,255,.05);
+  margin-bottom:0 !important
+}
+
+/* ============ #3 Step Ops Row — badges عملية ============ */
+.step-ops-row{
+  display:flex;flex-wrap:wrap;gap:5px;
+  margin-top:5px;font-family:'Outfit',sans-serif
+}
+.sor-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9.5px;font-weight:700;letter-spacing:.3px;
+  padding:3px 8px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.02);
+  color:var(--tx2);
+  white-space:nowrap
+}
+.sor-badge b{color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800}
+[data-theme="light"] .sor-badge b{color:#1A1D24}
+.sor-rest{
+  background:rgba(90,180,255,.05);
+  border-color:rgba(90,180,255,.2);
+  color:var(--blue)
+}
+.sor-rest b{color:var(--blue)}
+.sor-zone{
+  background:rgba(90,230,138,.04);
+  border-color:rgba(90,230,138,.18);
+  color:var(--grn)
+}
+@media (max-width:600px){
+  .step-ops-row{gap:4px;margin-top:4px}
+  .sor-badge{font-size:9px;padding:3px 7px}
+  .sor-badge b{font-size:10px}
+}
+
+
 
 .step-name{display:flex;flex-direction:column;align-items:flex-start;gap:1px}
 .step-name .sn-en{font-size:13.5px;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;letter-spacing:.2px;line-height:1.25}

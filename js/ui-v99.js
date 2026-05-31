@@ -778,6 +778,174 @@
     },1500);
   }
 
+  // ============================================================
+  // V9.12 ADDITIONS — Daily Start Card + Progressive Disclosure + Step Ops Row
+  // ============================================================
+
+  // #1 — Plan B Hint: من Dashboard، يفتح t1 + يضيء أزرار ⇄ + toast
+  function openPlanBHint(){
+    if(typeof switchToTab==='function') switchToTab(1);
+    setTimeout(()=>{
+      // افتح اليوم النشط
+      const active=document.querySelector('#t1 .dy.last-session-day, #t1 .dy.today-day, #t1 .dy.session-active-day');
+      if(active && !active.classList.contains('open')){
+        document.querySelectorAll('#t1 .dy.open').forEach(d=>d.classList.remove('open'));
+        active.classList.add('open');
+        // scroll
+        setTimeout(()=>{
+          const top=active.getBoundingClientRect().top+window.pageYOffset-100;
+          window.scrollTo({top,behavior:'smooth'});
+        },120);
+      }
+      // أبرز كل أزرار البدائل ⇄
+      const altBtns=document.querySelectorAll('#t1 .alt-btn');
+      altBtns.forEach(b=>b.classList.add('alt-btn-flash'));
+      setTimeout(()=>{
+        altBtns.forEach(b=>b.classList.remove('alt-btn-flash'));
+      },2800);
+      if(typeof showToast==='function'){
+        showToast('🔄 اضغط زر ⇄ بجانب أي تمرين لإيجاد بديل','var(--blue)',3200);
+      }
+    },150);
+  }
+
+  // #2 — Progressive Disclosure في t1
+  // اللف البطاقات الكبيرة (شرح + قائمة أوزان) في <details> مغلقة افتراضياً
+  function initT1ProgressiveDisclosure(){
+    const t1=document.getElementById('t1');
+    if(!t1) return;
+    if(t1.dataset.t1Disclosed==='1') return;
+    t1.dataset.t1Disclosed='1';
+    // اعثر على أول bigعنوانين:
+    //  - "منطق ترتيب التمارين الجديد"
+    //  - "أوزانك المبدئية — الأسبوع الأول"
+    const cards=t1.querySelectorAll(':scope > .card');
+    cards.forEach(card=>{
+      const head=card.querySelector('.ct');
+      if(!head) return;
+      const txt=head.textContent.trim();
+      if(/منطق ترتيب التمارين|الأوزان|أوزانك المبدئية|الأوزان المبدئية/i.test(txt)){
+        _wrapInDetails(card,txt);
+      }
+    });
+  }
+
+  function _wrapInDetails(card,summaryText){
+    // أنشئ <details> بنفس مكان البطاقة
+    const det=document.createElement('details');
+    det.className='t1-disclosure';
+    const sum=document.createElement('summary');
+    sum.innerHTML=`<span class="t1d-icon">📖</span><span class="t1d-title">${escHTML?escHTML(summaryText):summaryText}</span><small class="t1d-hint">اضغط للعرض</small>`;
+    det.appendChild(sum);
+    // ضع <details> قبل البطاقة، ثم انقل البطاقة داخلها
+    card.parentNode.insertBefore(det,card);
+    det.appendChild(card);
+    // أزل margin-bottom من البطاقة الداخلية
+    card.style.marginBottom='0';
+    card.style.marginTop='8px';
+  }
+
+  // #3 — Step Ops Row: حقن صف badges عملية في كل step تدريبي
+  // [⏱ راحة 60ث] [🏷 zone] — يكتمل مع weight chip (وزن) + alt-btn (بديل)
+  function injectStepOpsRow(){
+    document.querySelectorAll('#t1 .step:not(.rest):not(.warmup)').forEach(step=>{
+      if(step.dataset.opsInjected==='1') return;
+      const stepBody=step.querySelector('.step-body');
+      if(!stepBody) return;
+      // ابحث عن next step.rest في الـ phase
+      const nextRest=_findNextRestStep(step);
+      const restSec=nextRest?_parseRestSeconds(nextRest):null;
+      // zone من الـ banner في الـ phase الأب
+      const phase=step.closest('.dy')?step.parentElement:null;
+      const banner=step.previousElementSibling && step.previousElementSibling.closest('.dbi')
+        ?step.closest('.dbi').querySelector('.pair-banner .zone-tag')
+        :null;
+      let zoneText=null;
+      // ابحث للأعلى عن أقرب pair-banner داخل نفس .dbi
+      const dbi=step.closest('.dbi');
+      if(dbi){
+        // اعثر على أقرب previous pair-banner قبل هذا الـ step
+        let cur=step.previousElementSibling;
+        while(cur){
+          if(cur.classList && cur.classList.contains('pair-banner')){
+            const zt=cur.querySelector('.zone-tag');
+            if(zt) zoneText=zt.textContent.trim();
+            break;
+          }
+          if(cur.classList && cur.classList.contains('phase-bar')) break; // وصلنا phase جديد
+          cur=cur.previousElementSibling;
+        }
+      }
+      // ابن الـ ops row
+      const badges=[];
+      if(restSec){
+        badges.push(`<span class="sor-badge sor-rest" title="مدة الراحة قبل السيت التالي">⏱ <b>${restSec}</b>ث راحة</span>`);
+      }
+      if(zoneText){
+        // اختصر "🟢 ZONE" إلى عرض جميل
+        badges.push(`<span class="sor-badge sor-zone" title="منطقة الجهاز في الجيم">🏷 ${escHTML?escHTML(zoneText.replace(/^🟢\s*/,'').replace(/^ZONE/i,'').trim()||zoneText):zoneText}</span>`);
+      }
+      if(!badges.length) {step.dataset.opsInjected='1';return}
+      const row=document.createElement('div');
+      row.className='step-ops-row';
+      row.innerHTML=badges.join('');
+      // ضع الـ row بعد step-info مباشرة
+      const info=stepBody.querySelector('.step-info');
+      if(info) info.after(row);
+      else stepBody.appendChild(row);
+      step.dataset.opsInjected='1';
+    });
+  }
+
+  function _findNextRestStep(step){
+    let cur=step.nextElementSibling;
+    while(cur){
+      if(cur.classList && cur.classList.contains('step')){
+        if(cur.classList.contains('rest')) return cur;
+        // إذا step غير rest بعد هذا، فلا توجد راحة بينهما
+        return null;
+      }
+      cur=cur.nextElementSibling;
+    }
+    return null;
+  }
+
+  function _parseRestSeconds(restStep){
+    if(!restStep) return null;
+    const txt=restStep.textContent;
+    // ابحث عن "٩٠" أو "60" أو "٦٠ ث"
+    const norm=(typeof arabicToLatinDigits==='function')?arabicToLatinDigits(txt):txt;
+    const m=norm.match(/(\d{2,3})\s*(?:ث|ثانية|s|sec)?/);
+    if(m) return parseInt(m[1],10);
+    return null;
+  }
+
+  // ربط lifecycle
+  function _applyV912Enhancements(){
+    try{initT1ProgressiveDisclosure()}catch(e){}
+    try{injectStepOpsRow()}catch(e){}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    setTimeout(_applyV912Enhancements,650);
+  });
+  if(typeof window!=='undefined'){
+    const ob3=new MutationObserver((muts)=>{
+      // لو ظهرت .step جديدة، أعد injection
+      for(const m of muts){
+        for(const node of m.addedNodes){
+          if(node.nodeType===1 && (node.classList?.contains('step') || node.querySelector?.('.step'))){
+            setTimeout(_applyV912Enhancements,120);
+            return;
+          }
+        }
+      }
+    });
+    setTimeout(()=>{
+      const pc=document.getElementById('programContainer');
+      if(pc) try{ob3.observe(pc,{childList:true,subtree:true})}catch(e){}
+    },1600);
+  }
+
   // expose
   window.toggleFocusMode=toggleFocusMode;
   window.injectAllWeightChips=injectAllWeightChips;
@@ -787,5 +955,8 @@
   window.applyTipsCollapsible=applyTipsCollapsible;
   window.applyDayTypeColors=applyDayTypeColors;
   window.applyBilingualNames=applyBilingualNames;
-  window._uiV99={initFocusMode,initGuideCollapsible,initDailyLogSubtabs,applyHeroCompact,applyWeekGridStatus,buildDayStrip,injectAllWeightChips,toggleFocusMode,applyTipsCollapsible,applyDayTypeColors,applyBilingualNames};
+  window.openPlanBHint=openPlanBHint;
+  window.initT1ProgressiveDisclosure=initT1ProgressiveDisclosure;
+  window.injectStepOpsRow=injectStepOpsRow;
+  window._uiV99={initFocusMode,initGuideCollapsible,initDailyLogSubtabs,applyHeroCompact,applyWeekGridStatus,buildDayStrip,injectAllWeightChips,toggleFocusMode,applyTipsCollapsible,applyDayTypeColors,applyBilingualNames,openPlanBHint,initT1ProgressiveDisclosure,injectStepOpsRow};
 })();

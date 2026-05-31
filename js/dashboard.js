@@ -483,6 +483,24 @@
     const sets=(todayProg.stats&&todayProg.stats.sets)||'—';
     const mins=(todayProg.stats&&todayProg.stats.minutes)||'—';
     const exs=(todayProg.stats&&todayProg.stats.exercises)||'—';
+    // V9.12 (#1) — أول تمرين فعلي (تخطّ phase الإحماء)
+    let firstEx=null;
+    if(todayProg.phases && todayProg.phases.length){
+      for(const ph of todayProg.phases){
+        if(ph.type==='warmup') continue;
+        // اسم التمرين الأول — قد يكون phase.name (مثلاً "Chest Press — راحة كاملة" أو "Lat Machine ↔ Shoulder Press")
+        if(ph.name){
+          // خذ ما قبل أول "—" أو "↔" أو "·"
+          firstEx=String(ph.name).split(/[—↔·]/)[0].trim();
+          break;
+        }
+        // fallback: أول step غير rest
+        if(ph.steps && ph.steps.length){
+          const s=ph.steps.find(x=>x.type!=='rest');
+          if(s){firstEx=String(s.name).split(/[—↔·]/)[0].trim();break}
+        }
+      }
+    }
     // سطر تحفيزي ديناميكي
     let motivation='';
     if(streak && streak.current>=3){
@@ -492,12 +510,16 @@
     } else {
       motivation=`💪 يوم تدريب — كل سيت يبني عضل`;
     }
+    // V9.12 (#1) — زر Plan B ثانوي: يفتح t1 ويرشد لاستخدام ⇄
+    const planBBtn=`<button class="dpr-cta-secondary dpr-cta-row" onclick="openPlanBHint&&openPlanBHint()" title="إذا كان الجهاز مشغولاً، اضغط زر ⇄ بجانب أي تمرين">🔄 الجهاز مشغول؟ Plan B</button>`;
     return `
       <div class="dash-primary">
         <div class="dpr-tag">⭐ جلسة اليوم</div>
         <div class="dpr-title">${E(dayType)}</div>
         <div class="dpr-meta">⏱ ~<b>${E(mins)}</b> دقيقة · 💪 <b>${E(sets)}</b> سيت · 🏋 <b>${E(exs)}</b> تمارين</div>
-        <button class="dpr-cta" onclick="switchToTab(1)">💪 ابدأ جلسة ${E(dayType)}</button>
+        ${firstEx?`<div class="dpr-first-ex"><span class="dpr-fe-lbl">▶ أول تمرين:</span><b>${E(firstEx)}</b></div>`:''}
+        <button class="dpr-cta" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+        <div class="dpr-actions-row">${planBBtn}</div>
         <div class="dpr-motivation">${motivation}</div>
       </div>`;
   }
