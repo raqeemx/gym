@@ -107,6 +107,9 @@ async function getActiveGymId(){
 async function setActiveGymId(id){
   await db.put('settings',{key:KEYS.ACTIVE_GYM_ID,value:id});
   invalidateGymCache();
+  // V9.7 (#10) — reset dismiss + reevaluate banner
+  try{sessionStorage.removeItem('gymMismatchDismissed')}catch(e){}
+  if(typeof updateGymMismatchBanner==='function') setTimeout(updateGymMismatchBanner, 300);
 }
 
 async function getActiveGym(){
@@ -208,6 +211,43 @@ async function isExerciseAvailable(exerciseName){
     if(exerciseName.startsWith(e+' ') || exerciseName.startsWith(e+'—')) return true;
   }
   return false;
+}
+
+// V9.7 (#10) — يفحص كل تمارين البرنامج النشط ضد active gym
+// يرجّع {unavailable:[ex1,ex2,...], total:25}
+async function getProgramEquipmentMismatch(){
+  const gym=await getActiveGym();
+  if(!gym) return {unavailable:[],total:0,gym:null};
+  // اقرأ كل التمارين من EFFECTIVE_PROGRAM
+  const program=(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM)
+    ?EFFECTIVE_PROGRAM
+    :(typeof getActiveProgram==='function'?await getActiveProgram():null);
+  if(!program || !program.days) return {unavailable:[],total:0,gym};
+  // استخرج كل أسماء التمارين الفريدة (من steps من نوع 'set' أو 'solo-set')
+  const exNames=new Set();
+  for(const day of program.days){
+    if(day.isRest||!day.phases) continue;
+    for(const phase of day.phases){
+      if(!phase.steps) continue;
+      for(const step of phase.steps){
+        if(step.type==='set' || step.type==='solo-set'){
+          // استخرج اسم التمرين من step.name (مثلاً "Chest Press — سيت ١")
+          const name=(step.name||'').split('—')[0].trim();
+          // طبّع
+          const norm=(typeof normalizeExName==='function')?normalizeExName(name):name;
+          if(norm) exNames.add(norm);
+        }
+      }
+    }
+  }
+  // افحص كل اسم
+  const unavailable=[];
+  for(const ex of exNames){
+    if(!(await isExerciseAvailable(ex))){
+      unavailable.push(ex);
+    }
+  }
+  return {unavailable, total:exNames.size, gym};
 }
 
 // ============ Utility: list of all known equipment (for the editor UI) ============

@@ -54,14 +54,24 @@
   }
 
   // ---------- compute ----------
-  function _weekProgress(firstWorkoutDate){
-    if(!firstWorkoutDate) return null;
-    const first=new Date(firstWorkoutDate);
-    const now=Date.now();
-    const days=Math.floor((now-first.getTime())/86400000);
-    const week=Math.min(12,Math.max(1,Math.floor(days/7)+1));
-    const month=Math.min(3,Math.max(1,Math.floor((week-1)/4)+1));
-    return {week,month,daysIn:days,pct:Math.min(100,Math.round((week/12)*100))};
+  // V9.7 (#14) — استخدم getProgramWeekProgress للبرنامج النشط بدل firstWorkoutDate الموحّد
+  async function _weekProgress(){
+    if(typeof getProgramWeekProgress==='function'){
+      const wp=await getProgramWeekProgress();
+      if(wp) return wp;
+    }
+    // fallback: firstWorkoutDate (legacy)
+    try{
+      const fw=await db.get('settings',KEYS.FIRST_WORKOUT);
+      if(fw && fw.value){
+        const first=new Date(fw.value);
+        const days=Math.floor((Date.now()-first.getTime())/86400000);
+        const week=Math.min(12,Math.max(1,Math.floor(days/7)+1));
+        const month=Math.min(3,Math.max(1,Math.floor((week-1)/4)+1));
+        return {week,month,daysIn:days,pct:Math.min(100,Math.round((week/12)*100))};
+      }
+    }catch(e){}
+    return null;
   }
 
   function _weekStats(sets,workouts){
@@ -377,7 +387,7 @@
       const data=await _loadData();
       const todayProg=_programDayFor(_todayWd());
       const activeSession=(typeof currentSession!=='undefined')?currentSession:null;
-      const wp=_weekProgress(data.firstWorkoutDate);
+      const wp=await _weekProgress();
 
       // مستخدم جديد تماماً
       if(!data.workouts.length && !activeSession){

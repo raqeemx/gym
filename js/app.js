@@ -370,6 +370,8 @@ async function openProfile(){
   if(typeof refreshAutoBackupUI==='function') refreshAutoBackupUI();
   // V9.1 (A.4) — حدّث قائمة البرامج (templates selector)
   if(typeof refreshProgramList==='function') refreshProgramList();
+  // V9.7 (#9) — حدّث قائمة التخصيصات
+  if(typeof refreshOverridesList==='function') refreshOverridesList();
   // V8 — املأ حقول التذكيرات من الإعدادات المحفوظة
   if(typeof loadReminderPrefs==='function'){
     const prefs=await loadReminderPrefs();
@@ -745,6 +747,97 @@ async function selectProgram(id){
   }catch(e){
     console.error('selectProgram failed:',e);
     showToast('⚠️ تعذّر تبديل البرنامج','var(--red)');
+  }
+}
+
+// V9.7 (#10) — تنبيه عند عدم توفر تمارين البرنامج في الجيم النشط
+async function updateGymMismatchBanner(){
+  const banner=document.getElementById('gymMismatchBanner');
+  if(!banner) return;
+  if(typeof getProgramEquipmentMismatch!=='function'){banner.style.display='none';return}
+  try{
+    const res=await getProgramEquipmentMismatch();
+    if(!res.unavailable.length || !res.gym){banner.style.display='none';return}
+    const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+    const gymName=E(res.gym.name||'الجيم النشط');
+    const gymIcon=res.gym.icon||'🏋️';
+    const unavailCount=res.unavailable.length;
+    const totalCount=res.total;
+    const pct=Math.round((unavailCount/totalCount)*100);
+    const sample=res.unavailable.slice(0,3).map(E).join(' · ');
+    const moreTxt=unavailCount>3?` <small>+${unavailCount-3} آخرى</small>`:'';
+    // اقترح برنامج Full Body 3-day كبديل لو bodyweight
+    const isBodyweight=!!res.gym.bodyweightOnly;
+    const suggestProgramBtn=isBodyweight && typeof setActiveProgram==='function'
+      ?`<button class="gmb-suggest" type="button" onclick="setActiveProgram('full-body-3day').then(()=>updateGymMismatchBanner())">جرّب Full Body بدلاً</button>`
+      :'';
+    banner.style.display='';
+    banner.innerHTML=`
+      <div class="gmb-icon">⚠️</div>
+      <div class="gmb-body">
+        <div class="gmb-title"><b>${E(unavailCount)} تمرين</b> من ${E(totalCount)} (${E(pct)}%) غير متاحة في ${gymIcon} ${gymName}</div>
+        <div class="gmb-sample">${sample}${moreTxt}</div>
+        <div class="gmb-hint">💡 استخدم زر <b>«⇄ بديل؟»</b> بجانب كل تمرين لإيجاد بديل متاح في هذا الجيم</div>
+      </div>
+      <div class="gmb-actions">
+        ${suggestProgramBtn}
+        <button class="gmb-dismiss" type="button" onclick="dismissGymMismatchBanner()" aria-label="إخفاء">✕</button>
+      </div>
+    `;
+  }catch(e){console.warn('gym mismatch banner failed:',e)}
+}
+
+function dismissGymMismatchBanner(){
+  const banner=document.getElementById('gymMismatchBanner');
+  if(banner) banner.style.display='none';
+  // sessionStorage فقط — يظهر مجدداً في الجلسة التالية
+  try{sessionStorage.setItem('gymMismatchDismissed', new Date().toISOString().split('T')[0])}catch(e){}
+}
+
+// V9.7 (#9) — إدارة تخصيصات الأيام عبر البرامج
+async function refreshOverridesList(){
+  const wrap=document.getElementById('profOverridesList');
+  const section=document.getElementById('profOverridesSection');
+  if(!wrap||!section) return;
+  if(typeof getOverridesCounts!=='function'){section.style.display='none';return}
+  const counts=await getOverridesCounts();
+  const programIds=Object.keys(counts);
+  if(!programIds.length){section.style.display='none';return}
+  section.style.display='';
+  const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+  const templates=(typeof PROGRAM_TEMPLATES!=='undefined')?PROGRAM_TEMPLATES:{};
+  const activeId=(typeof getActiveProgramId==='function')?await getActiveProgramId():null;
+  wrap.innerHTML=programIds.map(pid=>{
+    const tpl=templates[pid];
+    const name=tpl?tpl.meta.name:pid;
+    const isActive=pid===activeId;
+    return `<div class="prof-override-row${isActive?' active':''}">
+      <div class="por-info">
+        <b>${E(name)}</b>
+        <small>${E(counts[pid])} يوم مخصّص${isActive?' · <span class="por-active-tag">نشط</span>':''}</small>
+      </div>
+      <button type="button" class="por-clear-btn" onclick="clearProgramOverrides('${E(pid)}')" title="امسح كل التخصيصات لهذا البرنامج">🗑 مسح الكل</button>
+    </div>`;
+  }).join('');
+}
+
+async function clearProgramOverrides(programId){
+  if(typeof clearOverridesFor!=='function') return;
+  if(!await customConfirm(`<b>سيُمسح كل تخصيصاتك لهذا البرنامج.</b><br>هل أنت متأكد؟`,{title:'تأكيد المسح',okText:'امسح',cancelText:'إلغاء',danger:true,icon:'🗑'})) return;
+  try{
+    await clearOverridesFor(programId);
+    showToast('✓ تم مسح التخصيصات','var(--grn)');
+    refreshOverridesList();
+    // أعد بناء البرنامج لو هذا هو النشط
+    const activeId=(typeof getActiveProgramId==='function')?await getActiveProgramId():null;
+    if(activeId===programId && typeof renderProgram==='function'){
+      await renderProgram();
+      if(typeof ensureStepIds==='function') ensureStepIds();
+      if(typeof injectTrackingInputs==='function') await injectTrackingInputs();
+    }
+  }catch(e){
+    console.error('clearProgramOverrides failed:',e);
+    showToast('⚠️ فشل المسح','var(--red)');
   }
 }
 
@@ -1159,6 +1252,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
       maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة
     }
     await highlightToday();    // V9.3 — async الآن: يقرأ آخر workout من DB
+    // V9.7 (#10) — banner لو تمارين البرنامج لا تتوفر في active gym
+    setTimeout(()=>{
+      try{
+        const dismissed=sessionStorage.getItem('gymMismatchDismissed');
+        if(dismissed===new Date().toISOString().split('T')[0]) return;
+      }catch(e){}
+      if(typeof updateGymMismatchBanner==='function') updateGymMismatchBanner();
+    },1500);
     await setupHeroCollapse(); // طي الـ Hero بعد أول جلسة (V7 — #24)
     await updateWeekUI();      // شارة الأسبوع + بانر deload (V7 — #15)
     await checkOnboarding();  // فحص أول فتح وعرض الـ onboarding (V7)

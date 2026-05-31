@@ -1539,6 +1539,41 @@ body.sess-active .nav{top:50px}
 .pp-cmp-delta.pp-w-down .pp-cmp-delta-main b{color:var(--blue)}
 .pp-cmp-delta.pp-w-flat{background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.06)}
 .pp-cmp-delta.pp-w-flat .pp-cmp-delta-main b{color:var(--tx2)}
+
+/* ============================================================
+ * V9.7 — Multi-program tracking + Deload unification + Equipment mismatch
+ * ============================================================ */
+
+/* #9 — Overrides Manager (في Profile) */
+.prof-overrides-list{display:flex;flex-direction:column;gap:8px}
+.prof-override-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--s1);border:1px solid rgba(255,255,255,.05);border-radius:9px}
+.prof-override-row.active{border-color:rgba(212,168,83,.22);background:linear-gradient(135deg,rgba(212,168,83,.04),var(--s1))}
+.prof-override-row .por-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.prof-override-row .por-info b{font-size:12.5px;color:var(--tx);font-family:'Outfit',sans-serif;font-weight:700}
+.prof-override-row .por-info small{font-size:10.5px;color:var(--tx3)}
+.prof-override-row .por-active-tag{background:rgba(90,230,138,.12);color:var(--grn);padding:1px 6px;border-radius:4px;font-size:9.5px;font-weight:700;margin-right:3px}
+.prof-override-row .por-clear-btn{background:transparent;color:var(--red);border:1px solid rgba(255,90,95,.22);padding:6px 11px;border-radius:7px;font-family:'Rubik',sans-serif;font-size:10.5px;font-weight:600;cursor:pointer;transition:.2s;-webkit-tap-highlight-color:transparent;min-height:32px;flex-shrink:0}
+.prof-override-row .por-clear-btn:hover{background:rgba(255,90,95,.08);border-color:var(--red)}
+
+/* #10 — Gym Equipment Mismatch banner */
+.gym-mismatch-banner{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:linear-gradient(135deg,rgba(255,184,90,.08),rgba(255,184,90,.02));border:1px solid rgba(255,184,90,.32);border-radius:12px;margin:0 0 14px;position:relative;animation:fadeUp .4s both}
+.gym-mismatch-banner .gmb-icon{font-size:24px;line-height:1;flex-shrink:0;margin-top:1px}
+.gym-mismatch-banner .gmb-body{flex:1;min-width:0}
+.gym-mismatch-banner .gmb-title{font-size:12.5px;color:var(--tx);font-weight:600;line-height:1.5;margin-bottom:4px}
+.gym-mismatch-banner .gmb-title b{color:var(--org);font-family:'JetBrains Mono',monospace}
+.gym-mismatch-banner .gmb-sample{font-size:11px;color:var(--tx2);font-family:'JetBrains Mono',monospace;line-height:1.5;margin-bottom:6px}
+.gym-mismatch-banner .gmb-sample small{color:var(--tx3);font-family:'Rubik',sans-serif;font-size:10px;margin-right:3px}
+.gym-mismatch-banner .gmb-hint{font-size:10.5px;color:var(--tx3);line-height:1.6}
+.gym-mismatch-banner .gmb-hint b{color:var(--g2);font-weight:700}
+.gym-mismatch-banner .gmb-actions{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.gym-mismatch-banner .gmb-suggest{background:linear-gradient(135deg,var(--g2),var(--g3));color:#000;border:none;padding:7px 12px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:700;cursor:pointer;transition:.2s;-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:34px}
+.gym-mismatch-banner .gmb-suggest:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(212,168,83,.3)}
+.gym-mismatch-banner .gmb-dismiss{background:transparent;color:var(--tx3);border:none;width:26px;height:26px;font-size:16px;cursor:pointer;border-radius:50%;line-height:1;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;padding:0}
+.gym-mismatch-banner .gmb-dismiss:hover{background:rgba(255,255,255,.06);color:var(--tx)}
+
+/* #11 — Weekly Review Deload suggestions (info variant) */
+.wr-suggestion.wr-suggestion-info{background:rgba(90,180,255,.05);border:1px solid rgba(90,180,255,.2)}
+.wr-suggestion.wr-suggestion-info .wrs-body b{color:var(--blue)}
 .summary-prs{margin-bottom:16px;max-height:160px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .summary-pr-item{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g2);background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);padding:6px 10px;border-radius:8px;margin-bottom:5px;text-align:right}
 .summary-close{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border:none;padding:12px 28px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:800;letter-spacing:1.5px;cursor:pointer;text-transform:uppercase;width:100%}

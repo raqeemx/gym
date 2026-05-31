@@ -262,6 +262,9 @@
   <!-- V8.3 (3.10) — Smart day recommendation banner (لو فات >24س بدون جلسة) -->
   <div id="missedDayBanner" class="missed-banner" style="display:none"></div>
 
+  <!-- V9.7 (#10) — Gym Equipment Mismatch banner (لو تمارين البرنامج لا تتوفر في active gym) -->
+  <div id="gymMismatchBanner" class="gym-mismatch-banner" style="display:none"></div>
+
   <!-- كل الأيام السبعة تُولَّد ديناميكياً من PROGRAM_DATA عبر renderProgram() -->
   <!-- V8.3 — التخصيصات (program editor) تُحفظ في KEYS.PROGRAM_OVERRIDES وتُدمج عند التوليد -->
   <div id="programContainer"></div>
@@ -1014,6 +1017,14 @@
         <div id="profProgramList" class="prof-program-list"><div class="chart-loading">جاري تحميل البرامج...</div></div>
       </div>
 
+      <!-- V9.7 (#9) — Overrides Manager: تخصيصات الأيام عبر البرامج -->
+      <div id="profOverridesSection" class="prof-program-section" style="display:none">
+        <div class="prof-program-head">
+          <span>✏️ تخصيصاتك للأيام</span>
+        </div>
+        <div id="profOverridesList" class="prof-overrides-list"></div>
+      </div>
+
       <!-- V8.3 (3.12) — Weight Goal Tracker -->
       <div class="prof-goal-section">
         <div class="prof-goal-title">🎯 هدف الوزن <small>(اختياري)</small></div>
@@ -1376,6 +1387,7 @@
 <script src="js/data.js"></script>
 <script src="js/program-data.js"></script>
 <script src="js/program-templates.js"></script>
+<script src="js/data-helpers.js"></script>
 <script src="js/exercise-media.js"></script>
 <script src="js/program-render.js"></script>
 <script src="js/program-editor.js"></script>

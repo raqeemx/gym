@@ -387,6 +387,10 @@ async function getActiveProgram(){
 async function setActiveProgram(id){
   if(!PROGRAM_TEMPLATES[id]) throw new Error('Unknown program: '+id);
   await db.put('settings', { key:KEYS.ACTIVE_PROGRAM_ID, value:id, at:new Date().toISOString() });
+  // V9.7 (#14) — سجّل بدء البرنامج لو ما كان مسجلاً (يضمن "الأسبوع 1 من 12" يبدأ من اليوم)
+  if(typeof recordProgramStart==='function'){
+    try{await recordProgramStart(id)}catch(e){}
+  }
   // أعِد بناء البرنامج فوراً
   if(typeof renderProgram==='function'){
     await renderProgram();
@@ -402,6 +406,9 @@ async function setActiveProgram(id){
     if(typeof syncPlanBTexts==='function') syncPlanBTexts();
     if(typeof highlightToday==='function') highlightToday();
     if(typeof refreshDashboard==='function') refreshDashboard();
+    // V9.7 (#10) — أعد فحص توافق الجيم مع البرنامج الجديد
+    try{sessionStorage.removeItem('gymMismatchDismissed')}catch(e){}
+    if(typeof updateGymMismatchBanner==='function') setTimeout(updateGymMismatchBanner, 600);
   }
 }
 

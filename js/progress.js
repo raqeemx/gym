@@ -1902,6 +1902,7 @@ async function renderRestTrend(setsOrNull){
 }
 
 // V7.3 — رسم RPE المتوسط لكل جلسة + كشف ارتفاع متراكم (يقترح deload)
+// V9.7 (#12) — يظلّل أيام Deload بلون مختلف (workout.deloadActive)
 async function renderRpeTrend(setsOrNull){
   const Chart=window.Chart;
   const ctx=document.getElementById('chartRpe').getContext('2d');
@@ -1909,6 +1910,11 @@ async function renderRpeTrend(setsOrNull){
   if(_charts.rpe) _charts.rpe.destroy();
 
   const sets=setsOrNull||await db.getAll('sets');
+  // V9.7 (#12) — اقرأ workouts لمعرفة deloadActive لكل جلسة
+  const allWorkouts=await db.getAll('workouts').catch(()=>[]);
+  const wMap={};
+  allWorkouts.forEach(w=>{wMap[w.id]=w});
+
   // اجمع السيتات التي فيها RPE فقط، حسب workoutId
   const byWorkout={};
   sets.forEach(s=>{
@@ -1918,10 +1924,11 @@ async function renderRpeTrend(setsOrNull){
     const t=new Date(s.timestamp).getTime();
     if(t>byWorkout[s.workoutId].time) byWorkout[s.workoutId].time=t;
   });
-  // احسب المتوسط لكل جلسة + رتّب زمنياً
+  // احسب المتوسط لكل جلسة + رتّب زمنياً + علامة deload
   const workouts=Object.entries(byWorkout).map(([wid,info])=>{
     const avg=info.rpes.reduce((a,r)=>a+r,0)/info.rpes.length;
-    return {wid,avg:Math.round(avg*10)/10,time:info.time,count:info.rpes.length};
+    const w=wMap[wid];
+    return {wid,avg:Math.round(avg*10)/10,time:info.time,count:info.rpes.length,deload:!!(w&&w.deloadActive)};
   }).sort((a,b)=>a.time-b.time);
 
   if(hintEl) hintEl.style.display='none';
@@ -1943,24 +1950,80 @@ async function renderRpeTrend(setsOrNull){
   opts.scales.y.beginAtZero=false;
   opts.scales.y.ticks.stepSize=1;
 
+  // V9.7 (#12) — لون النقاط حسب Deload
+  const pointColors=workouts.map(w=>w.deload?'#5AB4FF':'#B08AFF');     // أزرق لـ Deload، بنفسجي للعادي
+  const pointBorders=workouts.map(w=>w.deload?'#2974BB':'#B08AFF');
+  const pointRadii=workouts.map(w=>w.deload?6:4);                       // أكبر للـ Deload لإبرازها
+  const hasAnyDeload=workouts.some(w=>w.deload);
+
   _charts.rpe=new Chart(ctx,{
     type:'line',
     data:{
       labels,
       datasets:[
-        {label:'متوسط RPE',data,borderColor:'#B08AFF',backgroundColor:'rgba(176,138,255,.15)',tension:.3,fill:true,pointBackgroundColor:'#B08AFF',pointRadius:4,pointHoverRadius:6},
+        {
+          label:'متوسط RPE',
+          data,
+          borderColor:'#B08AFF',
+          backgroundColor:'rgba(176,138,255,.15)',
+          tension:.3,
+          fill:true,
+          pointBackgroundColor:pointColors,
+          pointBorderColor:pointBorders,
+          pointRadius:pointRadii,
+          pointHoverRadius:workouts.map(w=>w.deload?8:6),
+          pointStyle:workouts.map(w=>w.deload?'rectRot':'circle')      // ⬥ شكل مختلف لـ Deload
+        },
         // خط مرجعي عند 8.5 (عتبة التنبيه)
         {label:'عتبة الإرهاق (8.5)',data:labels.map(()=>8.5),borderColor:'rgba(255,90,95,.5)',borderDash:[4,4],pointRadius:0,fill:false,borderWidth:1}
       ]
     },
-    options:opts
+    options:{
+      ...opts,
+      plugins:{
+        ...opts.plugins,
+        legend:{
+          ...((opts.plugins&&opts.plugins.legend)||{}),
+          display:true,
+          position:'bottom',
+          labels:{
+            color:'#9CA4B5',font:{size:10},boxWidth:12,padding:8,
+            generateLabels:(c)=>{
+              const base=[
+                {text:'متوسط RPE', fillStyle:'#B08AFF', strokeStyle:'#B08AFF', lineWidth:0},
+                {text:'عتبة 8.5', fillStyle:'rgba(255,90,95,.5)', strokeStyle:'rgba(255,90,95,.5)', lineDash:[4,4], lineWidth:1}
+              ];
+              if(hasAnyDeload) base.push({text:'🛟 أيام Deload', fillStyle:'#5AB4FF', strokeStyle:'#2974BB', lineWidth:0, pointStyle:'rectRot'});
+              return base;
+            }
+          }
+        },
+        tooltip:{
+          ...((opts.plugins&&opts.plugins.tooltip)||{}),
+          callbacks:{
+            ...(((opts.plugins&&opts.plugins.tooltip)||{}).callbacks||{}),
+            afterLabel:(ctx2)=>{
+              if(ctx2.datasetIndex!==0) return '';
+              const w=workouts[ctx2.dataIndex];
+              return w&&w.deload?'🛟 خلال Deload':'';
+            }
+          }
+        }
+      }
+    }
   });
 
-  // كشف الإرهاق المتراكم: ٣ جلسات متتالية بمتوسط > 8.5
+  // كشف الإرهاق المتراكم: ٣ جلسات متتالية بمتوسط > 8.5 (مع استثناء أيام Deload)
+  // V9.7 (#12) — لو آخر ٣ جلسات كانت Deload، الانخفاض متوقع — لا نعرض "تحسّن" مزيّف
   if(workouts.length>=3 && hintEl){
     const last3=workouts.slice(-3);
+    const allDeload=last3.every(w=>w.deload);
     const allHigh=last3.every(w=>w.avg>8.5);
-    if(allHigh){
+    if(allDeload){
+      const avgOfLast3=Math.round((last3.reduce((a,w)=>a+w.avg,0)/3)*10)/10;
+      hintEl.innerHTML=`🛟 <b>أيام Deload</b> — متوسط RPE ${avgOfLast3} (متوقع منخفض). هذا ليس "تحسّن" — الأوزان مخفّضة. الـ RPE الحقيقي بعد العودة لـ bulk mode.`;
+      hintEl.style.display='block';
+    }else if(allHigh){
       const avgOfLast3=Math.round((last3.reduce((a,w)=>a+w.avg,0)/3)*10)/10;
       hintEl.innerHTML=`💡 <b>ارتفاع RPE المتواصل</b> — متوسط آخر ٣ جلسات: <b>${avgOfLast3}</b>. قد تحتاج لـ <b>أسبوع deload</b> (×0.6 على الأوزان) للتعافي وتجنّب الإصابة.`;
       hintEl.style.display='block';

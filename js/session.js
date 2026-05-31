@@ -1113,21 +1113,24 @@ async function updateDeloadHeaderBanner(){
   invalidateDeloadCache();    // بعد الـ auto-end نعيد القراءة من DB
   const banner=document.getElementById('deloadHeaderBanner');
   if(!banner) return;
-  const deloadRec=await db.get('settings',KEYS.MANUAL_DELOAD_ACTIVE);
-  const active=deloadRec && deloadRec.value && deloadRec.value.active;
 
-  if(active){
+  // V9.7 (#11) — مصدر حقيقة موحّد بدل ٣ فحوصات منفصلة
+  const status=(typeof getDeloadStatus==='function')?await getDeloadStatus():null;
+  if(!status){banner.className='deload-header-banner';banner.innerHTML='';return}
+
+  if(status.active){
+    const daysLeftTxt=status.daysLeft?` · ينتهي بعد ${status.daysLeft} يوم`:'';
     banner.className='deload-header-banner show deload-active';
-    banner.innerHTML=`<span class="dhb-text">🛟 وضع <b>Deload</b> نشط — أوزانك المقترحة ×0.6</span>
+    banner.innerHTML=`<span class="dhb-text">🛟 وضع <b>Deload</b> نشط — أوزانك المقترحة ×0.6${daysLeftTxt}</span>
       <button class="dhb-btn" onclick="endManualDeload()">إيقاف</button>`;
     return;
   }
 
-  // فحص الكشف الذكي — اعرض البنر فقط لو urgency 'high'
-  const detection=await detectDeloadNeed();
-  if(detection.needed && detection.urgency==='high'){
+  // اعرض البنر فقط لو التوصية urgency 'high'
+  if(status.recommended && status.recommendationUrgency==='high'){
+    const mainReason=status.reasons[0]?status.reasons[0].text:'تحتاج تعافياً';
     banner.className='deload-header-banner show deload-suggest';
-    banner.innerHTML=`<span class="dhb-text">🛟 <b>يبدو أنك تحتاج deload</b> — ${detection.reason}</span>
+    banner.innerHTML=`<span class="dhb-text">🛟 <b>يبدو أنك تحتاج deload</b> — ${mainReason}</span>
       <button class="dhb-btn" onclick="startManualDeload('smart-detect')">ابدأ Deload</button>`;
   }else{
     banner.className='deload-header-banner';
@@ -1163,11 +1166,22 @@ async function endSession(silent=false){
   const endTime=new Date().toISOString();
   const duration=Math.round((new Date(endTime)-new Date(currentSession.startTime))/1000);
 
+  // V9.7 (#13) — اقرأ البرنامج النشط لحفظه في workout (لـ analytics بـ filter)
+  let activeProgramId=null;
+  let deloadActive=false;
+  try{
+    if(typeof getActiveProgramId==='function') activeProgramId=await getActiveProgramId();
+    // V9.7 (#12) — احفظ deload state ليُستخدم في RPE chart markers
+    if(typeof isDeloadActive==='function') deloadActive=await isDeloadActive();
+  }catch(e){}
+
   // احفظ الجلسة كـ workout كامل
   const workout={
     id:currentSession.id,
     date:currentSession.date,
     dayType:currentSession.dayType,
+    programId:activeProgramId,           // V9.7 (#13)
+    deloadActive:deloadActive,           // V9.7 (#12)
     startTime:currentSession.startTime,
     endTime:endTime,duration:duration,
     totalVolume:currentSession.totalVolume,
@@ -1176,6 +1190,11 @@ async function endSession(silent=false){
     notes:currentSession.notes||''
   };
   await db.put('workouts',workout);
+
+  // V9.7 (#14) — سجّل تاريخ بدء البرنامج لو هذه أول جلسة فيه
+  if(activeProgramId && typeof recordProgramStart==='function'){
+    try{await recordProgramStart(activeProgramId)}catch(e){}
+  }
 
   const finished={...currentSession,duration};
   currentSession=null;

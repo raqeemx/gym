@@ -5,6 +5,95 @@
 
 ---
 
+## [V9.7 — Multi-program tracking + Deload unification + Equipment guard] — 2026-05-31
+
+حلّ ٦ مشاكل **🟠 متوسطة-عالية** من تقرير Data Audit (#9 → #14). معظمها تتمحور حول دعم **تبديل البرامج** بشكل صحي.
+
+### 🏗️ Foundation — `js/data-helpers.js` (ملف جديد ~٢٠٠ سطر)
+ملف مركزي يجمع **مصادر الحقيقة الموحّدة**:
+- `getProgramStartDate(programId?)` — تاريخ بدء البرنامج النشط (#14)
+- `recordProgramStart(programId)` — تسجيل البدء عند `setActiveProgram`
+- `getProgramWeekProgress()` — حساب "الأسبوع X من ١٢"
+- `getOverridesFor(programId)` — قراءة overrides بـ namespace (#9)
+- `setOverrideFor(programId, dayId, obj)` — حفظ بـ namespace
+- `clearOverridesFor(programId)` — مسح كل overrides لبرنامج
+- `getOverridesCounts()` — `{programId: count}` للعرض في Profile
+- `getDeloadStatus()` — مصدر حقيقة واحد للـ Deload (#11)
+- `isWorkoutDuringDeload(workout, history)` — للـ chart markers (#12)
+
+كل الـ helpers تدعم **backward-compat**:
+- PROGRAM_OVERRIDES بشكلها القديم (`{dayId:...}`) تُترجم تلقائياً لـ `upper-priority` namespace
+- `firstWorkoutDate` يُستخدم كـ fallback لـ `programStartDates['upper-priority']`
+
+### ✨ #13 — `workout.programId` عند كل save
+- `endSession` يحفظ الآن `programId` (البرنامج النشط لحظة التسجيل)
+- `deloadActive` (true/false) — للـ chart markers في #12
+- workouts القديمة بدون programId تُعتبر تابعة لـ `upper-priority` (legacy)
+
+### ✨ #14 — `programStartDates` لكل برنامج منفصلاً
+- `KEYS.PROGRAM_START_DATES` جديد: `{programId: ISOString}`
+- `setActiveProgram(id)` يستدعي `recordProgramStart(id)` تلقائياً (لو ما مُسجّل)
+- Dashboard «الأسبوع X من ١٢» يستخدم تاريخ بدء البرنامج النشط بدل `firstWorkoutDate` المُوحّد
+- النتيجة: لو بدّلت لـ Full Body في مارس بعد ٨ أسابيع في Upper Priority → ترى «الأسبوع ١ من ١٢» لـ Full Body (دقيق)، بدل «الأسبوع ١٠ من ١٢» (خاطئ)
+
+### ✨ #9 — PROGRAM_OVERRIDES بـ namespace
+- البنية الجديدة: `{programId: {dayId: dayObject}}`
+- `program-editor.js` (`saveEditorChanges`, `resetEditorDay`, `openProgramEditor`) كلها تستخدم helpers المنفصلة
+- **Profile modal — قسم جديد «✏️ تخصيصاتك للأيام»** يعرض:
+  - لكل برنامج فيه overrides: اسم + عدد + علامة «نشط» لو هو الـ active
+  - زر «🗑 مسح الكل» لتنظيف overrides برنامج محدد
+- لا تتراكم زبالة بعد اليوم: overrides Full Body لا تتداخل مع Upper Priority
+
+### ✨ #11 — Deload state موحّد (مصدر واحد)
+- 3 mismatches قديمة (`MANUAL_DELOAD_ACTIVE` + `detectDeloadNeed()` + `weekly-review.suggestDeload`) → الآن كلها تقرأ من `getDeloadStatus()`
+- `getDeloadStatus()` يُرجع: `{active, activeSince, activeUntil, daysLeft, source, recommended, recommendationUrgency, reasons:[...]}`
+- `updateDeloadHeaderBanner` (في session.js) → يستخدم الـ status مع `daysLeft` صريح
+- `weekly-review.js` → `_renderDeloadSuggestion(status)` يفرّق بين «نشط الآن» / «اقتراح» / «استمر»
+- المستخدم لا يرى رسائل متضاربة بعد اليوم
+
+### ✨ #12 — RPE chart مع Deload markers
+- نقاط أيام Deload في الـ chart الآن:
+  - **لون مختلف** (أزرق `#5AB4FF` بدل بنفسجي `#B08AFF`)
+  - **شكل مختلف** (⬥ rectRot بدل ●)
+  - **حجم أكبر** (6px بدل 4px)
+- **Legend** يظهر «🛟 أيام Deload» تلقائياً لو فيه أي نقطة Deload
+- **Tooltip** يضيف سطر «🛟 خلال Deload» للنقاط المعنية
+- **Hint منطقي**: لو آخر ٣ جلسات كلها Deload، الرسالة تقول «هذا ليس تحسّن — الأوزان مخفّضة. الـ RPE الحقيقي بعد العودة لـ bulk mode» (بدل تنبيه deload كاذب)
+
+### ✨ #10 — Gym Equipment Mismatch Banner
+- `getProgramEquipmentMismatch()` في gyms.js يفحص كل تمارين البرنامج النشط ضد `gym.equipment`
+- Banner برتقالي أعلى تبويب التمارين: «⚠️ ١٢ تمرين من ٢٥ (٤٨٪) غير متاحة في 🏠 جيم البيت — Chest Press · Lat Machine...»
+- في وضع `bodyweightOnly`: زر CTA «جرّب Full Body بدلاً» يبدّل البرنامج بضغطة
+- زر dismiss يحفظ في sessionStorage (يظهر مرة واحدة لكل جلسة + يعود بعد تبديل الجيم/البرنامج)
+- ينطلق تلقائياً بعد `setActiveGymId` و `setActiveProgram`
+
+### 📁 ملفات جديدة (١)
+- `js/data-helpers.js` (~٢٠٠ سطر) — مصادر حقيقة موحّدة
+
+### ✏️ ملفات معدّلة (٩)
+- `js/data.js` — `KEYS.PROGRAM_START_DATES`
+- `js/session.js` — `workout.programId` + `workout.deloadActive` + `recordProgramStart` + `updateDeloadHeaderBanner` يستخدم getDeloadStatus
+- `js/program-templates.js` — `setActiveProgram` يستدعي `recordProgramStart` + reset gym mismatch
+- `js/program-render.js` — يستخدم `getOverridesFor(activeProgramId)`
+- `js/program-editor.js` — `save/reset/open` يستخدمون `setOverrideFor/clearOverrideFor/getOverridesFor`
+- `js/dashboard.js` — `_weekProgress` async يقرأ `getProgramWeekProgress`
+- `js/weekly-review.js` — `_renderDeloadSuggestion(status)` بـ ٣ حالات
+- `js/progress.js` — RPE chart مع Deload markers (color/shape/size) + legend ديناميكي + tooltip + hint محسّن
+- `js/gyms.js` — `getProgramEquipmentMismatch` + reset banner في `setActiveGymId`
+- `js/app.js` — `refreshOverridesList` + `clearProgramOverrides` + `updateGymMismatchBanner` + `dismissGymMismatchBanner` + استدعاء في init
+- `index.html` — قسم Overrides Manager في Profile + `gymMismatchBanner` في tab التمارين + script tag
+- `css/styles.css` — ~٦٠ سطر CSS جديد (prof-override-row + gym-mismatch-banner + wr-suggestion-info)
+- `service-worker.js` — تضمين `data-helpers.js`
+
+### 🛡️ توافق وهجرة
+- **لا migration formal** — كل التغييرات backward-compatible:
+  - workouts القديمة بدون `programId` تُعتبر تابعة لـ `upper-priority`
+  - PROGRAM_OVERRIDES بالشكل القديم تعمل تلقائياً (detected by shape)
+  - `firstWorkoutDate` يُستخدم كـ fallback لـ `programStartDates['upper-priority']`
+- Service Worker: `bulkmode-v9-7-0`
+
+---
+
 ## [V9.6 — استثمار البيانات المخفية: subs/meal-slot/PR-types/fiber/photo-weight] — 2026-05-31
 
 حلّ ٥ مشاكل **🟡 متوسطة الأولوية** من تقرير Data Audit (#4 → #8). كلها بيانات كانت مخزّنة لكن غير ظاهرة.

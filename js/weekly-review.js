@@ -106,15 +106,8 @@
       topEx:_topExercise(sets,thisStart,now),
       daily:_dailyAvg(dailyLogs,thisStart,now),
       streak:(typeof computeStreak==='function')?computeStreak(workouts):{current:0,best:0},
-      // اقتراح: لو متوسط RPE > 8.5 لـ ٣ جلسات الأخيرة → deload
-      suggestDeload:(()=>{
-        const last3W=workouts.slice(-3);
-        if(last3W.length<3) return false;
-        const last3Sets=sets.filter(s=>last3W.some(w=>w.id===s.workoutId) && s.rpe!=null);
-        if(!last3Sets.length) return false;
-        const avg=last3Sets.reduce((a,s)=>a+s.rpe,0)/last3Sets.length;
-        return avg>8.5;
-      })()
+      // V9.7 (#11) — اقتراح Deload موحّد من getDeloadStatus بدل المنطق المنفصل
+      deloadStatus:(typeof getDeloadStatus==='function')?await getDeloadStatus():null
     };
   }
 
@@ -194,22 +187,41 @@
         </div>
       </div>
 
-      ${r.suggestDeload?`
-      <div class="wr-suggestion wr-suggestion-warn">
+      ${_renderDeloadSuggestion(r.deloadStatus)}
+    `;
+  }
+
+  // V9.7 (#11) — يعرض اقتراح Deload موحّد بناءً على getDeloadStatus
+  function _renderDeloadSuggestion(status){
+    if(!status){return ''}
+    if(status.active){
+      const daysLeftTxt=status.daysLeft?`متبقي ${status.daysLeft} يوم.`:'';
+      return `<div class="wr-suggestion wr-suggestion-info">
+        <div class="wrs-icon">🛟</div>
+        <div class="wrs-body">
+          <b>Deload نشط حالياً</b>
+          <div>أوزانك مضروبة ×0.6 للتعافي. ${daysLeftTxt} استمر وتجنّب الإرهاق.</div>
+        </div>
+      </div>`;
+    }
+    if(status.recommended){
+      const reasonsList=(status.reasons||[]).slice(0,2).map(r=>r.text).join(' · ');
+      const urgencyCls=status.recommendationUrgency==='high'?'wr-suggestion-warn':'wr-suggestion-info';
+      return `<div class="wr-suggestion ${urgencyCls}">
         <div class="wrs-icon">🛟</div>
         <div class="wrs-body">
           <b>اقتراح للأسبوع القادم: Deload</b>
-          <div>متوسط RPE تجاوز ٨.٥ في آخر جلسات. اضرب الأوزان × ٠.٦ هذا الأسبوع للتعافي.</div>
+          <div>${reasonsList||'إشارات للحاجة لتعافٍ نشط.'} اضرب الأوزان ×0.6 هذا الأسبوع.</div>
         </div>
-      </div>`:`
-      <div class="wr-suggestion wr-suggestion-ok">
-        <div class="wrs-icon">✅</div>
-        <div class="wrs-body">
-          <b>استمر بنفس الإيقاع</b>
-          <div>الأرقام صحية. ركّز على التغذية والنوم في الأسبوع القادم.</div>
-        </div>
-      </div>`}
-    `;
+      </div>`;
+    }
+    return `<div class="wr-suggestion wr-suggestion-ok">
+      <div class="wrs-icon">✅</div>
+      <div class="wrs-body">
+        <b>استمر بنفس الإيقاع</b>
+        <div>الأرقام صحية. ركّز على التغذية والنوم في الأسبوع القادم.</div>
+      </div>
+    </div>`;
   }
 
   async function openWeeklyReview(){

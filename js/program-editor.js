@@ -22,9 +22,15 @@ async function openProgramEditor(dayId){
   let day=defaultDay;
   let isCustom=false;
   try{
-    const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
-    const ovs=(rec&&rec.value)||{};
-    if(ovs[dayId]){day=ovs[dayId];isCustom=true}
+    // V9.7 (#9) — اقرأ من namespace البرنامج النشط
+    if(typeof getOverridesFor==='function'){
+      const ovs=await getOverridesFor();
+      if(ovs[dayId]){day=ovs[dayId];isCustom=true}
+    }else{
+      const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
+      const ovs=(rec&&rec.value)||{};
+      if(ovs[dayId]){day=ovs[dayId];isCustom=true}
+    }
   }catch(e){}
   // Deep clone for editing — لا نعدّل المرجع الأصلي
   _editorState={
@@ -211,10 +217,17 @@ async function saveEditorChanges(){
   if(!_editorState) return;
   const day=_editorState.day;
   try{
-    const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
-    const ovs=(rec&&rec.value)||{};
-    ovs[_editorState.dayId]=day;
-    await db.put('settings',{key:KEYS.PROGRAM_OVERRIDES,value:ovs});
+    // V9.7 (#9) — احفظ بـ namespace للبرنامج النشط
+    const activeProgramId=(typeof getActiveProgramId==='function')?await getActiveProgramId():'upper-priority';
+    if(typeof setOverrideFor==='function'){
+      await setOverrideFor(activeProgramId, _editorState.dayId, day);
+    }else{
+      // fallback للنسخة القديمة
+      const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
+      const ovs=(rec&&rec.value)||{};
+      ovs[_editorState.dayId]=day;
+      await db.put('settings',{key:KEYS.PROGRAM_OVERRIDES,value:ovs});
+    }
     closeProgramEditor();
     showToast('✓ تم حفظ التخصيصات','var(--grn)');
     await rerenderProgramAfterEdit();
@@ -228,10 +241,16 @@ async function resetEditorDay(){
   if(!_editorState) return;
   if(!await customConfirm('استعادة هذا اليوم لإعداداته الافتراضية؟<br><br><b>سيتم فقدان كل التعديلات</b>.',{title:'إعادة للافتراضي',okText:'استعد',danger:true,icon:'↺'})) return;
   try{
-    const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
-    const ovs=(rec&&rec.value)||{};
-    delete ovs[_editorState.dayId];
-    await db.put('settings',{key:KEYS.PROGRAM_OVERRIDES,value:ovs});
+    // V9.7 (#9) — احذف من namespace البرنامج النشط
+    const activeProgramId=(typeof getActiveProgramId==='function')?await getActiveProgramId():'upper-priority';
+    if(typeof clearOverrideFor==='function'){
+      await clearOverrideFor(activeProgramId, _editorState.dayId);
+    }else{
+      const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
+      const ovs=(rec&&rec.value)||{};
+      delete ovs[_editorState.dayId];
+      await db.put('settings',{key:KEYS.PROGRAM_OVERRIDES,value:ovs});
+    }
     closeProgramEditor();
     showToast('↺ تم استعادة الإعدادات الافتراضية','var(--blue)');
     await rerenderProgramAfterEdit();

@@ -319,7 +319,9 @@ const KEYS={
   GYM_HINT_SHOWN:'app:gym_hint_shown',       // first-time switcher hint flag
   IOS_INSTALL_HINT_SHOWN:'app:ios_install_hint_shown',
   // V9.1 (A.4) — Multi-program templates
-  ACTIVE_PROGRAM_ID:'app:active_program_id'  // string id matching PROGRAM_TEMPLATES key
+  ACTIVE_PROGRAM_ID:'app:active_program_id',  // string id matching PROGRAM_TEMPLATES key
+  // V9.7 (#14) — تاريخ بدء كل برنامج: {programId: ISOString}
+  PROGRAM_START_DATES:'app:program_start_dates'
 };
 
 // V7 (#29) — خريطة ترحيل المفاتيح القديمة للنسخة الجديدة

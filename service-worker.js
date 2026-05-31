@@ -32,6 +32,7 @@ const ASSETS = [
   './js/weekly-review.js',
   './js/exercise-media.js',
   './js/program-templates.js',
+  './js/data-helpers.js',
   './js/foods-database.js',
   './js/nutrition.js',
   './js/smart-next-workout.js',

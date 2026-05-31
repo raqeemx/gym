@@ -54,10 +54,14 @@ async function renderProgram(){
     if(typeof PROGRAM_DATA==='undefined'){console.warn('PROGRAM_DATA not loaded');return}
     baseProgram = PROGRAM_DATA;
   }
-  // V8.3 (3.3) — ادمج التخصيصات لكل يوم (لو حُفظ override يستبدل اليوم الافتراضي بالكامل)
+  // V8.3 (3.3) + V9.7 (#9) — ادمج التخصيصات للبرنامج النشط (namespaced)
   let overrides={};
   try{
-    if(typeof db!=='undefined' && db.get){
+    // V9.7 (#9): getOverridesFor يقرأ تلقائياً حسب البرنامج النشط مع backward-compat
+    if(typeof getOverridesFor==='function'){
+      overrides=await getOverridesFor();
+    }else if(typeof db!=='undefined' && db.get){
+      // fallback لو data-helpers.js لم يُحمّل
       const rec=await db.get('settings',KEYS.PROGRAM_OVERRIDES);
       overrides=(rec&&rec.value)||{};
     }
