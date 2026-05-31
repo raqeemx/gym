@@ -2799,3 +2799,220 @@ body{
     height: calc(var(--real-vh, 1vh) * 100);
   }
 }
+
+/* ============================================================
+ * V9.9 — UI/UX OVERHAUL (Sprint 1)
+ * ============================================================
+ * 1. Focus Mode: إخفاء الـ chrome أثناء الجلسة النشطة
+ * 2. Weight Suggestion Chip بارز فوق track-input
+ * 3. Hero collapse-by-default بعد 3+ جلسات
+ * 4. Daily Log sub-tabs (3 أقسام)
+ * 5. Guide tab — V4 content خلف collapsible
+ * 6. Week grid status colors (done/today/missed/upcoming)
+ * 7. Day filter strip أفقي sticky
+ * ============================================================ */
+
+/* ============ 1. FOCUS MODE ============ */
+/* عند بدء جلسة، أخفِ كل اليوم غير النشط + كل بطاقات الشرح/التحذيرات
+   ابقِ فقط: nav + sess-bar + اليوم النشط + program container body */
+body.sess-active.focus-mode #t1 > .card{display:none !important}
+body.sess-active.focus-mode #t1 #missedDayBanner,
+body.sess-active.focus-mode #t1 #gymMismatchBanner{display:none !important}
+body.sess-active.focus-mode #t0,
+body.sess-active.focus-mode #t2,
+body.sess-active.focus-mode #t3,
+body.sess-active.focus-mode #t4,
+body.sess-active.focus-mode #t5,
+body.sess-active.focus-mode #t6,
+body.sess-active.focus-mode #t7,
+body.sess-active.focus-mode #t8{
+  /* لا نلمس tabs الأخرى - المستخدم يقدر يتنقل، لكن في t1 نفصل */
+}
+/* في t1: أخفِ كل الأيام غير النشطة */
+body.sess-active.focus-mode #t1 .dy:not(.last-session-day):not(.today-day):not(.session-active-day){
+  display:none !important
+}
+/* أخفِ شريط الأيام الأفقي أيضاً أثناء Focus */
+body.sess-active.focus-mode .day-strip{display:none !important}
+/* footer + back-to-top + week-float + plate-calc-fab أثناء Focus */
+body.sess-active.focus-mode .footer,
+body.sess-active.focus-mode .btt,
+body.sess-active.focus-mode .week-float{display:none !important}
+
+/* Focus toggle button - يظهر داخل sess-bar */
+.sess-bar .sb-focus{background:rgba(212,168,83,.12);color:var(--g2);border:1px solid rgba(212,168,83,.3);border-radius:7px;width:30px;height:30px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;transition:.2s;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.sess-bar .sb-focus:hover{background:rgba(212,168,83,.2);color:#fff}
+.sess-bar .sb-focus.active{background:linear-gradient(135deg,var(--g1),var(--g2));color:#000;box-shadow:0 0 12px rgba(212,168,83,.4)}
+
+/* Focus exit hint - شريط صغير يظهر فوق نسخة Focus */
+.focus-exit-hint{display:none}
+body.sess-active.focus-mode .focus-exit-hint{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin:0 0 12px;padding:9px 14px;
+  background:linear-gradient(135deg,rgba(212,168,83,.1),rgba(212,168,83,.04));
+  border:1px solid rgba(212,168,83,.25);border-radius:10px;
+  font-size:11.5px;color:var(--g2);font-family:'JetBrains Mono',monospace
+}
+.focus-exit-hint button{
+  background:rgba(212,168,83,.12);color:var(--g2);
+  border:1px solid rgba(212,168,83,.3);border-radius:6px;
+  padding:4px 10px;font-size:10.5px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:700;letter-spacing:1px
+}
+
+/* ============ 2. WEIGHT SUGGESTION CHIP ============ */
+/* chip ذهبي كبير بارز فوق track-input يعرض الوزن المقترح */
+.weight-chip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:8px 0 6px;padding:10px 14px;
+  background:linear-gradient(135deg,rgba(212,168,83,.14),rgba(212,168,83,.06));
+  border:1.5px solid rgba(212,168,83,.4);border-radius:12px;
+  box-shadow:0 4px 14px rgba(212,168,83,.12);
+  font-family:'JetBrains Mono',monospace
+}
+.weight-chip .wc-icon{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(145deg,var(--g1),var(--g3));
+  color:#000;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;flex-shrink:0
+}
+.weight-chip .wc-body{flex:1;min-width:0}
+.weight-chip .wc-label{font-size:9.5px;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;font-family:'Outfit',sans-serif;font-weight:700}
+.weight-chip .wc-val{font-size:18px;color:#fff;font-weight:800;line-height:1.2;margin-top:1px}
+.weight-chip .wc-val b{color:var(--g2);font-size:22px}
+.weight-chip .wc-val small{color:var(--tx3);font-size:11px;margin-right:4px}
+.weight-chip .wc-reps{font-size:10.5px;color:var(--tx2);margin-top:2px}
+.weight-chip .wc-reps b{color:var(--g2)}
+.weight-chip .wc-apply{
+  background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;
+  border:none;padding:9px 14px;border-radius:8px;
+  font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;
+  cursor:pointer;flex-shrink:0;transition:.2s;text-transform:uppercase
+}
+.weight-chip .wc-apply:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(212,168,83,.4)}
+.weight-chip.deload-mode{background:linear-gradient(135deg,rgba(90,180,255,.12),rgba(90,180,255,.04));border-color:rgba(90,180,255,.35)}
+.weight-chip.deload-mode .wc-icon{background:linear-gradient(145deg,var(--blue),#7BC8FF)}
+.weight-chip.deload-mode .wc-val b{color:var(--blue)}
+.weight-chip.deload-mode .wc-apply{background:linear-gradient(135deg,var(--blue),#7BC8FF)}
+.weight-chip.first-time{background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border-color:rgba(255,255,255,.08)}
+.weight-chip.first-time .wc-icon{background:linear-gradient(145deg,#444,#222);color:var(--tx2)}
+.weight-chip.first-time .wc-val b{color:var(--tx2)}
+.weight-chip.first-time .wc-apply{display:none}
+
+@media (max-width:600px){
+  .weight-chip{padding:9px 12px;gap:10px}
+  .weight-chip .wc-icon{width:28px;height:28px;font-size:14px}
+  .weight-chip .wc-val{font-size:16px}
+  .weight-chip .wc-val b{font-size:20px}
+  .weight-chip .wc-apply{padding:8px 11px;font-size:10px}
+}
+
+/* ============ 3. HERO COLLAPSE ============ */
+/* الهيدر الكبير في Dashboard يصبح compact بعد 3+ جلسات */
+.dash-hero.compact-mode{
+  padding:10px 14px !important;min-height:auto !important
+}
+.dash-hero.compact-mode .dh-greeting,
+.dash-hero.compact-mode .dh-sub,
+.dash-hero.compact-mode .dh-reco,
+.dash-hero.compact-mode .dh-time,
+.dash-hero.compact-mode .dh-deload{display:none !important}
+.dash-hero.compact-mode .dh-mini{display:flex !important}
+.dash-hero .dh-mini{display:none;align-items:center;gap:10px;font-family:'Outfit',sans-serif;font-size:12.5px;color:#fff;font-weight:700}
+.dash-hero .dh-mini b{color:var(--g2)}
+.dash-hero .dh-mini .dh-mini-dot{color:var(--tx3)}
+.dash-hero .dh-mini .dh-mini-badge{
+  margin-right:auto;background:rgba(212,168,83,.12);color:var(--g2);
+  border:1px solid rgba(212,168,83,.25);border-radius:14px;
+  padding:3px 10px;font-size:10px;letter-spacing:.5px
+}
+.dash-hero-expand-btn{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:var(--tx2);border-radius:7px;width:28px;height:28px;
+  font-size:13px;font-weight:700;cursor:pointer;transition:.2s;
+  display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent
+}
+.dash-hero-expand-btn:hover{background:rgba(212,168,83,.1);color:var(--g2)}
+
+/* ============ 4. DAILY LOG SUB-TABS ============ */
+.dl-subtabs{
+  display:flex;gap:6px;margin:0 0 14px;padding:5px;
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);
+  border-radius:11px;overflow-x:auto;-webkit-overflow-scrolling:touch
+}
+.dl-subtab{
+  flex:1;min-width:0;background:transparent;border:none;
+  color:var(--tx2);font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  padding:9px 10px;border-radius:8px;cursor:pointer;transition:.25s;
+  letter-spacing:.5px;white-space:nowrap;-webkit-tap-highlight-color:transparent
+}
+.dl-subtab:hover{color:#fff;background:rgba(255,255,255,.03)}
+.dl-subtab.a{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;box-shadow:0 2px 10px rgba(212,168,83,.2)}
+.dl-subpane{display:none}
+.dl-subpane.a{display:block;animation:fadeUp .35s cubic-bezier(.16,1,.3,1)}
+
+/* ============ 5. GUIDE COLLAPSIBLE V4 CONTENT ============ */
+.guide-v4-collapsible{margin-top:16px}
+.guide-v4-collapsible summary{
+  list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;
+  padding:14px 16px;background:linear-gradient(135deg,rgba(212,168,83,.06),rgba(212,168,83,.02));
+  border:1px solid rgba(212,168,83,.15);border-radius:12px;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:12.5px;color:var(--g2);
+  letter-spacing:.5px;transition:.25s
+}
+.guide-v4-collapsible summary::-webkit-details-marker{display:none}
+.guide-v4-collapsible summary:hover{border-color:rgba(212,168,83,.3);background:linear-gradient(135deg,rgba(212,168,83,.1),rgba(212,168,83,.04))}
+.guide-v4-collapsible summary::before{content:'▶';color:var(--g2);font-size:9px;transition:.3s}
+.guide-v4-collapsible[open] summary::before{transform:rotate(90deg)}
+.guide-v4-collapsible summary small{margin-right:auto;color:var(--tx3);font-size:10.5px;font-weight:500;letter-spacing:0}
+.guide-v4-body{margin-top:14px;animation:fadeUp .35s cubic-bezier(.16,1,.3,1)}
+
+/* ============ 6. WEEK GRID STATUS ============ */
+/* status icons in dashboard week split card */
+.wc[data-week-status]{position:relative}
+.wc[data-week-status="done"]{background:linear-gradient(145deg,rgba(90,230,138,.1),rgba(90,230,138,.02));border-color:rgba(90,230,138,.25)}
+.wc[data-week-status="done"]::after{content:'✓';position:absolute;top:-7px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--grn);color:#000;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(90,230,138,.4)}
+.wc[data-week-status="missed"]{background:linear-gradient(145deg,rgba(255,90,95,.08),rgba(255,90,95,.02));border-color:rgba(255,90,95,.25);opacity:.85}
+.wc[data-week-status="missed"]::after{content:'⚠';position:absolute;top:-7px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(255,90,95,.4)}
+.wc[data-week-status="upcoming"]{opacity:.65}
+.wc[data-week-status="upcoming"]::after{content:'';position:absolute;top:-6px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--tx3);opacity:.5}
+.wc[data-week-status="today"]{transform:scale(1.08);box-shadow:0 0 0 2px var(--g1),0 8px 22px rgba(212,168,83,.25);background:linear-gradient(145deg,rgba(212,168,83,.18),rgba(212,168,83,.04));border-color:var(--g1);z-index:2}
+.wc[data-week-status="today"]::after{content:'⭐';position:absolute;top:-9px;right:-5px;font-size:14px;animation:pulse 1.6s infinite}
+.wc[data-week-status]{cursor:pointer;transition:transform .2s}
+.wc[data-week-status]:hover{transform:scale(1.04)}
+.wc[data-week-status="today"]:hover{transform:scale(1.12)}
+
+/* ============ 7. DAY FILTER STRIP ============ */
+.day-strip{
+  position:sticky;top:50px;z-index:55;
+  display:flex;gap:5px;margin:0 -22px 12px;padding:8px 22px;
+  background:linear-gradient(180deg,rgba(5,6,8,.95),rgba(5,6,8,.88));
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity
+}
+body.sess-active .day-strip{top:100px}
+body:has(#deloadHeaderBanner.show) .day-strip{top:142px}
+.day-strip::-webkit-scrollbar{display:none}
+.ds-chip{
+  flex-shrink:0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  color:var(--tx2);border-radius:10px;padding:7px 12px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.5px;transition:.2s;scroll-snap-align:start;
+  -webkit-tap-highlight-color:transparent;min-width:62px;text-align:center
+}
+.ds-chip:hover{background:rgba(212,168,83,.06);color:var(--g2);border-color:rgba(212,168,83,.15)}
+.ds-chip.a{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;border-color:transparent;box-shadow:0 4px 14px rgba(212,168,83,.25)}
+.ds-chip.today-chip::before{content:'⭐';font-size:10px;margin-left:3px}
+.ds-chip.last-session-chip::before{content:'✓';font-size:11px;margin-left:3px;color:var(--blue)}
+.ds-chip.last-session-chip.a::before{color:#000}
+.ds-chip.rest-chip{opacity:.7}
+.ds-chip-day{font-size:10px;color:var(--tx3);display:block;font-weight:500;margin-bottom:1px;letter-spacing:0}
+.ds-chip.a .ds-chip-day{color:rgba(0,0,0,.6)}
+.ds-chip-type{font-size:11.5px}
+
+@media (max-width:600px){
+  .day-strip{margin:0 -16px 10px;padding:7px 16px;gap:4px}
+  .ds-chip{padding:6px 9px;font-size:10.5px;min-width:54px}
+  .ds-chip-type{font-size:10.5px}
+}

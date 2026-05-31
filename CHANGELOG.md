@@ -5,6 +5,59 @@
 
 ---
 
+## [V9.9 — UI/UX Overhaul Sprint 1: Focus Mode + Weight Chip + Day Strip] — 2026-05-31
+
+تنفيذ ٧ أولويات من تقرير تحليل UI/UX. الهدف: تقليل التشتيت أثناء التمرين + جعل البيانات الحرجة بارزة + تكثيف الشاشات المزدحمة.
+
+### ✨ #1 — Focus Mode (إخفاء chrome أثناء الجلسة)
+- `body.focus-mode` يُخفي بطاقات الشرح، اليوم غير النشط، footer، week-float، btt
+- زر تبديل `◎/◉` في `sess-bar` (بجانب زر إنهاء)
+- يُفعّل تلقائياً للمستخدمين ذوي ٣+ جلسات (تفضيل قابل للتعديل)
+- شريط `focus-exit-hint` ذهبي يذكّر بحالة Focus + زر "خروج" سريع
+- يُعلَّم اليوم النشط بـ `.session-active-day` كل ١.٥ ث ليبقى بارزاً
+
+### ✨ #2 — Weight Suggestion Chip (chip ذهبي بارز فوق track-input)
+- chip كبير (`32px icon` + `22px وزن`) قبل كل track-input في t1
+- يعرض: الوزن المقترح/آخر وزن + الهدف بالتكرار + زر "تطبيق" فوري
+- حالات بصرية: `📈 زيادة`، `⏸ استمرار`، `🛟 Deload` (أزرق)، `⚠ تخفيف`، `first-time` (رمادي)
+- زر "تطبيق" يحقن القيمة + يقفز إلى reps-input
+
+### ✨ #3 — Hero Compact (طي تلقائي بعد ٣ جلسات)
+- Hero الكامل يصير سطر واحد: `💪 UPPER A · ٢٢ سيت [الخميس]` + زر `+` للتوسعة
+- يبقى كامل للمستخدمين الجدد (`< 3 workouts`) أو على شاشة الترحيب
+
+### ✨ #4 — Daily Log Subtabs (٣ أقسام)
+- `📋 حالة اليوم`: ماء/نوم/بروتين/مكملات/الوجبات الست
+- `🍽️ وجبات اليوم`: foodLogPanel الفعلي (food search + entries)
+- `📊 الإحصائيات`: dlStats + آخر ١٤ يوم
+- النموذج الأصلي + saveDailyLog يعملون كما هم — فقط أُعيد توزيع DOM
+
+### ✨ #5 — Guide V4 Collapsible
+- محتوى V4 الكامل (بدائل/جداول/قياسات/توقيت/مكملات/قياسات شهرية/الـ ١٢ أسبوع) صار خلف `<details>`
+- شاشة tab 5 الأولى = ٤ Hub Cards + ٤ هدف clickable بدون scrolling
+- Summary مع `▶` rotation + شرح فرعي
+
+### ✨ #6 — Week Grid Status (تفاعلي + ملوّن)
+- كل خلية في `wg` تحصل `data-week-status`: `done` (✓ أخضر)، `today` (⭐ ذهبي)، `missed` (⚠ أحمر)، `upcoming` (نقطة رمادية)، `rest` (يبقى cr)
+- النقر على خلية → ينقل لـ t1 + يفتح اليوم المطابق + scroll smooth
+
+### ✨ #7 — Day Strip (شريط أيام أفقي sticky)
+- `.day-strip` فوق `#programContainer` في t1، sticky تحت nav
+- chips أفقية: `[أحد U.A] [إثن BACK] [⭐ثلا A.A] [أرب 🧘] ...`
+- النقر → يطوي بقية الأيام + يفتح المطلوب + scroll
+- اليوم النشط: `⭐` ذهبي (today-chip) أو `✓` أزرق (last-session-chip)
+- يُعاد بناؤه عبر MutationObserver عند تغيّر `programContainer`
+
+### 🛠 ملفات جديدة
+- `js/ui-v99.js` (~520 سطر) — كل التحسينات في mod واحد، expose للـ window
+- إضافات CSS (~280 سطر) إلى `styles.css` في قسم V9.9
+
+### 📦 Bundle
+- `index.html` — أُدخل ui-v99.js في نهاية scripts
+- `service-worker.js` — أضف ui-v99.js للـ ASSETS
+
+---
+
 ## [V9.8 — Round 4: تفاصيل PRs + RPE chips + إنجاز قادم + شهري + decimals] — 2026-05-31
 
 حلّ آخر ٨ مشاكل **🟢 منخفضة الأولوية** من تقرير Data Audit (#15 → #22). كلها quick wins ذات تأثير تحفيزي/تنظيمي.
