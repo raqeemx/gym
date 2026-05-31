@@ -5,6 +5,85 @@
 
 ---
 
+## [V9.14 — Homepage Redesign: Hero + Today's Workout Card + Program Summary] — 2026-05-31
+
+إعادة هيكلة الصفحة الرئيسية لتجيب على ٣ أسئلة فورية:
+**ما هذا البرنامج؟ · ماذا سأستفيد؟ · ما أول زر أضغطه الآن؟**
+
+### ✨ 1. Hero Section (تفسيري ومباشر)
+- Title: **"برنامج تضخيم ١٢ أسبوع — اتبع تمرين اليوم فقط"**
+- Description: شرح موجز للبرنامج مع تأكيد على Plan B
+- ٣ أزرار:
+  - 💪 **ابدأ تمرين اليوم** (primary، ذهبي)
+  - 📅 **شاهد جدول الأسبوع** (secondary، يفتح التقويم)
+  - 🎯 **أول مرة في الجيم؟** (tertiary، dashed border)
+- **collapse-by-default للمستخدمين النشطين** (٥+ جلسات) عبر `<details>` — توفير المساحة بعد فهم البرنامج
+- Visual: gradient ذهبي خفيف + radial highlight ذهبي
+
+### ✨ 2. Today's Workout Card (أهم عنصر في الصفحة)
+- ribbon: **⭐ تمرين اليوم**
+- **معلومات Grid:**
+  - اليوم: الأحد
+  - الجلسة: UPPER A
+  - الهدف: صدر · ظهر · أكتاف (مُستخرَج من `DAY_TARGETS` map)
+- **Stats Grid (٣ بطاقات):**
+  - ⏱ ٥٥ دقيقة
+  - 🏋 ٨ تمارين (من `todayProg.stats.exercises`)
+  - ⏸ ٦٠–٩٠ ثانية راحة
+- **Progress line:**
+  - افتراضياً: `📊 التقدم: 0/8 تمارين` (dashed)
+  - بعد اكتمال اليوم: `✓ اكتمل اليوم · ٢٢ سيت` (أخضر)
+- **First Exercise:** `▶ أول تمرين: Chest Press` (dashed border ذهبي)
+- **٣ أزرار:**
+  - 💪 **ابدأ الجلسة** (primary كبير)
+  - **عرض التمارين** (secondary)
+  - 🔄 **الجهاز مشغول؟** (tertiary أزرق، يفتح Plan B Hint)
+- **حالات:**
+  - يوم تدريب → البطاقة الكاملة كما أعلاه
+  - يوم راحة → `tc-rest-badge` + رسالة هادئة + Smart Reco إذا مناسب
+  - جلسة نشطة → `tc-pulse` نبضة حمراء + ↩ ارجع للجلسة
+
+### ✨ 3. Program Quick Summary (٦ مصغّرات)
+- شبكة ٣×٢ بعد بطاقة اليوم مباشرة:
+  - 📅 ١٢ أسبوع
+  - 💪 ٦ أيام تمرين
+  - ⏱ ٥٢-٥٧ دقيقة للجلسة
+  - ⏸ ٦٠ ث راحة
+  - 🥩 ١٧٥g بروتين
+  - 🔄 Plan B لكل تمرين
+- الأرقام تظهر كقرارات سريعة (ذهبية) — لا كزينة
+
+### 🗑 محذوف
+- `_statusStrip` (sliver chips) — استُبدل بـ Hero Section
+- `_primaryHero` (V9.11) — استُبدل بـ Today's Workout Card الأكثر تفصيلاً
+
+### 🛠 ملفات معدّلة
+- `js/dashboard.js` — أُضيف:
+  - `DAY_TARGETS` map (UPPER A → صدر·ظهر·أكتاف، etc.)
+  - `_muscleTargets(dayType)` — يستخرج الأهداف العضلية
+  - `_firstExerciseName(day)` — أول تمرين بعد warmup
+  - `_heroSection(workouts)` — البلوك التفسيري
+  - `_todayWorkoutCard(...)` — البطاقة الكبيرة (٣ حالات: تدريب/راحة/جلسة-نشطة)
+  - `_programQuickSummary()` — شبكة المصغّرات
+  - `main render`: استبدل StatusStrip+PrimaryHero بـ Hero+TodayCard+Summary
+- `css/styles.css` — قسم V9.14 (~400 سطر): `hero-v14`، `hv-*`، `today-card`، `tc-*`، `program-summary-grid`، `psg-*`
+- `index.html` — بدون تعديل (الكل ديناميكي)
+
+### 📐 تسلسل الصفحة الرئيسية الجديد
+1. Hero Section (collapsible)
+2. Profile-missing strip (شرطي)
+3. **Today's Workout Card** ← الأكبر
+4. Program Quick Summary (٦ badges)
+5. Top Progress Card (V9.13)
+6. Quick Stats (٣)
+7. Week Grid
+8. Next Achievement (شرطي)
+9. PRs Carousel
+10. Nutrition + Next Meal
+11. Quick Actions
+
+---
+
 ## [V9.13 — Gym Mode + Bottom Nav + Inline Plan B + Progress Card] — 2026-05-31
 
 حلّ ٧ مشاكل UX (#4-#10): Plan B داخل كل تمرين، وضع Gym Mode للجلسات، تنقّل سفلي على الموبايل، أوزان مع +/-، ملخص تغذية مع الوجبة التالية، بطاقة تقدم في الأعلى، تصميم أهدأ للجلسة.

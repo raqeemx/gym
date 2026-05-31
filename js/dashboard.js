@@ -405,11 +405,197 @@
   }
 
   // ============================================================
-  // V9.11 — NEW BLOCKS (Homepage Redesign)
+  // V9.14 — Homepage Redesign (Hero + Today's Workout + Program Summary)
   // ============================================================
 
-  // 1. STATUS STRIP — أهم ٣ أرقام في سطر واحد
-  // [ أسبوع ٣/١٢ · 🔥 ٥ يوم · ⭐ UPPER B اليوم ]
+  // ----- خريطة الأهداف العضلية لكل dayType -----
+  const DAY_TARGETS={
+    'UPPER A':'صدر · ظهر · أكتاف',
+    'UPPER B':'صدر · ظهر · أكتاف',
+    'BACK & WINGS':'ظهر · كتف خلفي · بايسبس',
+    'ARMS A':'بايسبس · ترايسبس',
+    'ARMS B':'بايسبس · ترايسبس',
+    'LEGS':'أرجل · سمانة · بطن'
+  };
+  function _muscleTargets(dayType){
+    if(!dayType) return null;
+    const t=String(dayType).trim().toUpperCase();
+    for(const [key,val] of Object.entries(DAY_TARGETS)){
+      if(t.includes(key)) return val;
+    }
+    // fallback ذكي
+    if(/UPPER/.test(t)) return 'صدر · ظهر · أكتاف';
+    if(/BACK|WING/.test(t)) return 'ظهر · كتف خلفي';
+    if(/ARMS?/.test(t)) return 'بايسبس · ترايسبس';
+    if(/LEGS?|أرجل/.test(t)) return 'أرجل · سمانة';
+    return null;
+  }
+
+  // ----- استخراج أول تمرين (بدون warmup) -----
+  function _firstExerciseName(day){
+    if(!day||!day.phases) return null;
+    for(const ph of day.phases){
+      if(ph.type==='warmup') continue;
+      if(ph.name){
+        const en=String(ph.name).split(/[—↔·]/)[0].trim();
+        if(en) return en;
+      }
+      if(ph.steps && ph.steps.length){
+        const s=ph.steps.find(x=>x.type!=='rest');
+        if(s) return String(s.name).split(/[—↔·]/)[0].trim();
+      }
+    }
+    return null;
+  }
+
+  // ----- 1. HERO SECTION (تفسيري، يفهم المستخدم البرنامج في ٣ ثوانٍ) -----
+  function _heroSection(workouts){
+    // ابدأ compact للمستخدمين النشطين (٥+ جلسات)
+    const isActive=(workouts||[]).length>=5;
+    return `
+      <details class="hero-v14${isActive?'':' open'}" ${isActive?'':'open'}>
+        <summary class="hv-summary">
+          <div class="hv-brand">💪 BULK MODE</div>
+          <div class="hv-tag">برنامج تضخيم ١٢ أسبوع</div>
+          <span class="hv-toggle">▾</span>
+        </summary>
+        <div class="hv-body">
+          <h1 class="hv-title">برنامج تضخيم ١٢ أسبوع — اتبع تمرين اليوم فقط</h1>
+          <p class="hv-desc">خطة عربية للتضخيم باستخدام أجهزة الجيم، مع أوزان مقترحة، راحة محسوبة، و<b>Plan B</b> إذا كان الجهاز مشغولاً.</p>
+          <div class="hv-actions">
+            <button type="button" class="hv-cta hv-cta-primary" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+            <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(8)">📅 شاهد جدول الأسبوع</button>
+            <button type="button" class="hv-cta hv-cta-tertiary" onclick="switchToTab(6)">🎯 أول مرة في الجيم؟</button>
+          </div>
+        </div>
+      </details>`;
+  }
+
+  // ----- 2. TODAY'S WORKOUT CARD (أهم عنصر في الصفحة) -----
+  function _todayWorkoutCard(todayProg,activeSession,workouts,missedDay,smartReco){
+    const arDayNames=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const todayName=arDayNames[_todayWd()];
+    const today=_todayISO();
+
+    // أ. جلسة نشطة → كرت "ارجع للجلسة"
+    if(activeSession){
+      return `
+        <div class="today-card today-active">
+          <div class="tc-header">
+            <span class="tc-pulse"></span>
+            <div class="tc-htext">
+              <div class="tc-day">${E(todayName)} · جلسة نشطة الآن</div>
+              <div class="tc-title">${E(activeSession.dayType||'تمرين')}</div>
+            </div>
+          </div>
+          <div class="tc-stats">
+            <div class="tc-stat"><span class="tcs-lbl">سُجِّل</span><b class="tcs-val">${E(activeSession.setsCount||0)}</b><span class="tcs-unit">سيت</span></div>
+            <div class="tc-stat"><span class="tcs-lbl">PR</span><b class="tcs-val">${E(activeSession.prCount||0)}</b><span class="tcs-unit">جديد</span></div>
+          </div>
+          <button type="button" class="tc-cta tc-cta-active" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
+        </div>`;
+    }
+
+    // ب. يوم راحة
+    if(!todayProg || todayProg.isRest || todayProg.type==='REST'){
+      let extraHint='';
+      if(missedDay){
+        extraHint=`<div class="tc-hint tc-hint-warn">⚠️ فاتك يوم <b>${E(missedDay.type)}</b> — يمكنك تعويضه اليوم.</div>`;
+      } else if(smartReco && smartReco.day && smartReco.urgency!=='low'){
+        extraHint=`<div class="tc-hint tc-hint-info">💡 لو تبي تتمرن: <b>${E(smartReco.day.type||smartReco.day.label)}</b></div>`;
+      }
+      return `
+        <div class="today-card today-rest">
+          <div class="tc-rest-badge">🧘 راحة</div>
+          <div class="tc-day-rest">${E(todayName)}</div>
+          <div class="tc-title">${E((todayProg&&todayProg.label)||'يوم راحة نشطة')}</div>
+          <p class="tc-rest-desc">جسمك يبني العضل اليوم. لا تفوّت وجباتك ونومك.</p>
+          ${extraHint}
+          <div class="tc-actions">
+            <button type="button" class="tc-cta tc-cta-secondary" onclick="switchToTab(1)">شاهد البرنامج</button>
+            <button type="button" class="tc-cta tc-cta-tertiary" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'daily\\']');if(b)b.click()},120)">📋 سجّل يومك</button>
+          </div>
+        </div>`;
+    }
+
+    // ج. يوم تدريب — البطاقة الكاملة
+    const dayType=todayProg.type||todayProg.label;
+    const targets=_muscleTargets(dayType);
+    const sets=(todayProg.stats&&todayProg.stats.sets)||'—';
+    const exercises=(todayProg.stats&&todayProg.stats.exercises)||'—';
+    const mins=(todayProg.stats&&todayProg.stats.minutes)||'—';
+    const restRange=todayProg.stats && todayProg.stats.restRange
+      ? todayProg.stats.restRange
+      : '٦٠–٩٠';
+    const firstEx=_firstExerciseName(todayProg);
+
+    // التقدم: لو فيه workout مكتمل اليوم بنفس الـ dayType، أظهر "تم اليوم"
+    const todayWorkout=(workouts||[]).find(w=>{
+      const d=(w.startTime||'').split('T')[0];
+      return d===today && (w.dayType||'').toUpperCase()===String(dayType).toUpperCase();
+    });
+    let progressLine=`<div class="tc-prog"><span>📊 التقدم:</span><b>0/${E(exercises)}</b><span>تمارين</span></div>`;
+    if(todayWorkout){
+      progressLine=`<div class="tc-prog tc-prog-done"><span>✓</span><b>اكتمل اليوم</b><span>· ${E(todayWorkout.setsCount||0)} سيت</span></div>`;
+    }
+
+    return `
+      <div class="today-card today-train">
+        <div class="tc-ribbon">⭐ تمرين اليوم</div>
+        <div class="tc-grid">
+          <div class="tc-info-row tc-info-day">
+            <span class="tc-info-lbl">اليوم</span>
+            <b class="tc-info-val">${E(todayName)}</b>
+          </div>
+          <div class="tc-info-row tc-info-session">
+            <span class="tc-info-lbl">الجلسة</span>
+            <b class="tc-info-val tc-info-session-name">${E(dayType)}</b>
+          </div>
+          ${targets?`<div class="tc-info-row tc-info-target">
+            <span class="tc-info-lbl">الهدف</span>
+            <b class="tc-info-val">${E(targets)}</b>
+          </div>`:''}
+        </div>
+        <div class="tc-stats">
+          <div class="tc-stat"><span class="tcs-ic">⏱</span><b class="tcs-val">${E(mins)}</b><span class="tcs-unit">دقيقة</span></div>
+          <div class="tc-stat"><span class="tcs-ic">🏋</span><b class="tcs-val">${E(exercises)}</b><span class="tcs-unit">تمارين</span></div>
+          <div class="tc-stat"><span class="tcs-ic">⏸</span><b class="tcs-val">${E(restRange)}</b><span class="tcs-unit">ث راحة</span></div>
+        </div>
+        ${progressLine}
+        ${firstEx?`<div class="tc-first-ex">
+          <span class="tc-fe-lbl">▶ أول تمرين</span>
+          <b class="tc-fe-name">${E(firstEx)}</b>
+        </div>`:''}
+        <div class="tc-actions tc-actions-3">
+          <button type="button" class="tc-cta tc-cta-primary" onclick="switchToTab(1)">💪 ابدأ الجلسة</button>
+          <button type="button" class="tc-cta tc-cta-secondary" onclick="switchToTab(1)">عرض التمارين</button>
+          <button type="button" class="tc-cta tc-cta-tertiary" onclick="openPlanBHint&&openPlanBHint()">🔄 الجهاز مشغول؟</button>
+        </div>
+      </div>`;
+  }
+
+  // ----- 3. PROGRAM QUICK SUMMARY (6 badges صغيرة) -----
+  function _programQuickSummary(){
+    const items=[
+      {ic:'📅', val:'12', lbl:'أسبوع'},
+      {ic:'💪', val:'6', lbl:'أيام تمرين'},
+      {ic:'⏱', val:'52–57', lbl:'دقيقة للجلسة'},
+      {ic:'⏸', val:'60', lbl:'ث راحة'},
+      {ic:'🥩', val:'175g', lbl:'بروتين'},
+      {ic:'🔄', val:'Plan B', lbl:'لكل تمرين'}
+    ];
+    return `
+      <div class="program-summary-grid">
+        ${items.map(it=>`
+          <div class="psg-card">
+            <div class="psg-ic">${it.ic}</div>
+            <div class="psg-val">${E(it.val)}</div>
+            <div class="psg-lbl">${E(it.lbl)}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // (V9.11) — Status Strip القديم يبقى لأن الإيقاف يكسر التحديثات السابقة
   function _statusStrip(wp,streak,todayProg,profileMissing){
     const parts=[];
     if(wp){
@@ -816,10 +1002,22 @@
         profileMissing=!p || (!p.age && !p.weight && !p.height);
       }catch(e){}
 
-      // V9.11/V9.13 — البنية: Status Strip → Primary Hero → Top Progress → Quick Stats → Week Grid → Next Ach → PRs → Nutrition → Quick Actions
+      // V9.14 — البنية الجديدة:
+      //   1. Hero Section (تفسيري)
+      //   2. Today's Workout Card (أكبر عنصر)
+      //   3. Program Quick Summary (6 badges)
+      //   4. Top Progress Card
+      //   5. Quick Stats (3)
+      //   6. Week Grid
+      //   7. Next Achievement
+      //   8. PRs Carousel
+      //   9. Nutrition + Next Meal
+      //   10. Quick Actions
       container.innerHTML=`
-        ${_statusStrip(wp,streak,todayProg,profileMissing)}
-        ${_primaryHero(todayProg,activeSession,missedDay,smartReco,streak)}
+        ${_heroSection(data.workouts)}
+        ${profileMissing?`<div class="profile-missing-strip" onclick="openProfile()">👤 أكمل ملفك الشخصي لحساب الأهداف بدقة ›</div>`:''}
+        ${_todayWorkoutCard(todayProg,activeSession,data.workouts,missedDay,smartReco)}
+        ${_programQuickSummary()}
         ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets)}
         ${_quickStats3(streak,week)}
         ${_weekGridBlock()}
