@@ -125,37 +125,28 @@
 <!-- V8 — Smart Deload Header Banner (sticky below nav) -->
 <div id="deloadHeaderBanner" class="deload-header-banner"></div>
 
-<!-- ===== TAB 0: الرئيسية (Dashboard V9.0) ===== -->
+<!-- ===== TAB 0: الرئيسية (Dashboard V9.11) ===== -->
+<!-- البنية الجديدة:
+     ١. Status Strip (أسبوع/streak/يوم النوع)
+     ٢. Primary Action Hero (CTA كبير)
+     ٣. Quick Stats (٣ بطاقات)
+     ٤. Week Grid (٧ خلايا تفاعلية)
+     ٥. Next Achievement (شرطي >٣٠٪)
+     ٦. Recent PRs (٣ كحد أقصى، carousel)
+     ٧. Today Nutrition (٣ progress bars)
+     ٨. Quick Actions (٣ أزرار)
+     ٩. Expandable Program Info (details)
+     كلها تُولَّد من js/dashboard.js → refreshDashboard() -->
 <div class="sec a" id="t0">
 
-  <!-- Dashboard: محتوى ديناميكي يُملأ من js/dashboard.js → refreshDashboard() -->
+  <!-- Dashboard container (يحوي كل البلوكات الديناميكية) -->
   <div id="dashboardContainer">
     <div class="chart-loading">جاري تحميل لوحة التحكم...</div>
   </div>
 
-  <!-- ملف المستخدم (يبقى كما هو — يُملأ من ensureUserProfileCard) -->
-  <div class="card fu" id="userProfileCard">
-    <div class="ch">
-      <div class="ci">👤</div>
-      <div><div class="ct">بياناتك</div><div class="cs" id="userProfileCardSub">عدّلها من 👤 ملفي الشخصي</div></div>
-    </div>
-    <div class="tip t0" id="userProfileCardBody"><div class="ti">📋</div><div class="tt" id="userProfileCardText">جاري التحميل...</div></div>
-    <div style="text-align:center;margin-top:10px"><button type="button" class="bm-save" style="font-size:11px;padding:8px 16px" onclick="openProfile()">✏️ عدّل ملفك الشخصي</button></div>
-  </div>
-
-  <!-- V9.0 (P2) — تقسيم الأسبوع: مهم بصرياً، يبقى ظاهراً في الرئيسية -->
-  <div class="card fu fu2">
-    <div class="ch"><div class="ci">📅</div><div><div class="ct">تقسيم الأسبوع</div><div class="cs">٥ أيام علوي + يوم أرجل + يوم راحة</div></div></div>
-    <div class="wg">
-      <div class="wc cp" data-day="0"><div class="wd">الأحد</div><div class="wt">UPPER A</div></div>
-      <div class="wc cpl" data-day="1"><div class="wd">الاثنين</div><div class="wt">BACK & WINGS</div></div>
-      <div class="wc cpl" data-day="2"><div class="wd">الثلاثاء</div><div class="wt">ARMS A</div></div>
-      <div class="wc cr" data-day="3"><div class="wd">الأربعاء</div><div class="wt">راحة</div></div>
-      <div class="wc cp" data-day="4"><div class="wd">الخميس</div><div class="wt">UPPER B</div></div>
-      <div class="wc cl" data-day="5"><div class="wd">الجمعة</div><div class="wt">LEGS مختصر</div></div>
-      <div class="wc cpl" data-day="6"><div class="wd">السبت</div><div class="wt">ARMS B</div></div>
-    </div>
-  </div>
+  <!-- V9.11 — العناصر القديمة المحذوفة (userProfileCard, fu2) أُدمجت في Dashboard:
+       - بيانات المستخدم → نقطة في Status Strip + رابط من Hero
+       - تقسيم الأسبوع → Week Grid المدمج -->
 
   <!-- V9.0 (P2) — Collapsible: الشرح العلمي القديم (متوفر لمن يريد، مخفي افتراضياً) -->
   <details class="program-info-details">

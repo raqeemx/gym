@@ -402,6 +402,255 @@
       </div>`;
   }
 
+  // ============================================================
+  // V9.11 — NEW BLOCKS (Homepage Redesign)
+  // ============================================================
+
+  // 1. STATUS STRIP — أهم ٣ أرقام في سطر واحد
+  // [ أسبوع ٣/١٢ · 🔥 ٥ يوم · ⭐ UPPER B اليوم ]
+  function _statusStrip(wp,streak,todayProg,profileMissing){
+    const parts=[];
+    if(wp){
+      parts.push(`<span class="dss-pill"><b>${E(wp.week)}</b><small>/١٢</small> أسبوع</span>`);
+    }
+    if(streak && streak.current>0){
+      parts.push(`<span class="dss-pill dss-streak">🔥 <b>${E(streak.current)}</b> يوم</span>`);
+    }
+    if(todayProg){
+      const isRest=todayProg.isRest||todayProg.type==='REST';
+      const lbl=isRest?'🧘 راحة':(todayProg.type||todayProg.label||'تمرين');
+      parts.push(`<span class="dss-pill dss-day ${isRest?'rest':''}">⭐ ${E(lbl)} اليوم</span>`);
+    }
+    // نقطة "بياناتك" — تشير لو الملف ناقص
+    if(profileMissing){
+      parts.push(`<button type="button" class="dss-pill dss-profile-missing" onclick="openProfile()" title="أكمل ملفك الشخصي">👤 ${E('أكمل ملفك')}</button>`);
+    }
+    if(!parts.length) return '';
+    return `<div class="dash-status-strip">${parts.join('')}</div>`;
+  }
+
+  // 2. PRIMARY ACTION HERO — أكبر عنصر، CTA كبير، سطر تحفيزي
+  function _primaryHero(todayProg,activeSession,missedDay,smartReco,streak){
+    // أ. جلسة نشطة — عُد إليها
+    if(activeSession){
+      return `
+        <div class="dash-primary dash-primary-active">
+          <div class="dpr-tag">⏺ جلسة نشطة الآن</div>
+          <div class="dpr-title">${E(activeSession.dayType||'تمرين')}</div>
+          <div class="dpr-meta">سجّلت <b>${E(activeSession.setsCount||0)}</b> سيت · <b>${E(activeSession.prCount||0)}</b> PR</div>
+          <button class="dpr-cta dpr-cta-active" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
+        </div>`;
+    }
+    // ب. يوم راحة — رسالة هادئة
+    if(todayProg && (todayProg.isRest||todayProg.type==='REST')){
+      let extra='';
+      if(missedDay){
+        extra=`<div class="dpr-extra">⚠️ فاتك يوم <b>${E(missedDay.type)}</b> — يمكنك تعويضه اليوم.</div>`;
+      } else if(smartReco && smartReco.day && smartReco.urgency!=='low'){
+        extra=`<div class="dpr-extra">💡 لو تبي تتمرن: <b>${E(smartReco.day.type||smartReco.day.label)}</b></div>`;
+      }
+      return `
+        <div class="dash-primary dash-primary-rest">
+          <div class="dpr-tag">🧘 يوم راحة نشطة</div>
+          <div class="dpr-title">${E(todayProg.label||'استرح وتعافَ')}</div>
+          <div class="dpr-meta">جسمك يبني العضل اليوم — لا تفوّت وجباتك ونومك</div>
+          ${extra}
+          <button class="dpr-cta dpr-cta-secondary" onclick="switchToTab(1)">شاهد البرنامج ›</button>
+        </div>`;
+    }
+    // ج. يوم حر بدون برنامج
+    if(!todayProg){
+      const target = (smartReco && smartReco.day) ? smartReco.day : null;
+      if(target){
+        return `
+          <div class="dash-primary">
+            <div class="dpr-tag">اقتراح ذكي</div>
+            <div class="dpr-title">${E(target.type||target.label)}</div>
+            <div class="dpr-meta">${E(smartReco.reason||'بناءً على آخر جلساتك')}</div>
+            <button class="dpr-cta" onclick="switchToTab(1)">💪 ابدأ ${E(target.type||'الجلسة')}</button>
+          </div>`;
+      }
+      return `
+        <div class="dash-primary dash-primary-rest">
+          <div class="dpr-tag">يوم حر</div>
+          <div class="dpr-title">لا جلسة مجدولة اليوم</div>
+          <div class="dpr-meta">يمكنك تعويض يوم فات أو الراحة</div>
+          <button class="dpr-cta dpr-cta-secondary" onclick="switchToTab(1)">عرض كل الأيام ›</button>
+        </div>`;
+    }
+    // د. يوم تدريب — السيناريو الأساسي
+    const dayType=todayProg.type||todayProg.label;
+    const sets=(todayProg.stats&&todayProg.stats.sets)||'—';
+    const mins=(todayProg.stats&&todayProg.stats.minutes)||'—';
+    const exs=(todayProg.stats&&todayProg.stats.exercises)||'—';
+    // سطر تحفيزي ديناميكي
+    let motivation='';
+    if(streak && streak.current>=3){
+      motivation=`🔥 ${streak.current} أيام متتالية — لا تكسر السلسلة!`;
+    } else if(streak && streak.current===0){
+      motivation=`🌱 ابدأ سلسلة جديدة اليوم`;
+    } else {
+      motivation=`💪 يوم تدريب — كل سيت يبني عضل`;
+    }
+    return `
+      <div class="dash-primary">
+        <div class="dpr-tag">⭐ جلسة اليوم</div>
+        <div class="dpr-title">${E(dayType)}</div>
+        <div class="dpr-meta">⏱ ~<b>${E(mins)}</b> دقيقة · 💪 <b>${E(sets)}</b> سيت · 🏋 <b>${E(exs)}</b> تمارين</div>
+        <button class="dpr-cta" onclick="switchToTab(1)">💪 ابدأ جلسة ${E(dayType)}</button>
+        <div class="dpr-motivation">${motivation}</div>
+      </div>`;
+  }
+
+  // 3. QUICK STATS — ٣ بطاقات: Streak، Week PRs، Week Volume
+  function _quickStats3(streak,week){
+    const cur=streak&&streak.current||0;
+    const best=streak&&streak.best||0;
+    const fire=cur>=7?'🔥🔥🔥':cur>=3?'🔥🔥':cur>=1?'🔥':'•';
+    return `
+      <div class="dash-quick-stats">
+        <button type="button" class="dqs-card dqs-streak" onclick="openStreakPage&&openStreakPage()">
+          <div class="dqs-icon">${fire}</div>
+          <div class="dqs-num">${E(cur)}</div>
+          <div class="dqs-lbl">يوم متتالي</div>
+          <div class="dqs-sub">الأفضل: <b>${E(best)}</b></div>
+        </button>
+        <div class="dqs-card dqs-prs">
+          <div class="dqs-icon">🏆</div>
+          <div class="dqs-num">${E(week.prs)}</div>
+          <div class="dqs-lbl">PR هذا الأسبوع</div>
+          <div class="dqs-sub">${E(week.sessions)} جلسة</div>
+        </div>
+        <div class="dqs-card dqs-volume">
+          <div class="dqs-icon">⚖</div>
+          <div class="dqs-num">${E(week.volume.toLocaleString('en'))}</div>
+          <div class="dqs-lbl">كجم رفعت</div>
+          <div class="dqs-sub">${E(week.sets)} سيت</div>
+        </div>
+      </div>`;
+  }
+
+  // 4. WEEK GRID — ٧ خلايا تفاعلية، لون حسب الحالة
+  // (يَستخدم الأنواع من program data، يطبَّق applyWeekGridStatus من ui-v99.js لاحقاً)
+  function _weekGridBlock(){
+    const days=(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM && EFFECTIVE_PROGRAM.days)
+      ?EFFECTIVE_PROGRAM.days
+      :(typeof PROGRAM_DATA!=='undefined'?PROGRAM_DATA.days:[]);
+    if(!days || !days.length) return '';
+    const arDayNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    // رتّب حسب dayOfWeek
+    const byWd={};
+    days.forEach(d=>{byWd[d.dayOfWeek]=d});
+    const cells=[];
+    for(let wd=0;wd<7;wd++){
+      const d=byWd[wd];
+      const isRest=!d || d.isRest || d.type==='REST';
+      const typeLbl=isRest?'راحة':(d.type||d.label||'—');
+      // class حسب نوع اليوم (للتلوين الموحّد عبر V9.10)
+      let cat='push';
+      if(isRest) cat='rest';
+      else if(/BACK|PULL/i.test(typeLbl)) cat='pull';
+      else if(/LEGS?|أرجل/i.test(typeLbl)) cat='legs';
+      else if(/ARMS?|بايسبس|ترايسبس|ذراع/i.test(typeLbl)) cat='arms';
+      // class قديم (cp/cpl/cl/cr) للتوافق
+      const oldCls=isRest?'cr':(cat==='pull'?'cpl':cat==='legs'?'cl':cat==='arms'?'cpl':'cp');
+      cells.push(`<div class="wc ${oldCls}" data-day="${wd}" data-day-type="${cat}"><div class="wd">${E(arDayNames[wd])}</div><div class="wt">${E(typeLbl)}</div></div>`);
+    }
+    return `
+      <div class="dash-card dash-week-card">
+        <div class="dash-card-head dash-card-head-mini">📅 خطّتك هذا الأسبوع</div>
+        <div class="wg">${cells.join('')}</div>
+      </div>`;
+  }
+
+  // 5. NEXT ACHIEVEMENT — يُعرض فقط لو pct >= 30%
+  function _nextAchievementBlockFiltered(next){
+    if(!next) return '';
+    if(next.pct<0.3) return ''; // < ٣٠٪ → اخفِ (User said "حذف لو pct<30%")
+    const pct=Math.round(next.pct*100);
+    const remaining=next.remaining;
+    const unit=next.unit||'';
+    return `
+      <div class="dash-card dash-next-ach">
+        <div class="dash-card-head dash-card-head-mini">🏅 إنجاز قادم — قريب!</div>
+        <button type="button" class="dna-row" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'achievements\\']');if(b)b.click()},120)">
+          <div class="dna-icon">${E(next.ach.icon)}</div>
+          <div class="dna-body">
+            <div class="dna-name">${E(next.ach.title)}</div>
+            <div class="dna-progress">
+              <div class="dna-track"><div class="dna-fill" style="width:${pct}%"></div></div>
+              <div class="dna-meta">باقي <b>${E(remaining)}</b>${unit?' '+E(unit):''} · ${E(pct)}%</div>
+            </div>
+          </div>
+        </button>
+      </div>`;
+  }
+
+  // 6. RECENT PRs CAROUSEL — ٣ كحد أقصى، أفقي على الموبايل
+  function _prsCarousel(prs){
+    if(!prs.length) return '';
+    const recent=[...prs].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
+    const typeLabel={weight:'وزن',volume:'حجم','1rm':'1RM',reps:'تكرار',effort:'جهد أقل'};
+    return `
+      <div class="dash-card dash-prs-card">
+        <div class="dash-card-head dash-card-head-mini">🏆 آخر أرقامك القياسية</div>
+        <div class="dash-prs-carousel">
+          ${recent.map(p=>{
+            const ago=Math.max(0,Math.floor((Date.now()-new Date(p.date).getTime())/86400000));
+            const agoTxt=ago===0?'اليوم':ago===1?'أمس':ago+' أيام';
+            return `<div class="dprc-card">
+              <div class="dprc-type">${E(typeLabel[p.type]||p.type)}</div>
+              <div class="dprc-ex">${E(p.exerciseName)}</div>
+              <div class="dprc-val">${E(p.value)}</div>
+              <div class="dprc-ago">${E(agoTxt)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="dash-card-more" onclick="switchToTab(7)">شاهد كل الأرقام ›</button>
+      </div>`;
+  }
+
+  // 7. TODAY NUTRITION — ٣ progress bars: سعرات، بروتين، ماء
+  function _nutritionBars(nutrition,targets,daily){
+    const tCals = (targets&&targets.calories) || 2500;
+    const tProt = (targets&&targets.protein) || 150;
+    const tWater = 8;
+    const kcal = (nutrition && nutrition.kcal) || 0;
+    const prot = (nutrition && nutrition.protein>0) ? nutrition.protein : (daily?daily.protein:0);
+    const water = (daily && daily.water) || 0;
+    const bars=[
+      {ic:'🔥',lbl:'سعرات',cur:kcal,tgt:tCals,unit:'',pct:Math.round(kcal/tCals*100),color:'kcal'},
+      {ic:'🥩',lbl:'بروتين',cur:prot,tgt:tProt,unit:'g',pct:Math.round(prot/tProt*100),color:'protein'},
+      {ic:'💧',lbl:'ماء',cur:water,tgt:tWater,unit:'',pct:Math.round(water/tWater*100),color:'water'}
+    ];
+    return `
+      <div class="dash-card dash-nutrition-card">
+        <div class="dash-card-head dash-card-head-mini">🥗 تغذية اليوم</div>
+        <div class="dash-nut-bars">
+          ${bars.map(b=>`
+            <div class="dnb-row">
+              <div class="dnb-head">
+                <span class="dnb-ic">${b.ic}</span>
+                <span class="dnb-lbl">${E(b.lbl)}</span>
+                <span class="dnb-val"><b>${E(b.cur)}</b>${b.unit?E(b.unit):''}<small>/${E(b.tgt)}${b.unit?E(b.unit):''}</small></span>
+              </div>
+              <div class="dnb-track"><div class="dnb-fill dnb-${b.color} ${b.pct>=100?'full':b.pct>=70?'ok':'low'}" style="width:${Math.min(100,Math.max(0,b.pct))}%"></div></div>
+            </div>`).join('')}
+        </div>
+        <button class="dash-card-more" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'daily\\']');if(b)b.click()},120)">سجّل وجباتك ›</button>
+      </div>`;
+  }
+
+  // 8. QUICK ACTIONS — ٣ أزرار: قياسات، صورة، حاسبة بليتات
+  function _quickActions3(){
+    return `
+      <div class="dash-actions dash-actions-3">
+        <button class="dash-action" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'metrics\\']');if(b)b.click()},120)"><span>📏</span><b>قياسات</b></button>
+        <button class="dash-action" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'photos\\']');if(b)b.click()},120)"><span>📸</span><b>صورة</b></button>
+        <button class="dash-action" onclick="openPlateCalc()"><span>🧮</span><b>حاسبة بليتات</b></button>
+      </div>`;
+  }
+
   // ---------- main ----------
   async function refreshDashboard(){
     const container=document.getElementById('dashboardContainer');
@@ -422,14 +671,9 @@
       const week=_weekStats(data.sets,data.workouts);
       const daily=_todayDaily(data.dailyLogs);
       const proteinTarget=await _proteinTarget();
-      // V9.1 (A.3) — nutrition totals + targets
       const nutrition=await _todayNutritionTotals();
       const nutritionTargets=(typeof getNutritionTargets==='function')?await getNutritionTargets():null;
-      // V9.6 (#5) — breakdown حسب mealSlot
-      const nutritionBreakdown=await _todayNutritionBreakdown();
-      // V9.2 (B.7) — Smart Next Workout recommendation
       const smartReco=(typeof recommendNextWorkout==='function')?await recommendNextWorkout():null;
-      // V9.8 (#16) — الإنجاز القادم (الأقرب للفتح)
       const nextAch=(typeof getNextAchievement==='function')?await getNextAchievement():null;
 
       // اكتشف يوم تدريب فات (آخر ٧ أيام)
@@ -446,18 +690,24 @@
         }
       }
 
+      // V9.11 — تحقّق من اكتمال الملف الشخصي
+      let profileMissing=false;
+      try{
+        const r=await db.get('settings',KEYS.USER_PROFILE);
+        const p=r&&r.value;
+        profileMissing=!p || (!p.age && !p.weight && !p.height);
+      }catch(e){}
+
+      // V9.11 — البنية الجديدة (Status Strip → Hero → Stats → Grid → ...)
       container.innerHTML=`
-        ${_heroBlock(todayProg,activeSession,missedDay,smartReco)}
-        <div class="dash-grid dash-grid-2">
-          ${_streakBlock(streak)}
-          ${_statsBlock(week)}
-        </div>
-        ${_quickActionsBlock()}
-        ${_programProgressBlock(wp)}
-        ${_nextAchievementBlock(nextAch)}
-        ${_prsBlock(data.prs)}
-        ${_nutritionBlock(nutrition,nutritionTargets,nutritionBreakdown)}
-        ${_dailyBlock(daily,proteinTarget,nutrition)}
+        ${_statusStrip(wp,streak,todayProg,profileMissing)}
+        ${_primaryHero(todayProg,activeSession,missedDay,smartReco,streak)}
+        ${_quickStats3(streak,week)}
+        ${_weekGridBlock()}
+        ${_nextAchievementBlockFiltered(nextAch)}
+        ${_prsCarousel(data.prs)}
+        ${_nutritionBars(nutrition,nutritionTargets,daily)}
+        ${_quickActions3()}
       `;
     }catch(e){
       console.error('Dashboard refresh failed:',e);

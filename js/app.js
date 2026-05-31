@@ -281,9 +281,14 @@ function mergeGuideTabs(){
 
 // V8.4 (P1-#1) — املأ بطاقة "بياناتك" في "نظرة عامة" من profile (بدل HTML hardcoded)
 // تُستدعى في init + بعد saveUserProfile لإبقاء العرض متزامناً
+// V9.11 — بطاقة userProfileCard أُزيلت من t0؛ هذه الدالة الآن تُحدّث Dashboard إذا متاح
 async function refreshOverviewProfileCard(){
+  // V9.11 — لو Dashboard متاح، أعد تحميله (يقرأ profile جديد)
+  if(typeof refreshDashboard==='function'){
+    try{await refreshDashboard()}catch(e){}
+  }
   const textEl=document.getElementById('userProfileCardText');
-  if(!textEl) return;
+  if(!textEl) return; // البطاقة محذوفة في V9.11 — تُحدَّث Dashboard بدلاً منها
   let p={};
   try{
     const rec=await db.get('settings',KEYS.USER_PROFILE);

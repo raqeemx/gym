@@ -393,7 +393,8 @@
   //   upcoming = يوم تدريبي مستقبل
   //   rest   = يوم راحة (يبقى عليه class cr الأصلي)
   async function applyWeekGridStatus(){
-    const cells=document.querySelectorAll('.fu2 .wg .wc');
+    // V9.11 — week grid انتقل إلى .dash-week-card؛ ادعم القديم والجديد
+    const cells=document.querySelectorAll('.dash-week-card .wg .wc, .fu2 .wg .wc');
     if(!cells.length) return;
     let workouts=[];
     try{ workouts=await db.getAll('workouts')||[]; }catch(e){}
@@ -664,8 +665,8 @@
   }
 
   function applyDayTypeColors(){
-    // Week grid
-    document.querySelectorAll('.fu2 .wg .wc').forEach(cell=>{
+    // Week grid (V9.11 — يدعم القديم .fu2 والجديد .dash-week-card)
+    document.querySelectorAll('.dash-week-card .wg .wc, .fu2 .wg .wc').forEach(cell=>{
       const wt=cell.querySelector('.wt');
       if(!wt) return;
       const cat=_categorizeDayType(wt.textContent);

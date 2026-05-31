@@ -5,6 +5,54 @@
 
 ---
 
+## [V9.11 — إعادة تصميم الصفحة الرئيسية (Homepage Redesign)] — 2026-05-31
+
+**المبدأ:** «المستخدم يفتح التطبيق وهو في الجيم، لديه ٣ ثوانٍ ليقرر». كل عنصر يخدم سؤالاً واحداً: «ماذا أفعل الآن؟»
+
+### 🎯 البنية الجديدة (من الأعلى للأسفل)
+
+١. **Status Strip** (compact) — `[ أسبوع ٣/١٢ · 🔥 ٥ يوم · ⭐ UPPER B اليوم ]`
+   - دمج "بياناتك" كنقطة `dss-profile-missing` (تظهر فقط لو ناقص)
+٢. **Primary Action Hero** — أكبر عنصر في الصفحة
+   - tag + dayType + duration estimate (⏱ ~٥٥ دقيقة · ٢٢ سيت · ٧ تمارين)
+   - CTA كبير (full-width، 14px font، 1.5px letter-spacing)
+   - سطر تحفيزي ديناميكي (يتغيّر مع streak)
+٣. **Quick Stats** — ٣ بطاقات: 🔥 Streak / 🏆 Week PRs / ⚖ Volume
+٤. **Week Grid** — ٧ خلايا تفاعلية مع `data-day-type` (موحّد مع V9.10)
+   - يتفاعل تلقائياً مع `applyWeekGridStatus` لإظهار done/today/missed/upcoming
+٥. **Next Achievement** — يظهر فقط إذا **pct ≥ 30%** (يُحذف لو بعيد)
+٦. **Recent PRs Carousel** — ٣ كحد أقصى، أفقي `scroll-snap` على الموبايل
+٧. **Today Nutrition** — ٣ progress bars فقط: 🔥 سعرات · 🥩 بروتين · 💧 ماء
+٨. **Quick Actions** — ٣ أزرار فقط: 📏 قياسات · 📸 صورة · 🧮 حاسبة
+٩. **Expandable Program Info** (`<details>`) — مغلق افتراضياً
+
+### 🗑 محذوف
+
+- `#userProfileCard` (HTML كامل) — صار نقطة في Status Strip
+- `<div class="card fu fu2">` (تقسيم الأسبوع المنفصل) — صار ضمن Dashboard
+- "Hero" الديكوري القديم (`.dash-hero`) — استُبدل بـ `.dash-primary`
+- Daily Compliance widget — دُمج في 3 nutrition bars
+- زر "ملخص الأسبوع" من Quick Actions — لم يكن ضمن الـ ٣ الأهم
+
+### 🛠 تفاصيل التنفيذ
+
+- `js/dashboard.js` — أُضيفت ٨ دوال جديدة:
+  `_statusStrip`، `_primaryHero`، `_quickStats3`، `_weekGridBlock`،
+  `_nextAchievementBlockFiltered` (شرطي)، `_prsCarousel`، `_nutritionBars`، `_quickActions3`
+- `js/app.js → refreshOverviewProfileCard` — أصبح defensive (يستدعي refreshDashboard إذا متاح، يعود بدون أخطاء لو البطاقة محذوفة)
+- `js/ui-v99.js` — `applyWeekGridStatus` و `applyDayTypeColors` يدعمان `.dash-week-card .wg .wc` بجانب القديم `.fu2 .wg .wc`
+- `css/styles.css` — قسم V9.11 (~260 سطر): `dash-status-strip`، `dss-pill`، `dash-primary`، `dpr-*`، `dash-quick-stats`، `dqs-card`، `dash-week-card`، `dash-prs-carousel`، `dprc-card`، `dash-nut-bars`، `dnb-*`، `dash-actions-3`
+
+### 🎨 مبادئ بصرية
+
+- **Hierarchy واضح:** Primary Hero ضعف حجم باقي البطاقات (24px font + 14px CTA)
+- **Information density:** Status Strip يحتوي ٤ معلومات في 32px ارتفاع
+- **Progressive Disclosure:** Next Ach يظهر فقط لو قريب، Program Info مغلق
+- **Mobile-first:** PRs Carousel يستخدم `scroll-snap-type:x mandatory`
+- **Color coding موحّد:** كل خلية week-grid تأخذ `data-day-type` (push/pull/legs/arms/rest)
+
+---
+
 ## [V9.10 — UI/UX Sprint 2: FAB + Set Row + Progress + Bilingual] — 2026-05-31
 
 تنفيذ ٨ مشاكل UI/UX (من #8 إلى #15). الهدف: تقليل التكدّس البصري + تحفيز نفسي + توحيد ألوان + احترام اللغة الأم.
