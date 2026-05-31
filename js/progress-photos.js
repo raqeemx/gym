@@ -178,6 +178,25 @@ async function savePhotoFromForm(){
     await db.add('progressPhotos',rec);
     showToast('✓ تم حفظ الصورة','var(--grn)');
     try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+
+    // V9.5 (#2) — لو في وزن مع الصورة، اقترح حفظه في bodyMetrics لنفس التاريخ
+    if(rec.weight){
+      try{
+        const existingBM=await db.get('bodyMetrics',date);
+        // لا تكتب فوق قياسات موجودة بدون موافقة
+        if(!existingBM || existingBM.bodyWeight==null){
+          const bm=existingBM
+            ?{...existingBM, bodyWeight:rec.weight, timestamp:new Date().toISOString()}
+            :{date, bodyWeight:rec.weight, timestamp:new Date().toISOString()};
+          await db.put('bodyMetrics',bm);
+          setTimeout(()=>showToast('✓ تم تحديث "قياسات الجسم" أيضاً','var(--blue)',2500),1200);
+        }else if(Math.abs(existingBM.bodyWeight-rec.weight)>0.1){
+          // وزن موجود ومختلف — لا نكتب فوقه، لكن ننبّه
+          setTimeout(()=>showToast(`💡 وزنك في "قياسات الجسم" لهذا اليوم: ${existingBM.bodyWeight} كجم`,'var(--org)',4000),1200);
+        }
+      }catch(syncErr){console.warn('Photo→BM sync failed:',syncErr)}
+    }
+
     _pendingPhotoBlob=null;
     cancelPhotoForm();
     await renderPhotoGallery();

@@ -244,6 +244,12 @@
       // حدّث Daily Log & Dashboard
       if(typeof refreshFoodLogPanel==='function') refreshFoodLogPanel();
       if(typeof refreshDashboard==='function') refreshDashboard();
+      // V9.5 (#3) — أعد تحميل Daily Log لتحديث حقل البروتين (يتحول لـ read-only)
+      if(typeof loadDailyLogForDate==='function'){
+        const dateInput=document.getElementById('dlDate');
+        const date=(dateInput&&dateInput.value)||new Date().toISOString().split('T')[0];
+        loadDailyLogForDate(date);
+      }
     }catch(e){
       console.error('confirmAddFood failed:',e);
       showToast('⚠️ تعذّر الإضافة','var(--red)');
@@ -342,6 +348,12 @@
       showToast('✓ حُذف','var(--g2)');
       if(typeof refreshFoodLogPanel==='function') refreshFoodLogPanel();
       if(typeof refreshDashboard==='function') refreshDashboard();
+      // V9.5 (#3) — أعد تحميل Daily Log
+      if(typeof loadDailyLogForDate==='function'){
+        const dateInput=document.getElementById('dlDate');
+        const date=(dateInput&&dateInput.value)||new Date().toISOString().split('T')[0];
+        loadDailyLogForDate(date);
+      }
     }catch(e){console.error('delete food entry failed:',e)}
   }
 

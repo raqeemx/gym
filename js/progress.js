@@ -8,6 +8,15 @@ function _isoDayShift(isoDay,deltaDays){
 function _daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d}
 function _msInDay(){return 86400000}
 
+// V9.5 (#1) — متوسط الراحة الفعلية لـ workout واحد (من actualRestSeconds في sets)
+// يرجّع رقم أو null لو لا بيانات كافية
+function _avgRestForWorkout(sets){
+  if(!Array.isArray(sets)||sets.length<2) return null;
+  const vals=sets.map(s=>s.actualRestSeconds).filter(v=>typeof v==='number' && v>=10 && v<=600);
+  if(vals.length<2) return null;
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+
 // يحسب سلسلة الأيام المتتالية (Streak): يحسب الأيام التي تمرّنت بها بدون انقطاع
 function computeStreak(workouts){
   if(!workouts.length) return {current:0,best:0};
@@ -409,8 +418,11 @@ async function openStats(){
       ).join('');
       const vol=Math.round(w.totalVolume||0).toLocaleString('ar-SA');
       const noteHtml=w.notes?`<div class="history-note">📝 ${escHTML(w.notes)}</div>`:'';
+      // V9.5 (#1) — متوسط زمن الراحة لهذه الجلسة (لو متاح)
+      const restAvg=_avgRestForWorkout(ws);
+      const restMeta=restAvg?` · ⏸ ${restAvg}ث راحة`:'';
       return `<div class="history-day">
-        <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} · 📊 ${vol}${w.prCount?' · 🏆 '+w.prCount:''}</div>
+        <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} · 📊 ${vol}${w.prCount?' · 🏆 '+w.prCount:''}${restMeta}</div>
         ${noteHtml}
         ${exHtml}
       </div>`;
@@ -842,10 +854,30 @@ async function renderDailyLog(){
 
 async function loadDailyLogForDate(date){
   const rec=await db.get('dailyLog',date);
+
+  // V9.5 (#3) — لو فيه foodEntries لهذا اليوم، اقرأ البروتين منها (single source of truth)
+  // dailyLog.protein يصبح "manual override" فقط إذا المستخدم اختار يكتبه يدوياً
+  let foodProtein=null;
+  let foodCount=0;
+  try{
+    if(typeof getNutritionTotals==='function'){
+      const totals=await getNutritionTotals(date);
+      if(totals && totals.count>0){
+        foodProtein=Math.round(totals.protein);
+        foodCount=totals.count;
+      }
+    }
+  }catch(e){}
+
+  // إذا فيه foodEntries، البروتين منها — وإلا من dailyLog
+  const effectiveProtein = foodProtein!=null ? foodProtein : (rec?(rec.protein||0):0);
+
   _dlState={
     water:rec?(rec.water||0):0,
     sleep:rec?(rec.sleep||0):0,
-    protein:rec?(rec.protein||0):0, // V8.4 (P3-UX-#6)
+    protein:effectiveProtein,
+    proteinSource: foodProtein!=null ? 'foodEntries' : 'manual',
+    foodCount,
     supplements:rec?(rec.supplements||{}):{},
     meals:rec?(rec.meals||[false,false,false,false,false,false]):[false,false,false,false,false,false]
   };
@@ -859,8 +891,49 @@ async function loadDailyLogForDate(date){
   document.querySelectorAll('#dlMeals input').forEach(cb=>{
     cb.checked=!!_dlState.meals[parseInt(cb.dataset.meal)];
   });
+
+  // V9.5 (#3) — حدّث حالة حقل البروتين (read-only لو من foodEntries)
+  _updateProteinFieldState();
+
   // V8.4 (P3-UX-#6) — حدّث مؤشّر هدف البروتين
   if(typeof updateProteinProgress==='function') updateProteinProgress();
+}
+
+// V9.5 (#3) — يتحكم في حالة حقل البروتين بناءً على المصدر
+function _updateProteinFieldState(){
+  const pIn=document.getElementById('dlProteinVal');
+  const row=pIn?pIn.closest('.dl-row'):null;
+  if(!pIn||!row) return;
+  // أزل أي badge قديم
+  const oldBadge=row.querySelector('.dl-source-badge');
+  if(oldBadge) oldBadge.remove();
+  const oldOverride=row.querySelector('.dl-protein-override-btn');
+  if(oldOverride) oldOverride.remove();
+  // disable steps لو من foodEntries
+  const steps=row.querySelectorAll('.dl-step');
+  if(_dlState.proteinSource==='foodEntries'){
+    pIn.readOnly=true;
+    pIn.classList.add('dl-num-input-locked');
+    steps.forEach(s=>{s.style.opacity='.4';s.style.pointerEvents='none'});
+    // badge مع زر تجاوز
+    const badge=document.createElement('div');
+    badge.className='dl-source-badge';
+    badge.innerHTML=`<span class="dsb-icon">✓</span> محسوب تلقائياً من <b>${_dlState.foodCount}</b> وجبة <button type="button" class="dl-protein-override-btn" onclick="overrideProteinManual()">إدخال يدوي ›</button>`;
+    row.appendChild(badge);
+  }else{
+    pIn.readOnly=false;
+    pIn.classList.remove('dl-num-input-locked');
+    steps.forEach(s=>{s.style.opacity='';s.style.pointerEvents=''});
+  }
+}
+
+// زر التجاوز اليدوي
+function overrideProteinManual(){
+  _dlState.proteinSource='manual';
+  _updateProteinFieldState();
+  const pIn=document.getElementById('dlProteinVal');
+  if(pIn){pIn.focus();pIn.select()}
+  showToast('💡 أنت في وضع الإدخال اليدوي. لإعادة الحساب التلقائي، أضف وجبة من 🍽️ Food Search','var(--blue)',4000);
 }
 
 function dlAdjust(field,delta){
@@ -928,13 +1001,16 @@ async function saveDailyLog(){
     meals[parseInt(cb.dataset.meal)]=cb.checked;
   });
   // V8.4 (P3-UX-#6) — اقرأ قيمة البروتين من الـ input
+  // V9.5 (#3) — إذا المصدر = foodEntries، لا نحفظ dailyLog.protein (نتركه null ليُقرأ تلقائياً من foodEntries)
   const pIn=document.getElementById('dlProteinVal');
-  const protein=pIn?(parseInt(pIn.value)||0):0;
+  const isFromFoodEntries = _dlState.proteinSource==='foodEntries';
+  const protein = isFromFoodEntries ? null : (pIn?(parseInt(pIn.value)||0):0);
   const rec={
     date,
     water:_dlState.water,
     sleep:_dlState.sleep,
     protein,
+    proteinSource: isFromFoodEntries ? 'foodEntries' : 'manual',
     supplements,
     meals,
     timestamp:new Date().toISOString()
@@ -952,30 +1028,49 @@ function renderDailyLogHistory(records){
     body.innerHTML=`<div class="empty-state"><div class="es-icon">📅</div><div class="es-text">لم تسجّل أي يوم بعد.<br><b>ابدأ من النموذج فوق!</b></div></div>`;
     return;
   }
-  body.innerHTML=`<div class="bm-table-wrap"><table class="bm-table dl-table">
-    <thead><tr>
-      <th>التاريخ</th><th>💧</th><th>😴</th><th>🥩</th><th>💊</th><th>🍽️</th>
-    </tr></thead>
-    <tbody>
-      ${records.map(r=>{
-        const suppCount=Object.values(r.supplements||{}).filter(v=>v).length;
-        const mealCount=(r.meals||[]).filter(v=>v).length;
-        const waterClass=r.water>=8?'dl-good':(r.water>=5?'dl-mid':'dl-low');
-        const sleepClass=r.sleep>=7?'dl-good':(r.sleep>=5?'dl-mid':'dl-low');
-        const mealClass=mealCount>=6?'dl-good':(mealCount>=4?'dl-mid':'dl-low');
-        const protein=r.protein||0;
-        const protClass=protein>=140?'dl-good':(protein>=100?'dl-mid':(protein>0?'dl-low':''));
-        return `<tr>
-          <td class="bm-date">${fmtDate(r.date)}</td>
-          <td class="${waterClass}">${r.water||0}</td>
-          <td class="${sleepClass}">${r.sleep||0}س</td>
-          <td class="${protClass}">${protein?protein+'جم':'—'}</td>
-          <td>${suppCount}/5</td>
-          <td class="${mealClass}">${mealCount}/6</td>
-        </tr>`;
-      }).join('')}
-    </tbody>
-  </table></div>`;
+  // V9.5 (#3) — للبروتين: ادمج من foodEntries لو r.proteinSource='foodEntries' أو r.protein=null
+  // نحسبها مرة واحدة بـ Promise.all لتجنّب N+1
+  Promise.all(records.map(async r=>{
+    if(r.protein!=null && r.proteinSource!=='foodEntries') return {date:r.date, protein:r.protein, fromFood:false};
+    // اقرأ من foodEntries
+    try{
+      if(typeof getNutritionTotals==='function'){
+        const totals=await getNutritionTotals(r.date);
+        if(totals && totals.count>0) return {date:r.date, protein:Math.round(totals.protein), fromFood:true};
+      }
+    }catch(e){}
+    return {date:r.date, protein:r.protein||0, fromFood:false};
+  })).then(proteinMap=>{
+    const pMap={};
+    proteinMap.forEach(p=>pMap[p.date]=p);
+    body.innerHTML=`<div class="bm-table-wrap"><table class="bm-table dl-table">
+      <thead><tr>
+        <th>التاريخ</th><th>💧</th><th>😴</th><th>🥩</th><th>💊</th><th>🍽️</th>
+      </tr></thead>
+      <tbody>
+        ${records.map(r=>{
+          const suppCount=Object.values(r.supplements||{}).filter(v=>v).length;
+          const mealCount=(r.meals||[]).filter(v=>v).length;
+          const waterClass=r.water>=8?'dl-good':(r.water>=5?'dl-mid':'dl-low');
+          const sleepClass=r.sleep>=7?'dl-good':(r.sleep>=5?'dl-mid':'dl-low');
+          const mealClass=mealCount>=6?'dl-good':(mealCount>=4?'dl-mid':'dl-low');
+          const pInfo=pMap[r.date]||{protein:0,fromFood:false};
+          const protein=pInfo.protein;
+          const protClass=protein>=140?'dl-good':(protein>=100?'dl-mid':(protein>0?'dl-low':''));
+          // علامة 🍽 صغيرة لو البروتين محسوب من foodEntries
+          const sourceMark=pInfo.fromFood?'<span class="dl-from-food" title="محسوب من Food Entries">🍽</span>':'';
+          return `<tr>
+            <td class="bm-date">${fmtDate(r.date)}</td>
+            <td class="${waterClass}">${r.water||0}</td>
+            <td class="${sleepClass}">${r.sleep||0}س</td>
+            <td class="${protClass}">${protein?protein+'جم'+sourceMark:'—'}</td>
+            <td>${suppCount}/5</td>
+            <td class="${mealClass}">${mealCount}/6</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+  });
 }
 
 function renderDailyLogStats(allRecords){
@@ -1353,6 +1448,29 @@ async function saveBodyMetrics(){
   await db.put('bodyMetrics',rec);
   showToast('✓ تم حفظ القياسات','var(--grn)');
   try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+
+  // V9.5 (#2) — sync تلقائي: bodyWeight الجديد يحدّث profile.weight
+  // (مع توافق reverse: إذا profile.weight موجود وأحدث، لا نكتبه فوقه)
+  if(rec.bodyWeight!=null){
+    try{
+      const profRec=await db.get('settings',KEYS.USER_PROFILE);
+      const profile=(profRec&&profRec.value)||{};
+      // اكتب فقط لو القيمة الجديدة أحدث (نفس التاريخ أو أحدث) أو profile.weight غير موجود
+      const profUpdatedAt=profile.updatedAt?new Date(profile.updatedAt).getTime():0;
+      const recordedAt=new Date(rec.timestamp).getTime();
+      if(!profile.weight || recordedAt>=profUpdatedAt){
+        profile.weight=rec.bodyWeight;
+        profile.weightSource='bodyMetrics';   // علامة للمصدر
+        profile.weightSyncedAt=new Date().toISOString();
+        profile.updatedAt=new Date().toISOString();
+        await db.put('settings',{key:KEYS.USER_PROFILE,value:profile});
+        // حدّث Dashboard لأن السعرات/البروتين تعتمد على profile.weight
+        if(typeof refreshDashboard==='function') refreshDashboard();
+        if(typeof refreshOverviewProfileCard==='function') refreshOverviewProfileCard();
+      }
+    }catch(syncErr){console.warn('Profile weight sync failed:',syncErr)}
+  }
+
   // امسح حقول الإدخال
   ['bmArm','bmChest','bmShoulder','bmThigh','bmWaist','bmWeight'].forEach(id=>{
     document.getElementById(id).value='';
@@ -1430,8 +1548,11 @@ async function renderHistory(){
     ).join('');
     // V7.3 — اعرض ملاحظة الجلسة لو موجودة
     const noteHtml=w.notes?`<div class="history-note">📝 ${escHTML(w.notes)}</div>`:'';
+    // V9.5 (#1) — متوسط زمن الراحة الفعلي
+    const restAvg=_avgRestForWorkout(ws);
+    const restMeta=restAvg?` · ⏸ ${restAvg}ث راحة`:'';
     items.push(`<div class="history-day">
-      <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} سيت · 📊 ${Math.round(w.totalVolume||0)}${w.prCount?' · 🏆 '+w.prCount:''}</div>
+      <div class="h-date">${fmtDate(w.startTime)} · ${w.dayType} · ⏱ ${fmtDuration(w.duration||0)} · 💪 ${w.setsCount||0} سيت · 📊 ${Math.round(w.totalVolume||0)}${w.prCount?' · 🏆 '+w.prCount:''}${restMeta}</div>
       ${noteHtml}
       ${exHtml}
     </div>`);
@@ -1514,6 +1635,77 @@ async function renderCharts(){
   renderVolumeChart(sets);
   renderBodyWeightChart();
   await renderRpeTrend(sets); // V7.3 — رسم RPE المتوسط لكل جلسة
+  await renderRestTrend(sets); // V9.5 (#1) — رسم متوسط زمن الراحة
+}
+
+// V9.5 (#1) — رسم متوسط زمن الراحة عبر الجلسات
+async function renderRestTrend(setsOrNull){
+  const Chart=window.Chart;
+  const canvas=document.getElementById('chartRest');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const hintEl=document.getElementById('restHint');
+  if(_charts.rest) _charts.rest.destroy();
+
+  const sets=setsOrNull||await db.getAll('sets');
+  // اجمع actualRestSeconds حسب workoutId
+  const byWorkout={};
+  sets.forEach(s=>{
+    const rest=s.actualRestSeconds;
+    if(typeof rest!=='number' || rest<10 || rest>600) return;
+    if(!byWorkout[s.workoutId]) byWorkout[s.workoutId]={vals:[],time:0};
+    byWorkout[s.workoutId].vals.push(rest);
+    const t=new Date(s.timestamp).getTime();
+    if(t>byWorkout[s.workoutId].time) byWorkout[s.workoutId].time=t;
+  });
+  // متوسط لكل جلسة + ترتيب زمني
+  const workouts=Object.entries(byWorkout).map(([wid,info])=>{
+    const avg=info.vals.reduce((a,r)=>a+r,0)/info.vals.length;
+    return {wid,avg:Math.round(avg),time:info.time,count:info.vals.length};
+  }).sort((a,b)=>a.time-b.time);
+
+  if(hintEl) hintEl.style.display='none';
+  if(!workouts.length){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    _setChartEmpty('chartRest',true,{icon:'⏱',title:'لا توجد بيانات راحة بعد',hint:'سجّل ٢ سيتات أو أكثر في جلسة واحدة ليُحسب متوسط راحتك.'});
+    return;
+  }
+  _setChartEmpty('chartRest',false);
+
+  const labels=workouts.map(w=>new Date(w.time).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}));
+  const data=workouts.map(w=>w.avg);
+
+  const opts=structuredClone(CHART_BASE_OPTS);
+  // أوقات منطقية: 30-180s
+  opts.scales.y.min=0;
+  opts.scales.y.max=Math.max(180, Math.ceil(Math.max(...data)/30)*30+30);
+  opts.scales.y.beginAtZero=true;
+  opts.scales.y.ticks.stepSize=30;
+
+  _charts.rest=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'متوسط الراحة (ث)',data,borderColor:'#5AB4FF',backgroundColor:'rgba(90,180,255,.12)',tension:.3,fill:true,pointBackgroundColor:'#5AB4FF',pointRadius:4,pointHoverRadius:6},
+        {label:'المستهدف (60ث)',data:labels.map(()=>60),borderColor:'rgba(90,230,138,.5)',borderDash:[4,4],pointRadius:0,fill:false,borderWidth:1.5}
+      ]
+    },
+    options:opts
+  });
+
+  // hint: لو آخر ٣ جلسات متوسطها > 90ث → اقتراح تقليل الراحة
+  if(workouts.length>=3 && hintEl){
+    const last3=workouts.slice(-3);
+    const avgLast3=last3.reduce((a,w)=>a+w.avg,0)/3;
+    if(avgLast3>90){
+      hintEl.innerHTML=`💡 <b>راحتك أطول من المستهدف</b> — متوسط آخر ٣ جلسات: <b>${Math.round(avgLast3)}ث</b>. تقليل الراحة لـ ٦٠ث يُختصر الجلسة بـ <b>~${Math.round((avgLast3-60)*last3[0].count/60)} دقيقة</b> دون التأثير على نمو العضل.`;
+      hintEl.style.display='block';
+    }else if(avgLast3<30){
+      hintEl.innerHTML=`⚠️ <b>راحتك قصيرة جداً</b> — متوسط آخر ٣ جلسات: <b>${Math.round(avgLast3)}ث</b>. ٤٥-٦٠ث أفضل للأداء وحماية العضل من الإرهاق المبكر.`;
+      hintEl.style.display='block';
+    }
+  }
 }
 
 // V7.3 — رسم RPE المتوسط لكل جلسة + كشف ارتفاع متراكم (يقترح deload)

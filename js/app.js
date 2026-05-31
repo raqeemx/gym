@@ -322,10 +322,23 @@ async function openProfile(){
   // اقرأ الملف الحالي
   const rec=await db.get('settings',KEYS.USER_PROFILE);
   const p=(rec&&rec.value)||{};
+
+  // V9.5 (#2) — اقرأ آخر bodyMetric كمصدر حقيقة للوزن
+  // لو profile.weight فاضي، اقترح آخر قياس. لو موجود وقديم، نبّه المستخدم.
+  let latestBM=null;
+  try{
+    const all=await db.getAll('bodyMetrics');
+    const sorted=all.filter(r=>r.bodyWeight!=null).sort((a,b)=>b.date.localeCompare(a.date));
+    if(sorted.length) latestBM=sorted[0];
+  }catch(e){}
+
   document.getElementById('profName').value=p.name||'';
   document.getElementById('profAge').value=p.age||'';
   document.getElementById('profHeight').value=p.height||'';
-  document.getElementById('profWeight').value=p.weight||'';
+  // الوزن: استخدم profile.weight لو موجود، وإلا آخر bodyMetric
+  document.getElementById('profWeight').value=p.weight||(latestBM?latestBM.bodyWeight:'')||'';
+  // علامة بصرية على الحقل لو في bodyMetric أحدث من profile
+  _updateProfileWeightHint(p, latestBM);
   document.getElementById('profGoal').value=p.goal||'bulk';
   document.getElementById('profExp').value=p.experience||'beginner';
   // V8.3 (3.14)
@@ -566,12 +579,90 @@ async function renderWeightGoalChart(startDate,startW,targetDate,targetW){
 
 function _isoOf(d){return new Date(d).toISOString().split('T')[0]}
 
+// V9.5 (#2) — يعرض hint تحت حقل الوزن في Profile
+//   - إذا profile.weight قديم وفي bodyMetric أحدث → اقتراح استيراد
+//   - إذا profile.weight = bodyMetric (متطابقان) → علامة "مزامن"
+function _updateProfileWeightHint(profile, latestBM){
+  const wInput=document.getElementById('profWeight');
+  if(!wInput) return;
+  // أنشئ/أحضر hint container
+  let hint=wInput.parentNode.querySelector('.prof-weight-hint');
+  if(!hint){
+    hint=document.createElement('div');
+    hint.className='prof-weight-hint';
+    wInput.parentNode.appendChild(hint);
+  }
+  if(!latestBM){
+    hint.style.display='none';
+    return;
+  }
+  const profWeight=parseFloat(profile.weight||0);
+  const bmWeight=parseFloat(latestBM.bodyWeight);
+  const profUpdated=profile.updatedAt?new Date(profile.updatedAt):null;
+  const bmDate=new Date(latestBM.date+'T00:00:00');
+
+  if(!profWeight){
+    hint.innerHTML=`<span class="pwh-icon">💡</span> آخر قياس: <b>${bmWeight}</b> كجم (${_relDate(latestBM.date)})`;
+    hint.className='prof-weight-hint pwh-info';
+    hint.style.display='';
+  }else if(Math.abs(profWeight-bmWeight)<0.05){
+    // متطابقان
+    hint.innerHTML=`<span class="pwh-icon">✓</span> مزامن مع <b>قياسات الجسم</b> (${_relDate(latestBM.date)})`;
+    hint.className='prof-weight-hint pwh-ok';
+    hint.style.display='';
+  }else{
+    // مختلفان — اقترح الـ bodyMetric
+    const newer=bmDate>(profUpdated||new Date(0));
+    if(newer){
+      hint.innerHTML=`<span class="pwh-icon">⚠️</span> آخر قياس في "قياسات الجسم" <b>${bmWeight}</b> كجم (${_relDate(latestBM.date)}) <button type="button" class="pwh-apply" onclick="_useLatestBMWeight(${bmWeight})">استورد ›</button>`;
+      hint.className='prof-weight-hint pwh-warn';
+      hint.style.display='';
+    }else{
+      hint.style.display='none';
+    }
+  }
+}
+
+function _useLatestBMWeight(weight){
+  const el=document.getElementById('profWeight');
+  if(el){el.value=weight; el.dispatchEvent(new Event('input',{bubbles:true}))}
+  showToast('✓ تم استيراد آخر قياس','var(--grn)',2000);
+  // أعد تحديث الـ hint
+  setTimeout(()=>{
+    db.getAll('bodyMetrics').then(all=>{
+      const sorted=all.filter(r=>r.bodyWeight!=null).sort((a,b)=>b.date.localeCompare(a.date));
+      const latestBM=sorted[0]||null;
+      _updateProfileWeightHint({weight,updatedAt:new Date().toISOString()},latestBM);
+    });
+  },100);
+}
+
+function _relDate(iso){
+  if(!iso) return '';
+  const t=new Date(iso+'T00:00:00').getTime();
+  const days=Math.floor((Date.now()-t)/86400000);
+  if(days<=0) return 'اليوم';
+  if(days===1) return 'أمس';
+  if(days<7) return `قبل ${days} أيام`;
+  if(days<30) return `قبل ${Math.floor(days/7)} أسبوع`;
+  if(days<365) return `قبل ${Math.floor(days/30)} شهر`;
+  return `قبل ${Math.floor(days/365)} سنة`;
+}
+
 async function saveUserProfile(){
+  // V9.5 (#2) — إذا المستخدم عدّل الوزن يدوياً، نعلّمه weightSource='manual'
+  const existingRec=await db.get('settings',KEYS.USER_PROFILE);
+  const existing=(existingRec&&existingRec.value)||{};
+  const newWeight=parseFloat(document.getElementById('profWeight').value)||null;
+  const weightChanged=newWeight!==null && Math.abs((existing.weight||0)-newWeight)>0.05;
+
   const p={
     name:document.getElementById('profName').value.trim(),
     age:parseInt(document.getElementById('profAge').value)||null,
     height:parseFloat(document.getElementById('profHeight').value)||null,
-    weight:parseFloat(document.getElementById('profWeight').value)||null,
+    weight:newWeight,
+    weightSource:weightChanged?'manual':(existing.weightSource||'manual'),
+    weightSyncedAt:weightChanged?new Date().toISOString():existing.weightSyncedAt,
     goal:document.getElementById('profGoal').value,
     experience:document.getElementById('profExp').value,
     // V8.3 (3.14)
@@ -583,6 +674,18 @@ async function saveUserProfile(){
     updatedAt:new Date().toISOString()
   };
   await db.put('settings',{key:KEYS.USER_PROFILE,value:p});
+
+  // V9.5 (#2) — لو المستخدم غيّر الوزن يدوياً، نحفظ snapshot في bodyMetrics
+  // (نضمن أن bodyMetrics يبقى مصدر الحقيقة التاريخي)
+  if(weightChanged){
+    try{
+      const today=new Date().toISOString().split('T')[0];
+      const existingBM=await db.get('bodyMetrics',today);
+      const bm=existingBM?{...existingBM, bodyWeight:newWeight, timestamp:new Date().toISOString()}
+                        :{date:today, bodyWeight:newWeight, timestamp:new Date().toISOString()};
+      await db.put('bodyMetrics',bm);
+    }catch(e){console.warn('Body metric snapshot failed:',e)}
+  }
   showToast('✓ تم حفظ الملف الشخصي','var(--grn)');
   closeProfile();
   // V8.4 (P1-#1) — حدّث بطاقة "بياناتك" في نظرة عامة بعد كل حفظ

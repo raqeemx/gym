@@ -1208,7 +1208,7 @@ async function endSession(silent=false){
 let _lastFinishedWorkoutId=null;
 let _lastFinishedSession=null; // V8 — للـ checkAchievements مع pr_storm/legend
 
-function showSessionSummary(s){
+async function showSessionSummary(s){
   _lastFinishedWorkoutId=s.id; // V7.3
   _lastFinishedSession=s;       // V8
   document.getElementById('summaryDay').textContent=s.dayType;
@@ -1218,6 +1218,32 @@ function showSessionSummary(s){
     `<div class="summary-prs">${s.prList.slice(0,10).map(p=>`<div class="summary-pr-item">🏆 ${E(p.exerciseName)} — ${E(p.label)}: <b>${E(p.value)}</b></div>`).join('')}</div>`
     :'';
   const existingNote=E(s.notes||'');
+
+  // V9.5 (#1) — حساب متوسط زمن الراحة الفعلي من sets الجلسة
+  let restHtml='';
+  try{
+    const sets=await db.getAll('sets','workoutId',s.id);
+    const restValues=sets.map(x=>x.actualRestSeconds).filter(v=>typeof v==='number' && v>=10 && v<=600);
+    if(restValues.length>=2){
+      const avg=Math.round(restValues.reduce((a,b)=>a+b,0)/restValues.length);
+      const target=60; // مستهدف V4: ٦٠ ث بين سيتات الزوج
+      const delta=avg-target;
+      const statusClass = avg<=target+15 ? 'ok' : avg<=target+45 ? 'warn' : 'over';
+      const hint = delta<=15
+        ? '✓ ضمن المستهدف'
+        : delta<=45
+          ? '⚠ أعلى من المستهدف بقليل'
+          : '⏱ راحة طويلة — تطيل الجلسة';
+      restHtml=`<div class="summary-rest summary-rest-${statusClass}">
+        <div class="sr-icon">⏱</div>
+        <div class="sr-body">
+          <div class="sr-main"><b>${avg}</b> ث متوسط الراحة <small>(مستهدف ~${target} ث)</small></div>
+          <div class="sr-hint">${hint}</div>
+        </div>
+      </div>`;
+    }
+  }catch(err){console.warn('rest stats failed:',err)}
+
   document.getElementById('summaryBody').innerHTML=`
     <div class="summary-grid">
       <div class="summary-stat"><span class="ss-num">${fmtDuration(s.duration)}</span><span class="ss-lbl">مدة الجلسة</span></div>
@@ -1225,6 +1251,7 @@ function showSessionSummary(s){
       <div class="summary-stat"><span class="ss-num">${Math.round(s.totalVolume).toLocaleString('ar-SA')}</span><span class="ss-lbl">إجمالي الحجم</span></div>
       <div class="summary-stat ${s.prCount>0?'gold':''}"><span class="ss-num">${s.prCount}</span><span class="ss-lbl">🏆 أرقام قياسية</span></div>
     </div>
+    ${restHtml}
     ${prsHtml}
     <textarea class="session-note-textarea" id="sessionNoteInput" placeholder="📝 ملاحظة عن الجلسة (اختياري) — كيف كان شعورك؟ ألم؟ ملاحظات على الأوزان؟" rows="2">${existingNote}</textarea>
   `;

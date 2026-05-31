@@ -5,6 +5,49 @@
 
 ---
 
+## [V9.5 — توحيد مصادر البيانات + استثمار actualRestSeconds] — 2026-05-31
+
+حلّ ٣ مشاكل **🔴 عالية الأولوية** من تقرير Data Audit.
+
+### ✨ #1 — استثمار `actualRestSeconds` بثلاث طبقات
+الحقل كان يُسجَّل منذ V9.2 لكن لا يقرأه أي مكان. الآن مستخدم في ٣ أماكن:
+
+1. **Session Summary**: بطاقة جديدة «⏱ متوسط راحتك ١٠٥ث (مستهدف ~٦٠ث)» مع ٣ ألوان (أخضر ≤٧٥ث، برتقالي ≤١٠٥ث، أحمر >١٠٥ث) + نصيحة تفسيرية
+2. **History (في كلا renderHistory)**: عرض ` · ⏸ 85ث راحة` بجانب مدة الجلسة
+3. **Chart جديد في تحليلات**: «⏱ متوسط زمن الراحة عبر الزمن» — line chart بالأزرق مع خط مرجعي عند ٦٠ث، يكشف عند آخر ٣ جلسات > ٩٠ث ويقترح: «تقليل الراحة لـ ٦٠ث يختصر الجلسة بـ ~٧ دقائق دون التأثير على نمو العضل»
+
+### ✨ #2 — توحيد مصادر وزن الجسم (bodyMetrics = source of truth)
+3 مصادر سابقة كانت تتضارب (`bodyMetrics.bodyWeight` + `profile.weight` + `progressPhotos.weight`). الآن:
+
+- **عند حفظ bodyMetric جديد بـ bodyWeight** → يُحدَّث `profile.weight` تلقائياً + علامة `weightSource: 'bodyMetrics'` + يُحدَّث Dashboard لإعادة حساب السعرات/البروتين فوراً
+- **عند فتح Profile modal**: إذا فيه bodyMetric أحدث من profile.weight → hint برتقالي «آخر قياس X كجم — استورد ›» مع زر استيراد بنقرة واحدة. لو متطابقان → علامة أخضر «✓ مزامن مع قياسات الجسم»
+- **عند حفظ Profile بوزن جديد يدوياً** → يُسجَّل snapshot في `bodyMetrics` لتاريخ اليوم تلقائياً، مع علامة `weightSource: 'manual'`
+- **عند حفظ صورة بوزن**: لو لا يوجد bodyMetric لذلك التاريخ → يُحفظ تلقائياً + toast «✓ تم تحديث قياسات الجسم أيضاً». لو موجود ومختلف → نصيحة «وزنك في قياسات الجسم: X كجم» (بدون كتابة فوقه)
+
+### ✨ #3 — توحيد البروتين (foodEntries primary, dailyLog fallback)
+الحلّ الذكي: dailyLog.protein لا يُحذف لكن يصبح **مُحَكَّم بـ foodEntries**:
+
+- **لو فيه foodEntries لليوم**: حقل البروتين في Daily Log يصبح **read-only** مع badge أخضر «✓ محسوب تلقائياً من X وجبة [إدخال يدوي ›]» + أزرار -10/+10 معطّلة بصرياً
+- **زر "إدخال يدوي ›"**: يعيد الحقل لـ writable لو المستخدم يريد override
+- **عند saveDailyLog**: لو المصدر = foodEntries، نحفظ `protein:null` و `proteinSource:'foodEntries'` (نتجنّب الكتابة المزدوجة)
+- **في History**: العمود 🥩 يقرأ من foodEntries لو dailyLog.protein=null، مع علامة 🍽 صغيرة تبيّن المصدر
+- **عند إضافة/حذف وجبة**: يُعاد تحميل Daily Log تلقائياً ليتحول الحقل لـ locked/unlocked فوراً
+
+### 📁 ملفات معدّلة (٥)
+- `js/session.js` — `showSessionSummary` صار async + بطاقة الراحة
+- `js/progress.js` — `_avgRestForWorkout` + `renderRestTrend` + `loadDailyLogForDate` (موحّد للبروتين) + `_updateProteinFieldState` + `overrideProteinManual` + saveBodyMetrics sync + renderDailyLogHistory async للبروتين
+- `js/app.js` — `openProfile` يقرأ آخر bodyMetric + `_updateProfileWeightHint` + `_useLatestBMWeight` + saveUserProfile يحفظ snapshot في bodyMetrics
+- `js/progress-photos.js` — savePhotoFromForm يقترح sync مع bodyMetrics
+- `js/nutrition.js` — confirmAddFood/deleteFoodEntry يعيدان تحميل Daily Log
+- `index.html` — canvas chartRest + restHint
+- `css/styles.css` — ~٦٠ سطر CSS جديد (.summary-rest, .prof-weight-hint, .dl-source-badge, .dl-num-input-locked, .dl-from-food)
+
+### 🛡️ توافق
+- لا migration. الحقول الجديدة (`proteinSource`, `weightSource`, `weightSyncedAt`) اختيارية — السجلات القديمة تعمل كما هي
+- Service Worker: `bulkmode-v9-5-0`
+
+---
+
 ## [V9.4 — تحسين شامل لتجربة الموبايل] — 2026-05-30
 
 تحسينات mobile-first شاملة — حلّ ٨ مشاكل أساسية في تجربة الهاتف.
