@@ -1054,10 +1054,7 @@
     const moreBtn=document.getElementById('bnMoreBtn');
     if(moreBtn){
       moreBtn.addEventListener('click',()=>{
-        const dr=document.getElementById('bnDrawer');
-        const bd=document.getElementById('bnDrawerBackdrop');
-        if(dr){dr.classList.add('open');dr.setAttribute('aria-hidden','false')}
-        if(bd) bd.classList.add('open');
+        openBnDrawer();
         bn.querySelectorAll('.bn').forEach(b=>b.classList.remove('a'));
         moreBtn.classList.add('a');
       });
@@ -1091,6 +1088,14 @@
     const bd=document.getElementById('bnDrawerBackdrop');
     if(dr){dr.classList.remove('open');dr.setAttribute('aria-hidden','true')}
     if(bd) bd.classList.remove('open');
+  };
+
+  // V9.14.9 — فتح درج "المزيد" (يعمل على الموبايل من الشريط السفلي وعلى سطح المكتب من زر الشريط العلوي)
+  window.openBnDrawer=function(){
+    const dr=document.getElementById('bnDrawer');
+    const bd=document.getElementById('bnDrawerBackdrop');
+    if(dr){dr.classList.add('open');dr.setAttribute('aria-hidden','false')}
+    if(bd) bd.classList.add('open');
   };
 
   // ربط lifecycle

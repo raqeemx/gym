@@ -868,9 +868,11 @@ async function applyTheme(theme){
   const root=document.documentElement;
   if(theme==='light') root.setAttribute('data-theme','light');
   else root.removeAttribute('data-theme');
-  // حدّث label الزر
+  // حدّث label الزر (legacy FAB + V9.14.9 عنصر الدرج المنظّم)
   const btn=document.getElementById('themeToggleBtn');
   if(btn) btn.innerHTML=theme==='light'?'🌑 الوضع المظلم':'🌙 الوضع المضيء';
+  const drawerItem=document.getElementById('bnThemeItem');
+  if(drawerItem) drawerItem.innerHTML=theme==='light'?'<span>🌑</span><b>الوضع المظلم</b>':'<span>🌙</span><b>الوضع المضيء</b>';
   // حدّث meta theme-color للـ status bar في PWA
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content',theme==='light'?'#A8862D':'#D4A853');
