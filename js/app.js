@@ -792,7 +792,8 @@ async function checkWelcomeBack(){
   }catch(e){console.warn('Welcome back check failed:',e)}
 }
 
-// V9.8 (#21) — Equipment grid يقرأ من الجيم النشط (بدل hardcoded قائمة Technogym)
+// V9.8 (#21) — Equipment grid يقرأ من الجيم النشط
+// V9.14.4 (#6) — مقسّم حسب العضلة، كل جهاز بطاقة (عضلة/أيام/بديل/كيف أستخدمه)
 async function refreshEquipmentGrid(){
   const list=document.getElementById('equipmentGridList');
   const title=document.getElementById('equipmentGridTitle');
@@ -807,14 +808,162 @@ async function refreshEquipmentGrid(){
   }
   const eq=(gym.equipment||[]).filter(e=>e && e.trim());
   if(title) title.textContent=`${gym.icon||'🏋️'} ${gym.name||'الجيم النشط'} — ${eq.length} ${gym.bodyweightOnly?'عنصر':'جهاز'}`;
-  if(sub) sub.textContent = gym.bodyweightOnly
-    ? 'وضع وزن الجسم — معدّات محدودة'
-    : 'بدّل الجيم من 🏋️ إدارة الجيمات في القائمة';
+  if(sub) sub.textContent='مقسّمة حسب العضلة — اضغط «كيف أستخدمه؟» لأي جهاز';
   if(!eq.length){
+    list.classList.remove('eq-by-muscle');
     list.innerHTML='<div class="ei" style="grid-column:1/-1;text-align:center;opacity:.6">لا معدّات مسجّلة. أضف من إدارة الجيمات.</div>';
     return;
   }
-  list.innerHTML=eq.map(e=>`<div class="ei">${E(e)}</div>`).join('');
+  // جمّع حسب العضلة
+  const daysUsed=_buildDaysUsedMap();
+  const order=['صدر','ظهر','أكتاف','ذراعين','أرجل','سمانة','بطن/خصر'];
+  const groups={};
+  eq.forEach(name=>{
+    const mg=(typeof getMuscleGroup==='function')?getMuscleGroup(name):null;
+    const g=mg&&mg.group?mg.group:'أخرى';
+    (groups[g]=groups[g]||[]).push(name);
+  });
+  const keys=order.filter(g=>groups[g]).concat(Object.keys(groups).filter(g=>!order.includes(g)));
+  list.classList.add('eq-by-muscle');
+  list.innerHTML=keys.map(g=>{
+    const color=(typeof MUSCLE_COLORS!=='undefined'&&MUSCLE_COLORS[g])||'#8890A0';
+    const cards=groups[g].map(name=>_equipmentCardHtml(name,g,daysUsed,E)).join('');
+    return `<div class="eq-group" style="--mc:${color}">
+        <div class="eq-group-head"><span class="eq-dot"></span>${E(g)}<small>${groups[g].length} جهاز</small></div>
+        <div class="eq-cards">${cards}</div>
+      </div>`;
+  }).join('');
+}
+
+// خريطة: اسم تمرين (مطبّع) → أيام البرنامج التي يُستخدم فيها (أسماء مختصرة)
+function _buildDaysUsedMap(){
+  const prog=(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM && EFFECTIVE_PROGRAM.days)
+    ?EFFECTIVE_PROGRAM.days
+    :(typeof PROGRAM_DATA!=='undefined'?PROGRAM_DATA.days:[]);
+  const clean=(n)=>String(n||'')
+    .replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'')
+    .replace(/\s*[—-]\s*سيت[\s\S]*$/,'')
+    .replace(/\s*\([^)]*\)\s*$/,'').trim();
+  const map={};
+  (prog||[]).forEach(d=>{
+    if(!d || d.isRest || d.type==='REST' || !d.phases) return;
+    const seen=new Set();
+    d.phases.forEach(p=>(p.steps||[]).forEach(s=>{
+      if(!s || s.type==='rest') return;
+      const ex=clean(s.name); if(!ex) return;
+      const norm=(typeof normalizeExName==='function')?normalizeExName(ex):ex;
+      if(seen.has(norm)) return; seen.add(norm);
+      (map[norm]=map[norm]||[]).push(d.shortName||d.type||'');
+    }));
+  });
+  return map;
+}
+
+function _equipmentCardHtml(name,group,daysUsed,E){
+  const norm=(typeof normalizeExName==='function')?normalizeExName(name):name;
+  const days=(daysUsed[norm]||[]);
+  const daysTxt=days.length?days.join('، '):'غير مستخدم في البرنامج';
+  let alt='';
+  if(typeof EXERCISE_ALTERNATIVES!=='undefined' && EXERCISE_ALTERNATIVES[norm] && EXERCISE_ALTERNATIVES[norm][0]){
+    alt=EXERCISE_ALTERNATIVES[norm][0].name;
+  }
+  const hasNote=(typeof EXERCISE_FORM_NOTES!=='undefined' && EXERCISE_FORM_NOTES[norm]);
+  const howBtn=hasNote
+    ?`<button type="button" class="eq-how" onclick="openFormNoteModal('${String(norm).replace(/'/g,"\\'")}')">كيف أستخدمه؟ ›</button>`
+    :'';
+  return `<div class="eq-card">
+        <div class="eq-card-name">${E(name)}</div>
+        <div class="eq-card-rows">
+          <div class="eq-card-row"><span>🎯 العضلة</span><b>${E(group)}</b></div>
+          <div class="eq-card-row"><span>📅 الأيام</span><b>${E(daysTxt)}</b></div>
+          ${alt?`<div class="eq-card-row"><span>🔄 البديل</span><b>${E(alt)}</b></div>`:''}
+        </div>
+        ${howBtn}
+      </div>`;
+}
+
+// V9.14.4 (#8) — افتح قسم التغذية واذهب لقائمة المشتريات
+function openShoppingList(){
+  if(typeof switchToTab==='function') switchToTab(3);
+  setTimeout(()=>{
+    const el=document.getElementById('shoppingListCard');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  },180);
+}
+
+// V9.14.4 (#10) — نصائح وتنبيهات كبطاقات قصيرة + modal للتفاصيل
+const TIP_DETAILS={
+  pre:{title:'⚡ قبل التمرين',body:`
+    <p><b>الإحماء أهم من تظن.</b> ٥ دقائق كارديو خفيف (تجديف/مشي) لرفع حرارة الجسم، ثم مجموعة تسخين واحدة بنصف وزن العمل لأول تمرين.</p>
+    <ul>
+      <li>اشرب ٣٠٠-٥٠٠ مل ماء قبل البدء.</li>
+      <li>وجبة طاقة (كارب + بروتين) قبل ٦٠-٩٠ دقيقة.</li>
+      <li>راجع أوزان آخر جلسة من بطاقة «أوزانك جاهزة».</li>
+      <li>حضّر منشفتك لحجز الجهاز الثاني في الأزواج (APS).</li>
+    </ul>`},
+  during:{title:'🏃 أثناء التمرين',body:`
+    <p><b>التحكّم أهم من الوزن.</b> نزّل الوزن ببطء (٢-٣ ثوانٍ) وارفع بقوة، مع مدى حركة كامل.</p>
+    <ul>
+      <li>تنفّس: زفير مع الرفع، شهيق مع النزول.</li>
+      <li>التزم بالراحة المحددة (٦٠ث للأزواج · ٩٠ث للمنفرد).</li>
+      <li>آخر تكرارين يجب أن يكونا صعبين (RPE ٧-٨)، لا للفشل التام.</li>
+      <li>سجّل كل سيت فور انتهائه حتى لا تنسى.</li>
+    </ul>`},
+  post:{title:'🧊 بعد التمرين',body:`
+    <p><b>التعافي يبني العضلة، لا التمرين.</b></p>
+    <ul>
+      <li>وجبة بروتين + كارب خلال ساعة-ساعتين بعد التمرين.</li>
+      <li>تمدّد خفيف ٥ دقائق للعضلات المُجهَدة.</li>
+      <li>نوم ٧-٩ ساعات — أهم عامل للنمو.</li>
+      <li>راجع ملخص الجلسة وتأكد من تسجيل وزن جسمك أسبوعياً.</li>
+    </ul>`},
+  mistakes:{title:'⚠️ أخطاء شائعة',body:`
+    <ul>
+      <li><b>وزن أكبر من اللازم</b> على حساب الأداء = إصابات وعضلة أقل.</li>
+      <li><b>مدى حركة ناقص</b> (نصف تكرار) يقلّل التحفيز.</li>
+      <li><b>تخطّي الإحماء</b> أو التسخين.</li>
+      <li><b>عدم التدرّج</b>: زد الوزن/التكرار تدريجياً (Progressive Overload).</li>
+      <li><b>إهمال النوم والتغذية</b> ثم توقّع نتائج.</li>
+      <li><b>عدم تسجيل البيانات</b> — بلا قياس لا تعرف إن كنت تتقدّم.</li>
+    </ul>`},
+  redflags:{title:'🚨 علامات الخطر — توقّف',body:`
+    <p><b>أوقف التمرين فوراً واستشر مختصاً إذا واجهت:</b></p>
+    <ul>
+      <li>ألم حاد/طاعن في مفصل أو عضلة (يختلف عن حرقة العضلة الطبيعية).</li>
+      <li>دوخة، غثيان، أو ضيق تنفّس غير معتاد.</li>
+      <li>ألم في الصدر أو خفقان قلب غير طبيعي.</li>
+      <li>تنميل أو وخز ينتشر في الذراع/الساق.</li>
+      <li>إرهاق شديد مستمر، أرق، أو انخفاض أداء لأسابيع = علامة Overtraining.</li>
+    </ul>`},
+  deload:{title:'🔄 أسبوع Deload',body:`
+    <p><b>Deload = أسبوع تخفيف مخطّط للتعافي.</b> كل ٦-٨ أسابيع، أو عند ظهور علامات الإرهاق المتراكم.</p>
+    <ul>
+      <li>قلّل الوزن ٤٠-٥٠٪ <b>أو</b> عدد السيتات للنصف.</li>
+      <li>حافظ على نفس التمارين والحركة لتبقى التقنية.</li>
+      <li>ركّز على النوم والتغذية والترطيب.</li>
+      <li>تعود بعدها أقوى وبمفاصل مرتاحة — ليس تكاسلاً بل استراتيجية.</li>
+    </ul>`}
+};
+
+function openTipModal(id){
+  const t=TIP_DETAILS[id];
+  if(!t) return;
+  const modal=document.getElementById('tipModal');
+  if(!modal) return;
+  const titleEl=document.getElementById('tipModalTitle');
+  const bodyEl=document.getElementById('tipModalBody');
+  if(titleEl) titleEl.textContent=t.title;
+  if(bodyEl) bodyEl.innerHTML=t.body;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function closeTipModal(){
+  const modal=document.getElementById('tipModal');
+  if(!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
 }
 
 // V9.7 (#10) — تنبيه عند عدم توفر تمارين البرنامج في الجيم النشط

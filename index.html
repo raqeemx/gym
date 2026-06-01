@@ -314,7 +314,7 @@
     <div class="tip t0"><div class="ti">✅</div><div class="tt"><strong>التحقق:</strong> مجموع الوجبات = بروتين 175g + كارب 362g + دهون 74g = <b>2,814 سعرة</b>. كل شيء مطابق.</div></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="shoppingListCard">
     <div class="ch"><div class="ci">🛒</div><div><div class="ct">قائمة المشتريات الأسبوعية</div><div class="cs">اطبعها أو صوّرها وروح السوبرماركت</div></div></div>
     <div class="tip t0"><div class="ti">🥩</div><div class="tt"><strong>بروتين:</strong><br>• صدور دجاج: 2.5 كجم<br>• بيض: 2 كرتون (60 بيضة)<br>• لحم بقري قليل الدهن: 500 جرام<br>• تونة علب: 4 علب<br>• زبادي يوناني: 14 علبة (200g)</div></div>
     <div class="tip t0"><div class="ti">🍚</div><div class="tt"><strong>نشويات:</strong><br>• أرز أبيض أو بسمتي: 3 كجم<br>• شوفان: 1 كجم<br>• خبز أسمر: 3 ربطات<br>• معكرونة: 1 كجم<br>• بطاطس: 2 كجم</div></div>
@@ -389,6 +389,40 @@
 
 <!-- ===== TAB 5: دليل شامل (Hub) ===== -->
 <div class="sec" id="t5">
+
+  <!-- V9.14.4 (#10) — نصائح وتنبيهات كبطاقات قصيرة + زر «اقرأ التفاصيل» -->
+  <div class="tips-cards-grid">
+    <div class="tip-card tc-pre">
+      <h3>⚡ قبل التمرين</h3>
+      <p>إحماء ٥ دقائق + مجموعة تسخين. اشرب ماء وراجع أوزان آخر جلسة.</p>
+      <button type="button" onclick="openTipModal('pre')">اقرأ التفاصيل ›</button>
+    </div>
+    <div class="tip-card tc-during">
+      <h3>🏃 أثناء التمرين</h3>
+      <p>تحكّم في الوزن، مدى حركة كامل، تنفّس صحيح، والتزم بالراحة وسجّل كل سيت.</p>
+      <button type="button" onclick="openTipModal('during')">اقرأ التفاصيل ›</button>
+    </div>
+    <div class="tip-card tc-post">
+      <h3>🧊 بعد التمرين</h3>
+      <p>وجبة بروتين+كارب، تمدّد خفيف، ونوم ٧-٩ ساعات لبناء العضلة.</p>
+      <button type="button" onclick="openTipModal('post')">اقرأ التفاصيل ›</button>
+    </div>
+    <div class="tip-card tc-mistakes">
+      <h3>⚠️ أخطاء شائعة</h3>
+      <p>وزن زائد على حساب الأداء، مدى ناقص، تخطّي الإحماء، وإهمال التسجيل.</p>
+      <button type="button" onclick="openTipModal('mistakes')">اقرأ التفاصيل ›</button>
+    </div>
+    <div class="tip-card tc-redflags">
+      <h3>🚨 علامات الخطر</h3>
+      <p>ألم حاد بمفصل، دوخة، ضيق تنفّس، أو تنميل = توقّف فوراً واستشر مختصاً.</p>
+      <button type="button" onclick="openTipModal('redflags')">اقرأ التفاصيل ›</button>
+    </div>
+    <div class="tip-card tc-deload">
+      <h3>🔄 أسبوع Deload</h3>
+      <p>كل ٦-٨ أسابيع: خفّف الوزن أو السيتات للنصف لتتعافى وتعود أقوى.</p>
+      <button type="button" onclick="openTipModal('deload')">اقرأ التفاصيل ›</button>
+    </div>
+  </div>
 
   <!-- V9.0 (P5) — Guide Hub: ٤ بطاقات تنقّل سريع لتبويبات المحتوى التعليمي المخفية من nav -->
   <div class="guide-hub">
@@ -1220,6 +1254,18 @@
     </div>
     <div id="formNoteBody" class="form-note-body"></div>
     <div class="form-note-hint">💡 للشرح الكامل وكل الأجهزة: تبويب <b>"أول مرة"</b>.</div>
+  </div>
+</div>
+
+<!-- V9.14.4 (#10) — Tip details modal -->
+<div class="alt-modal tip-modal" id="tipModal" aria-hidden="true">
+  <div class="alt-sheet tip-sheet" role="dialog" aria-labelledby="tipModalTitle">
+    <div class="alt-grabber"></div>
+    <div class="alt-head">
+      <div><div class="alt-title" id="tipModalTitle">—</div></div>
+      <button class="alt-close" onclick="closeTipModal()" aria-label="إغلاق">✕</button>
+    </div>
+    <div id="tipModalBody" class="tip-modal-body"></div>
   </div>
 </div>
 
