@@ -133,8 +133,9 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Fetch strategy:
-// - origin assets: cache-first with background update
-// - Chart.js (jsdelivr): stale-while-revalidate (works offline after first load)
+// - navigation (HTML): network-first → الصفحة دائماً محدّثة عند وجود إنترنت، والكاش fallback أوفلاين
+// - origin assets (CSS/JS/...): stale-while-revalidate → يقدّم الكاش فوراً ويحدّثه في الخلفية،
+//   فتظهر التعديلات في التحميل التالي حتى بدون رفع رقم الإصدار. يبقى يعمل أوفلاين.
 // - fonts: stale-while-revalidate
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
@@ -142,20 +143,31 @@ self.addEventListener('fetch', (event) => {
 
   // App-shell (same origin)
   if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (response.ok) {
+    // التنقّل بين الصفحات (HTML) — network-first
+    if (event.request.mode === 'navigate') {
+      event.respondWith(
+        fetch(event.request).then((response) => {
+          if (response && response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        }).catch(() => {
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
+        }).catch(() =>
+          caches.match(event.request).then((cached) => cached || caches.match('./index.html'))
+        )
+      );
+      return;
+    }
+
+    // باقي ملفات نفس النطاق (CSS/JS/SVG/...) — stale-while-revalidate
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response && response.ok) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
       })
     );
     return;
