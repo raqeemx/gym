@@ -4058,8 +4058,9 @@ button.dqs-card:hover{border-color:rgba(212,168,83,.2);transform:translateY(-2px
   .fab-menu{bottom:calc(140px + var(--sai-bottom)) !important}
   /* btt + sess-pill انتقل أعلى */
   .btt{bottom:calc(76px + var(--sai-bottom)) !important}
-  .sess-pill{bottom:calc(76px + var(--sai-bottom)) !important}
-  .week-float{bottom:calc(76px + var(--sai-bottom)) !important}
+  /* V9.14.8 — لازم top:auto وإلا يبقى top الأساسي فيتمدد العنصر عمودياً (شريط طويل) */
+  .sess-pill{top:auto !important;bottom:calc(76px + var(--sai-bottom)) !important}
+  .week-float{top:auto !important;bottom:calc(76px + var(--sai-bottom)) !important}
   /* Timer trigger أعلى */
   .ttrig{bottom:calc(76px + var(--sai-bottom)) !important}
 }

@@ -636,6 +636,11 @@ async function importData(event){
       }
       const setsCount=(imp.sets||[]).length;
       if(!await customConfirm(`استيراد <b>${setsCount}</b> سيت + <b>${(imp.workouts||[]).length}</b> جلسة؟<br><br><b style="color:var(--red)">⚠️ سيُمسح ما هو موجود حالياً.</b>`,{title:'استيراد بيانات',okText:'استورد',danger:true,icon:'📥'})) return;
+      // V9.14.8 — تطبيع النسخ القديمة/التالفة: أي تاريخ غير صالح → '' (يمنع crashes في split/localeCompare/toISOString)
+      const _vd=(v)=>(typeof v==='string' && v && !isNaN(new Date(v).getTime()))?v:'';
+      (imp.workouts||[]).forEach(w=>{ if(w) w.startTime=_vd(w.startTime); });
+      ['sets','bodyMetrics','dailyLog','foodEntries'].forEach(k=>{ (imp[k]||[]).forEach(r=>{ if(r) r.date=_vd(r.date); }); });
+      (imp.prs||[]).forEach(p=>{ if(p){ p.date=_vd(p.date); if(!p.exerciseName && p.exercise) p.exerciseName=p.exercise; } });
       // امسح متاجر البيانات (settings تُدمج لاحقاً بدون مسح للحفاظ على حالة الجلسة)
       for(const st of ['workouts','sets','exercises','bodyMetrics','dailyLog','foodEntries','prs','progressPhotos']){
         try{await db.clear(st)}catch(e){console.warn('clear failed:',st,e)}
@@ -1653,7 +1658,8 @@ async function renderPRs(){
   prs.forEach(p=>{typeCounts[p.type]=(typeCounts[p.type]||0)+1});
 
   const items=Object.entries(byEx).sort((a,b)=>a[0].localeCompare(b[0],'ar')).map(([ex,types])=>{
-    const lastDate=Math.max(...Object.values(types).map(t=>new Date(t.date).getTime()));
+    // V9.14.8 — صفِّ التواريخ التالفة (بيانات قديمة قد لا تحوي date صالحاً) لتفادي Invalid time value
+    const lastDate=Math.max(...Object.values(types).map(t=>new Date(t.date).getTime()).filter(n=>!isNaN(n)));
     // مرتب حسب TYPE_ORDER
     const sortedTypes=Object.entries(types).sort((a,b)=>TYPE_ORDER.indexOf(a[0])-TYPE_ORDER.indexOf(b[0]));
     const typesHtml=sortedTypes.map(([t,p])=>{
@@ -1674,7 +1680,7 @@ async function renderPRs(){
         <div class="pr-name">${ex}</div>
         <div class="pr-types">${typesHtml}</div>
       </div>
-      <div class="pr-date">${fmtDate(new Date(lastDate).toISOString())}</div>
+      <div class="pr-date">${isFinite(lastDate)?fmtDate(new Date(lastDate).toISOString()):''}</div>
     </div>`;
   });
 

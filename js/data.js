@@ -554,6 +554,7 @@ function getDayLabel(stepEl){
 function fmtDate(iso){
   if(!iso) return '';
   const d=new Date(iso);
+  if(isNaN(d.getTime())) return ''; // V9.14.8 — تاريخ تالف من بيانات قديمة
   return d.toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
 }
 
