@@ -1120,7 +1120,7 @@ function renderDailyLogHistory(records){
   });
 }
 
-function renderDailyLogStats(allRecords){
+async function renderDailyLogStats(allRecords){
   const wrap=document.getElementById('dlStats');
   if(!wrap) return;
   // آخر ٧ أيام

@@ -5,6 +5,16 @@
 
 ---
 
+## [V9.14.6 — إصلاح جذري: أقسام "تقدّمي" عالقة على «جاري التحميل…»] — 2026-06-01
+
+السبب الجذري: الدالة `renderDailyLogStats` في [`js/progress.js`](js/progress.js) كانت تستخدم `await` وهي **ليست `async`** → خطأ تحليل (`await is only valid in async functions`) **يُعطّل ملف `progress.js` بالكامل**. فلم تُعرّف `renderAchievements`/`renderPRs`/`renderRecovery` ولا معالجات النقر على التبويبات الفرعية ولا `checkExportReminder` → بقيت بطاقات «جاري التحميل…» عالقة في صفحة "تقدّمي" والتبويبات الفرعية لا تتبدّل.
+
+- الإصلاح: `async function renderDailyLogStats(...)` (المستدعي fire-and-forget، آمن).
+- التحقّق: فحص آلي بـ headless Chrome — كل التبويبات الفرعية (إنجازات/راحة/تحليلات/قياسات/يومي/صور) نظيفة بلا علوق، واختفت أخطاء console (`pageerror` + `ReferenceError: checkExportReminder`).
+- bump إلى 9.14.6 لتغيير CACHE_NAME.
+
+---
+
 ## [V9.14.5 — تصلّب آلية تحديث الـ PWA: التعديلات تظهر دائماً] — 2026-06-01
 
 السبب الجذري لـ"التحديثات لا تظهر": الموقع المنشور والكود سليمان (تحقّقنا أن GitHub Pages يحمل آخر إصدار وكل أصول الـ SW تُرجع 200)، لكن كاش الـ PWA على الجهاز كان بطيئاً في كشف النسخة الجديدة. الإصلاح في تسجيل الـ Service Worker ([`js/app.js`](js/app.js)):
