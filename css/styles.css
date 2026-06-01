@@ -4400,3 +4400,91 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
   .ss-exercises{flex-direction:column}
   .ss-vs{transform:rotate(90deg);padding:2px 0}
 }
+
+/* ============================================================
+ * V9.14.4 — الأجهزة حسب العضلة · أوزان اليوم · تغذية مختصرة · ملخص تقدّم · بطاقات نصائح
+ * ============================================================ */
+
+/* ----- (#6) قسم الأجهزة مقسّم حسب العضلة ----- */
+.eg.eq-by-muscle{display:block}
+.eq-group{margin-bottom:16px}
+.eq-group-head{display:flex;align-items:center;gap:8px;font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;color:var(--mc,#8890A0);margin-bottom:8px}
+.eq-group-head small{color:var(--tx3);font-weight:600;font-size:11px;font-family:'Rubik',sans-serif}
+.eq-dot{width:10px;height:10px;border-radius:50%;background:var(--mc,#8890A0);box-shadow:0 0 8px var(--mc,#8890A0);flex:0 0 auto}
+.eq-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.eq-card{background:linear-gradient(150deg,var(--s2),var(--s3));border:1px solid rgba(255,255,255,.05);border-right:3px solid var(--mc,#8890A0);border-radius:12px;padding:12px}
+.eq-card-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:13.5px;color:#fff;margin-bottom:8px}
+[data-theme="light"] .eq-card-name{color:#1A1D24}
+.eq-card-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.eq-card-row{display:flex;justify-content:space-between;gap:8px;font-size:11px}
+.eq-card-row span{color:var(--tx3)}
+.eq-card-row b{color:var(--tx);font-weight:600;text-align:left}
+.eq-how{width:100%;background:rgba(212,168,83,.1);color:var(--g2);border:1px solid rgba(212,168,83,.2);border-radius:8px;padding:7px;font-family:'Rubik',sans-serif;font-weight:700;font-size:11.5px;cursor:pointer;transition:.2s;-webkit-tap-highlight-color:transparent}
+.eq-how:hover{background:rgba(212,168,83,.18)}
+
+/* ----- (#7) بطاقة أوزان اليوم ----- */
+.rw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.rw-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.04);border-radius:9px;padding:9px 12px}
+.rw-ex{font-size:12.5px;color:var(--tx);font-weight:600}
+.rw-w{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--g2);font-weight:700;white-space:nowrap}
+
+/* ----- (#8) تغذية مختصرة ----- */
+.nut-target{margin-bottom:12px}
+.nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}
+.nut-cal-cur{font-size:26px;font-weight:800;color:#fff}
+[data-theme="light"] .nut-cal-cur{color:#1A1D24}
+.nut-cal-sep{color:var(--tx3);font-size:18px}
+.nut-cal-tgt{font-size:18px;color:var(--g2);font-weight:700}
+.nut-target-main small{color:var(--tx3);font-size:12px;font-family:'Rubik',sans-serif}
+.nut-cal-track{height:8px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.nut-cal-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--g3),var(--g1));transition:width .5s cubic-bezier(.16,1,.3,1)}
+.nut-cal-fill.full{background:linear-gradient(90deg,var(--grn),#3FCF72)}
+.nut-cal-fill.low{background:linear-gradient(90deg,var(--org),var(--g1))}
+.nut-macros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.nut-macro{text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:9px 6px}
+.nut-macro .nm-lbl{font-size:10.5px;color:var(--tx3);margin-bottom:3px;font-family:'Outfit',sans-serif;font-weight:700;letter-spacing:.3px}
+.nut-macro .nm-val b{font-size:16px;color:#fff;font-weight:800}
+[data-theme="light"] .nut-macro .nm-val b{color:#1A1D24}
+.nut-macro .nm-val small{font-size:10px;color:var(--tx3)}
+.nut-protein{border-bottom:2px solid var(--red)}
+.nut-carb{border-bottom:2px solid var(--org)}
+.nut-fat{border-bottom:2px solid var(--purple)}
+.nut-actions{margin-top:10px}
+
+/* ----- (#9) ملخص التقدّم ----- */
+.dash-progress-summary .dps-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.dps-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:10px}
+.dps-lbl{display:block;font-size:10.5px;color:var(--tx3);margin-bottom:3px}
+.dps-val{font-size:13.5px;color:#fff;font-weight:700;font-family:'Outfit',sans-serif}
+[data-theme="light"] .dps-val{color:#1A1D24}
+.dps-compliance{margin-bottom:12px}
+.dps-compliance .dtp-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--tx2)}
+.dps-compliance .dtp-val{margin-right:auto;color:#fff;font-weight:800}
+[data-theme="light"] .dps-compliance .dtp-val{color:#1A1D24}
+.dps-compliance .dtp-track{height:7px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.dps-compliance .dtp-fill{height:100%;border-radius:99px;transition:width .5s}
+.dps-compliance .dtp-fill-good{background:linear-gradient(90deg,var(--grn),#3FCF72)}
+.dps-compliance .dtp-fill-ok{background:linear-gradient(90deg,var(--org),var(--g1))}
+.dps-compliance .dtp-fill-low{background:linear-gradient(90deg,var(--red),var(--org))}
+
+/* ----- (#10) بطاقات النصائح القصيرة + modal ----- */
+.tips-cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.tip-card{background:linear-gradient(150deg,var(--s1),var(--s2));border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:14px;display:flex;flex-direction:column}
+.tip-card h3{font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;margin:0 0 6px;color:#fff}
+[data-theme="light"] .tip-card h3{color:#1A1D24}
+.tip-card p{font-size:11.5px;color:var(--tx2);line-height:1.7;margin:0 0 10px;flex:1}
+.tip-card button{background:rgba(212,168,83,.1);color:var(--g2);border:1px solid rgba(212,168,83,.2);border-radius:8px;padding:7px;font-family:'Rubik',sans-serif;font-weight:700;font-size:11.5px;cursor:pointer;transition:.2s;-webkit-tap-highlight-color:transparent}
+.tip-card button:hover{background:rgba(212,168,83,.18)}
+.tip-card.tc-redflags{border-color:rgba(255,90,95,.2)}
+.tip-card.tc-redflags button{background:rgba(255,90,95,.1);color:var(--red);border-color:rgba(255,90,95,.25)}
+.tip-modal-body{padding:4px 2px 8px;color:var(--tx2);font-size:13.5px;line-height:1.9}
+.tip-modal-body p{margin:0 0 12px;color:var(--tx)}
+.tip-modal-body ul{margin:0;padding-right:20px;display:flex;flex-direction:column;gap:7px}
+.tip-modal-body li{font-size:12.5px}
+.tip-modal-body b{color:var(--g2)}
+
+@media (max-width:600px){
+  .eq-cards{grid-template-columns:1fr}
+  .tips-cards-grid{grid-template-columns:1fr}
+  .nut-macros{gap:6px}
+}
