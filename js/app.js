@@ -1075,6 +1075,11 @@ function goToDay(idx){
   // تأكد إن تبويب التمارين فاتح
   const t1Btn=document.querySelector('.nb[data-t="1"]');
   if(t1Btn && !t1Btn.classList.contains('a')) t1Btn.click();
+  // V9.14.2 — فعّل تبويب اليوم المطابق (حتى لا تبقى البطاقة مخفية بفلتر التبويبات)
+  if(typeof selectDayTab==='function'){
+    const wd=target.dataset.weekday!=null?Number(target.dataset.weekday):idx;
+    selectDayTab(wd);
+  }
   // افتح البطاقة
   if(!target.classList.contains('open')) target.classList.add('open');
   // سكروول بعد فريم لضمان عرض التبويب
@@ -1324,6 +1329,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
       maybeShowGymHint(); // V8.4 — تعريف بميزة الجيمات أوّل مرة
     }
     await highlightToday();    // V9.3 — async الآن: يقرأ آخر workout من DB
+    if(typeof setupDayTabs==='function') setupDayTabs(); // V9.14.2 — تبويبات التمارين حسب اليوم
     // V9.7 (#10) — banner لو تمارين البرنامج لا تتوفر في active gym
     setTimeout(()=>{
       try{

@@ -804,34 +804,54 @@
 
   // 4. WEEK GRID — ٧ خلايا تفاعلية، لون حسب الحالة
   // (يَستخدم الأنواع من program data، يطبَّق applyWeekGridStatus من ui-v99.js لاحقاً)
-  function _weekGridBlock(){
+  // V9.14.2 — جدول الأسبوع كبطاقات أيام بصرية:
+  //   اليوم → ذهبي · المكتمل → علامة صح خضراء · الراحة → أزرق هادئ
+  function _weekGridBlock(workouts){
     const days=(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM && EFFECTIVE_PROGRAM.days)
       ?EFFECTIVE_PROGRAM.days
       :(typeof PROGRAM_DATA!=='undefined'?PROGRAM_DATA.days:[]);
     if(!days || !days.length) return '';
     const arDayNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-    // رتّب حسب dayOfWeek
     const byWd={};
     days.forEach(d=>{byWd[d.dayOfWeek]=d});
-    const cells=[];
+    const todayWd=new Date().getDay();
+    // بداية الأسبوع (الأحد ٠٠:٠٠) لحساب الأيام المكتملة هذا الأسبوع
+    const now=new Date();
+    const sow=new Date(now); sow.setHours(0,0,0,0); sow.setDate(now.getDate()-now.getDay());
+    const completedWd=new Set();
+    (workouts||[]).forEach(w=>{
+      if(!w || !w.startTime) return;
+      const t=new Date(w.startTime);
+      if(t>=sow) completedWd.add(t.getDay());
+    });
+    const cards=[];
     for(let wd=0;wd<7;wd++){
       const d=byWd[wd];
       const isRest=!d || d.isRest || d.type==='REST';
       const typeLbl=isRest?'راحة':(d.type||d.label||'—');
-      // class حسب نوع اليوم (للتلوين الموحّد عبر V9.10)
       let cat='push';
       if(isRest) cat='rest';
       else if(/BACK|PULL/i.test(typeLbl)) cat='pull';
       else if(/LEGS?|أرجل/i.test(typeLbl)) cat='legs';
       else if(/ARMS?|بايسبس|ترايسبس|ذراع/i.test(typeLbl)) cat='arms';
-      // class قديم (cp/cpl/cl/cr) للتوافق
-      const oldCls=isRest?'cr':(cat==='pull'?'cpl':cat==='legs'?'cl':cat==='arms'?'cpl':'cp');
-      cells.push(`<div class="wc ${oldCls}" data-day="${wd}" data-day-type="${cat}"><div class="wd">${E(arDayNames[wd])}</div><div class="wt">${E(typeLbl)}</div></div>`);
+      const isToday=wd===todayWd;
+      const isDone=completedWd.has(wd) && !isRest;
+      let statusCls,statusLbl;
+      if(isRest){ statusCls='rest'; statusLbl='استشفاء'; }
+      else if(isToday){ statusCls='today'; statusLbl=isDone?'اليوم · تم':'اليوم'; }
+      else if(isDone){ statusCls='done'; statusLbl='تم'; }
+      else { statusCls='upcoming'; statusLbl='قادم'; }
+      const check=isDone?'<span class="wday-check">✓</span>':'';
+      cards.push(`<button type="button" class="wday-card wday-${statusCls} cat-${cat}" data-day="${wd}" onclick="openWorkoutDay(${wd})">
+          <span class="wday-name">${E(arDayNames[wd])}</span>
+          <span class="wday-type">${E(typeLbl)}</span>
+          <span class="wday-status">${check}${E(statusLbl)}</span>
+        </button>`);
     }
     return `
       <div class="dash-card dash-week-card">
-        <div class="dash-card-head dash-card-head-mini">📅 خطّتك هذا الأسبوع</div>
-        <div class="wg">${cells.join('')}</div>
+        <div class="dash-card-head dash-card-head-mini">📅 جدول الأسبوع</div>
+        <div class="wday-list">${cards.join('')}</div>
       </div>`;
   }
 
@@ -1020,7 +1040,7 @@
         ${_programQuickSummary()}
         ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets)}
         ${_quickStats3(streak,week)}
-        ${_weekGridBlock()}
+        ${_weekGridBlock(data.workouts)}
         ${_nextAchievementBlockFiltered(nextAch)}
         ${_prsCarousel(data.prs)}
         ${_nutritionBars(nutrition,nutritionTargets,daily)}
