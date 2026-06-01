@@ -132,28 +132,127 @@ function renderDaySummary(stats){
 }
 
 // ============ مرحلة (warmup/solo/pair) ============
+// V9.14.2 — تُعرض كبطاقات تمارين: بطاقة لكل تمرين (solo) أو بطاقة زوج (superset)
+// تحافظ على ترتيب وعدد عناصر .step كما هي → step IDs والتتبع لا ينكسران.
 function renderPhase(phase,counter){
-  let html=`      <div class="phase-bar">`+
-           `<span class="pl">${_pre(phase.label)}</span>`+
-           `<span class="pn">${_pre(phase.name)}</span>`+
-           (phase.meta?`<span class="pmeta">${_pre(phase.meta)}</span>`:'')+
-           `</div>`;
-  // banner اختياري (للأزواج)
-  if(phase.banner){
-    html+=`\n      <div class="pair-banner">`+
-          `<span class="pb-icon">${phase.banner.icon}</span>`+
-          `<div><span class="zone-tag">${phase.banner.zoneTag}</span>${phase.banner.text}</div>`+
-          `</div>`;
-  }
-  // Plan B (للأزواج)
-  if(phase.planB){
-    html+=`\n      <div class="plan-b"><span class="pb-tag">PLAN B</span><div>${phase.planB}</div></div>`;
-  }
-  // الستيبات
+  // ستيبات المرحلة بنفس الترتيب الأصلي (لا نعيد ترتيبها أبداً)
+  let stepsHtml='';
   for(const s of phase.steps){
-    html+='\n      '+renderStep(s,counter);
+    stepsHtml+='\n        '+renderStep(s,counter);
   }
-  return html;
+
+  // --- إحماء: بطاقة إحماء بسيطة ---
+  if(phase.type==='warmup'){
+    return `      <div class="ex-card ex-warmup">
+        <div class="ex-head"><span class="ex-kind">🔥 ${_pre(phase.label||'إحماء')}</span>`+
+        (phase.name?`<span class="ex-title-sm">${_pre(phase.name)}</span>`:'')+`</div>
+        <div class="ex-body">${stepsHtml}
+        </div>
+      </div>`;
+  }
+
+  const exList=_phaseExercises(phase);
+  const restName=_phaseRestName(phase);
+
+  // --- تمرين منفرد (SOLO أو أي مرحلة بتمرين واحد) ---
+  if(exList.length<=1){
+    const ex=exList[0]||{name:phase.name||'',sets:0,reps:''};
+    return `      <div class="ex-card">
+        ${_exHeadHtml(ex,phase,restName)}`+
+        (phase.banner?_bannerHtml(phase.banner):'')+
+        (phase.planB?_planBHtml(phase.planB):'')+`
+        <div class="ex-body">${stepsHtml}
+        </div>
+      </div>`;
+  }
+
+  // --- زوج (Superset): تمرينان+ يتبادلان — نحافظ على التبادل ---
+  const exHeads=exList.map(ex=>`<div class="ss-ex">
+          <div class="ss-ex-name">${_pre(ex.name)}</div>
+          <div class="ss-ex-meta">${_exMetaInline(ex)}</div>
+        </div>`).join('<div class="ss-vs">↔</div>');
+  return `      <div class="ex-card ex-superset">
+        <div class="ss-head"><span class="ss-tag">🔄 ${_pre(phase.label||'SUPERSET')}</span>`+
+        (phase.name?`<span class="ss-name">${_pre(phase.name)}</span>`:'')+
+        (phase.meta?`<span class="ss-meta">${_pre(phase.meta)}</span>`:'')+`</div>
+        <div class="ss-exercises">${exHeads}</div>`+
+        (phase.banner?_bannerHtml(phase.banner):'')+
+        (phase.planB?_planBHtml(phase.planB):'')+
+        (restName?`<div class="ss-rest-note">🔁 تبادل بين التمرينين · راحة ${_pre(restName)} بين كل انتقال</div>`:'')+`
+        <div class="ex-body ss-rounds">${stepsHtml}
+        </div>
+      </div>`;
+}
+
+// ============ مساعدات بطاقات التمارين (V9.14.2) ============
+// نظّف اسم التمرين من لاحقة "— سيت ١ / — مجموعة تسخين / (الأخير)"
+function _exNameClean(name){
+  return String(name==null?'':name)
+    .replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'')
+    .replace(/\s*[—-]\s*سيت[\s\S]*$/,'')
+    .replace(/\s*\([^)]*\)\s*$/,'')
+    .trim();
+}
+// استخرج تمارين المرحلة (بالترتيب) مع عدد السيتات ونطاق التكرار لكل تمرين
+function _phaseExercises(phase){
+  const order=[]; const map={};
+  for(const s of (phase.steps||[])){
+    if(!s || s.type==='rest') continue;
+    const ex=_exNameClean(s.name);
+    if(!ex) continue;
+    if(!map[ex]){ map[ex]={name:ex,sets:0,reps:''}; order.push(ex); }
+    map[ex].sets++;
+    if(!map[ex].reps && s.info){ map[ex].reps=String(s.info).split('·')[0].trim(); }
+  }
+  return order.map(k=>map[k]);
+}
+// استخرج مدة الراحة من أول ستيب راحة (مثلاً "٩٠ ثانية")
+function _phaseRestName(phase){
+  const r=(phase.steps||[]).find(s=>s && s.type==='rest');
+  if(!r) return '';
+  const m=String(r.name||'').match(/[\d٠-٩]+\s*(?:ثانية|ث|دقيقة|د)/);
+  if(m) return m[0];
+  return String(r.name||'').replace(/^راحة\s*/,'').split('+')[0].trim();
+}
+// العضلة المستهدفة من كتالوج substitutions.js (لو متاح)
+function _exMuscle(exName){
+  try{
+    if(typeof getMuscleGroup==='function'){
+      const mg=getMuscleGroup(exName);
+      if(mg && mg.group) return mg.group;
+    }
+  }catch(e){}
+  return '';
+}
+// رأس بطاقة تمرين منفرد: الاسم + شرائح (عضلة/جهاز/سيتات/راحة)
+function _exHeadHtml(ex,phase,restName){
+  const muscle=_exMuscle(ex.name);
+  const chips=[];
+  if(muscle) chips.push(`<span class="ex-chip ex-muscle">🎯 ${_pre(muscle)}</span>`);
+  chips.push(`<span class="ex-chip ex-machine">🏋️ ${_pre(ex.name)}</span>`);
+  if(ex.sets) chips.push(`<span class="ex-chip">📊 ${ex.sets} × ${_pre(ex.reps||'')}</span>`);
+  if(restName) chips.push(`<span class="ex-chip ex-rest">⏱ ${_pre(restName)}</span>`);
+  return `<div class="ex-head">`+
+    (phase.label?`<span class="ex-kind">${_pre(phase.label)}</span>`:'')+
+    `<div class="ex-title">${_pre(ex.name)}</div>
+        <div class="ex-chips">${chips.join('')}</div>
+      </div>`;
+}
+// سطر معلومات مضغوط لتمرين داخل بطاقة الزوج
+function _exMetaInline(ex){
+  const muscle=_exMuscle(ex.name);
+  const bits=[];
+  if(muscle) bits.push(`🎯 ${_pre(muscle)}`);
+  bits.push(`🏋️ ${_pre(ex.name)}`);
+  if(ex.sets) bits.push(`📊 ${ex.sets}×${_pre(ex.reps||'')}`);
+  return bits.join(' · ');
+}
+function _bannerHtml(banner){
+  return `<div class="pair-banner"><span class="pb-icon">${banner.icon}</span>`+
+         `<div><span class="zone-tag">${banner.zoneTag}</span>${banner.text}</div></div>`;
+}
+function _planBHtml(planB){
+  return `<div class="plan-b"><span class="pb-tag">PLAN B</span><div>${planB}</div></div>`;
 }
 
 // ============ ستيب واحد ============
@@ -282,3 +381,88 @@ function closeFormNoteModal(){
   modal.setAttribute('aria-hidden','true');
   document.body.style.overflow='';
 }
+
+/* ============================================================
+ * V9.14.2 — تبويبات التمارين حسب اليوم (Day Tabs)
+ * ============================================================
+ * بدل عرض كل الأيام دفعة واحدة، نعرض شريط تبويبات:
+ *   اليوم · الأحد · الاثنين · ... (أيام التدريب فقط، تُستثنى الراحة)
+ * كل تبويب يُظهر بطاقة يومه فقط (الباقي display:none — تبقى في DOM
+ * فيبقى التتبع و step IDs سليمة).
+ * ============================================================ */
+const _AR_DAY_NAMES=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+function _progDays(){
+  if(typeof EFFECTIVE_PROGRAM!=='undefined' && EFFECTIVE_PROGRAM && EFFECTIVE_PROGRAM.days) return EFFECTIVE_PROGRAM.days;
+  if(typeof PROGRAM_DATA!=='undefined' && PROGRAM_DATA && PROGRAM_DATA.days) return PROGRAM_DATA.days;
+  return [];
+}
+
+function setupDayTabs(){
+  const container=document.getElementById('programContainer');
+  if(!container) return;
+  const prog=_progDays();
+  // اربط كل بطاقة .dy بيوم الأسبوع الخاص بها
+  container.querySelectorAll('.dy').forEach((dy,i)=>{
+    const id=dy.getAttribute('data-day-id');
+    const pd=prog.find(d=>d.id===id);
+    dy.dataset.weekday=(pd && pd.dayOfWeek!=null)?pd.dayOfWeek:i;
+  });
+  // ابنِ شريط التبويبات (أيام التدريب فقط، مرتّبة)
+  let bar=document.getElementById('dayTabs');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='dayTabs';
+    bar.className='day-tabs';
+    bar.setAttribute('role','tablist');
+    container.parentNode.insertBefore(bar,container);
+  }
+  const trainDays=prog.filter(d=>!(d.isRest||d.type==='REST'))
+                      .slice().sort((a,b)=>a.dayOfWeek-b.dayOfWeek);
+  let html=`<button type="button" class="day-tab" data-wd="today" onclick="selectDayTab('today')">⭐ اليوم</button>`;
+  html+=trainDays.map(d=>`<button type="button" class="day-tab" data-wd="${d.dayOfWeek}" onclick="selectDayTab(${d.dayOfWeek})">${_pre(_AR_DAY_NAMES[d.dayOfWeek]||d.shortName||'')}</button>`).join('');
+  bar.innerHTML=html;
+  selectDayTab('today');
+}
+
+function selectDayTab(wd){
+  const container=document.getElementById('programContainer');
+  if(!container) return;
+  const isToday=(wd==='today');
+  let targetWd=isToday?new Date().getDay():Number(wd);
+  // لو اليوم الحالي لا يطابق أي بطاقة (نادر) → اعرض أول يوم تدريب
+  const allDy=container.querySelectorAll('.dy');
+  let matchExists=Array.prototype.some.call(allDy,dy=>Number(dy.dataset.weekday)===targetWd);
+  if(!matchExists && allDy.length){ targetWd=Number(allDy[0].dataset.weekday); }
+  // أظهر يوم الهدف فقط
+  allDy.forEach(dy=>{
+    if(Number(dy.dataset.weekday)===targetWd) dy.classList.remove('dt-hidden');
+    else dy.classList.add('dt-hidden');
+  });
+  // افتح البطاقة الظاهرة تلقائياً (إلا يوم الراحة بدون body)
+  const visible=container.querySelector('.dy:not(.dt-hidden)');
+  if(visible && !visible.querySelector('.db.rest')) visible.classList.add('open');
+  // تفعيل التبويب المناسب بصرياً
+  const bar=document.getElementById('dayTabs');
+  if(bar){
+    bar.querySelectorAll('.day-tab').forEach(b=>b.classList.remove('active'));
+    const sel=isToday?bar.querySelector('.day-tab[data-wd="today"]')
+                     :bar.querySelector('.day-tab[data-wd="'+targetWd+'"]');
+    if(sel) sel.classList.add('active');
+  }
+}
+
+// يُستدعى من بطاقات جدول الأسبوع في الـ Dashboard
+function openWorkoutDay(wd){
+  if(typeof switchToTab==='function') switchToTab(1);
+  setTimeout(()=>{
+    if(typeof selectDayTab==='function') selectDayTab(Number(wd));
+    const c=document.getElementById('programContainer');
+    const v=c&&c.querySelector('.dy:not(.dt-hidden)');
+    if(v) v.scrollIntoView({behavior:'smooth',block:'start'});
+  },160);
+}
+
+window.setupDayTabs=setupDayTabs;
+window.selectDayTab=selectDayTab;
+window.openWorkoutDay=openWorkoutDay;
