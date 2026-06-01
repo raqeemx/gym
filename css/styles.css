@@ -1037,6 +1037,23 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 @keyframes undoCountdown{from{width:100%}to{width:0%}}
 .toast-full{flex-direction:column;align-items:stretch}
 
+/* V9.14.7 — تحسين عرض الإشعارات على الموبايل:
+   شريط بعرض مريح فوق التنقّل السفلي، يحترم safe-area، نص أوضح ولا يتداخل مع الـ bottom-nav. */
+@media (max-width:600px){
+  .toast{
+    left:12px;right:12px;max-width:none;
+    bottom:calc(72px + var(--sai-bottom));
+    transform:translateY(16px);
+    padding:14px 16px;font-size:13.5px;line-height:1.45;
+    border-radius:14px;border-width:1.5px;
+    box-shadow:0 10px 30px rgba(0,0,0,.55);
+    text-align:right;
+  }
+  .toast.show{transform:translateY(0)}
+  .toast-msg{font-size:13.5px}
+  .toast-undo{padding:9px 14px;font-size:12px}
+}
+
 .day-summary{display:flex;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:12px;margin-bottom:14px}
 .ds-item{flex:1;min-width:90px;text-align:center}
 .ds-num{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--g2);display:block}

@@ -492,6 +492,7 @@ async function exportData(){
     exercises:await db.getAll('exercises'),
     bodyMetrics:await db.getAll('bodyMetrics'),
     dailyLog:await db.getAll('dailyLog'), // V7.2 #38
+    foodEntries:await db.getAll('foodEntries'), // V9.14.7 — تضمين سجل التغذية في النسخة الاحتياطية
     prs:await db.getAll('prs'),
     // V8.3 (3.13) — استبعد FileSystemDirectoryHandle (غير قابل للنقل بين الأجهزة)
     settings:(await db.getAll('settings')).filter(s=>!(s.key||'').includes('autobackup_handle'))
@@ -635,8 +636,8 @@ async function importData(event){
       }
       const setsCount=(imp.sets||[]).length;
       if(!await customConfirm(`استيراد <b>${setsCount}</b> سيت + <b>${(imp.workouts||[]).length}</b> جلسة؟<br><br><b style="color:var(--red)">⚠️ سيُمسح ما هو موجود حالياً.</b>`,{title:'استيراد بيانات',okText:'استورد',danger:true,icon:'📥'})) return;
-      // امسح كل المتجرات (عدا settings)
-      for(const st of ['workouts','sets','exercises','bodyMetrics','dailyLog','prs','progressPhotos']){
+      // امسح متاجر البيانات (settings تُدمج لاحقاً بدون مسح للحفاظ على حالة الجلسة)
+      for(const st of ['workouts','sets','exercises','bodyMetrics','dailyLog','foodEntries','prs','progressPhotos']){
         try{await db.clear(st)}catch(e){console.warn('clear failed:',st,e)}
       }
       for(const w of (imp.workouts||[])) await db.put('workouts',w);
@@ -644,7 +645,15 @@ async function importData(event){
       for(const ex of (imp.exercises||[])) await db.put('exercises',ex);
       for(const bm of (imp.bodyMetrics||[])) await db.put('bodyMetrics',bm);
       for(const dl of (imp.dailyLog||[])) await db.put('dailyLog',dl); // V7.2 #38
+      for(const fe of (imp.foodEntries||[])){const c={...fe};delete c.id;await db.add('foodEntries',c)} // V9.14.7 — سجل التغذية
       for(const pr of (imp.prs||[])){const c={...pr};delete c.id;await db.add('prs',c)}
+      // V9.14.7 — استعادة الإعدادات (ملف شخصي، جيمات، إعدادات البرنامج…)
+      // نتجاهل مفاتيح الجلسة/الترحيل/المقبض المحلي حتى لا نستعيد حالة جلسة قديمة.
+      for(const st of (imp.settings||[])){
+        const k=st&&st.key||'';
+        if(k.startsWith('session:')||k.includes('migrated')||k.includes('autobackup_handle')) continue;
+        try{await db.put('settings',st)}catch(e){console.warn('settings restore failed:',k,e)}
+      }
       showToast('✓ تم استيراد البيانات بنجاح');
       setTimeout(()=>location.reload(),1000);
     }catch(err){

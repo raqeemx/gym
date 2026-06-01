@@ -935,12 +935,12 @@
   <button onclick="openGymManager()">🏋️ إدارة الجيمات</button>
   <button onclick="toggleTheme()" id="themeToggleBtn">🌙 الوضع المضيء</button>
   <button onclick="exportData()">💾 تصدير البيانات</button>
+  <button onclick="document.getElementById('importFile').click()">📥 استيراد البيانات</button>
 
   <!-- قسم "مزيد" قابل للطي -->
   <details class="fab-more">
     <summary>⋯ مزيد</summary>
     <button onclick="openOnboarding()">🎯 الجولة التعريفية</button>
-    <button onclick="document.getElementById('importFile').click()">📥 استيراد بيانات</button>
   </details>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 </div>
@@ -955,6 +955,7 @@
     <div id="historyBody"></div>
     <div class="stats-actions">
       <button onclick="exportData()">💾 تصدير نسخة احتياطية</button>
+      <button onclick="document.getElementById('importFile').click()">📥 استيراد نسخة احتياطية</button>
       <button class="danger" onclick="clearAllData()">🗑 مسح كل البيانات</button>
     </div>
   </div>
