@@ -1574,32 +1574,50 @@ function showInstallButton(){
 }
 
 // ============ SERVICE WORKER REGISTRATION (PWA) ============
+// V9.14.5 — تصلّب آلية التحديث حتى تظهر التعديلات دائماً بلا كاش عالق:
+//   • updateViaCache:'none' → المتصفح يفحص service-worker.js و version.js من الشبكة
+//     مباشرة (لا من كاش HTTP) فيلاحظ تغيّر رقم الإصدار فوراً.
+//   • reg.update() عند العودة للتطبيق (visibility/focus) → الـ PWA يبقى مفتوحاً أياماً،
+//     فنفحص نسخة جديدة كلما رجع المستخدم بدل انتظار إعادة فتح كاملة.
+//   • معالجة reg.waiting (نسخة منتظِرة وقت فتح الصفحة) + updatefound معاً.
 if('serviceWorker' in navigator){
+  let _reloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(_reloading) return;
+    _reloading=true;
+    location.reload();
+  });
+
+  const _promptUpdate=(sw)=>{
+    if(!sw) return;
+    // نسخة جديدة جاهزة — اعرض toast بزر للتحديث الفوري
+    showToast('🔄 نسخة جديدة متاحة','var(--blue)',12000,{
+      action:{label:'تحديث',handler:()=>{ sw.postMessage({type:'SKIP_WAITING'}); }}
+    });
+  };
+
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('service-worker.js').then(reg=>{
+    navigator.serviceWorker.register('service-worker.js',{updateViaCache:'none'}).then(reg=>{
       console.log('SW registered:',reg.scope);
-      // V7 (#33) — اكشف عن تحديثات
+
+      // نسخة منتظِرة موجودة بالفعل وقت تحميل الصفحة
+      if(reg.waiting && navigator.serviceWorker.controller) _promptUpdate(reg.waiting);
+
+      // V7 (#33) — اكشف عن تحديثات جديدة أثناء التشغيل
       reg.addEventListener('updatefound',()=>{
         const newSW=reg.installing;
         if(!newSW) return;
         newSW.addEventListener('statechange',()=>{
           if(newSW.state==='installed' && navigator.serviceWorker.controller){
-            // نسخة جديدة جاهزة — اعرض toast بزر للتحديث
-            showToast('🔄 نسخة جديدة متاحة',  'var(--blue)', 12000, {
-              action:{label:'تحديث',handler:()=>{
-                newSW.postMessage({type:'SKIP_WAITING'});
-              }}
-            });
+            _promptUpdate(newSW);
           }
         });
       });
+
+      // افحص نسخة جديدة كلما رجع المستخدم للتطبيق (الـ PWA يبقى مفتوحاً طويلاً)
+      const _checkForUpdate=()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); };
+      document.addEventListener('visibilitychange',_checkForUpdate);
+      window.addEventListener('focus',_checkForUpdate);
     }).catch(err=>console.log('SW registration failed:',err));
-    // عند تغيير الـ SW النشط، أعد تحميل الصفحة
-    let _reloading=false;
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(_reloading) return;
-      _reloading=true;
-      location.reload();
-    });
   });
 }
