@@ -2850,7 +2850,11 @@ body{
 /* ============ 1. FOCUS MODE ============ */
 /* عند بدء جلسة، أخفِ كل اليوم غير النشط + كل بطاقات الشرح/التحذيرات
    ابقِ فقط: nav + sess-bar + اليوم النشط + program container body */
-body.sess-active.focus-mode #t1 > .card{display:none !important}
+/* V9.14.17 (#5) — أثناء الجلسة أخفِ الشرح/الجداول/النصائح/تبويبات الأيام (نُقلت لـ .t1-disclosure/.tip) */
+body.sess-active.focus-mode #t1 > .card,
+body.sess-active.focus-mode #t1 > .t1-disclosure,
+body.sess-active.focus-mode #t1 > .tip,
+body.sess-active.focus-mode #t1 > .day-tabs{display:none !important}
 body.sess-active.focus-mode #t1 #missedDayBanner,
 body.sess-active.focus-mode #t1 #gymMismatchBanner{display:none !important}
 body.sess-active.focus-mode #t0,
@@ -4740,6 +4744,24 @@ body.sess-active .sess-bottom-bar{display:flex}
   .sess-bottom-bar{bottom:calc(57px + var(--sai-bottom))}
   body.sess-active{padding-bottom:calc(118px + var(--sai-bottom))}
 }
+.sess-bottom-bar.complete{border-top-color:rgba(34,197,94,.55)}
+.sess-bottom-bar.complete .sbb-day,.sess-bottom-bar.complete .sbb-meta b{color:var(--grn)}
+
+/* #6 — ✓ واضح لكل سيت مكتمل */
+.step.completed .step-num{position:relative;color:transparent !important}
+.step.completed .step-num::after{content:'✓';position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;background:var(--grn);color:#06080D;
+  border-radius:inherit;font-weight:900;font-size:13px;font-family:'Rubik',sans-serif}
+
+/* #7 — عرض «آخر مرة / المقترح» أوضح */
+.track-input .last{font-size:11px;color:var(--tx2)}
+.track-input .last b{color:var(--tx);font-weight:800}
+.prog-hint{font-size:11.5px}
+.prog-hint b{color:var(--cta);font-size:13px}
+
+/* #8 — شارة الثقة (أوفلاين · بيانات محلية) */
+.sb-chip.sbc-offline{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.24);color:var(--grn)}
+.sb-chip.sbc-offline .ic{width:13px;height:13px}
 
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}

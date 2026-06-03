@@ -37,7 +37,9 @@
   }
 
   function _applyFocusClass(){
-    document.body.classList.toggle('focus-mode',FOCUS_MODE);
+    // V9.14.17 (#5) — أثناء أي جلسة نشطة فعّل تقليل النصوص تلقائياً (يخفي الشرح/الجداول/التغذية)
+    const sessionActive=document.body.classList.contains('sess-active');
+    document.body.classList.toggle('focus-mode',FOCUS_MODE||sessionActive);
     const btn=document.querySelector('.sess-bar .sb-focus');
     if(btn){
       btn.classList.toggle('active',FOCUS_MODE);
@@ -133,6 +135,7 @@
     const watcher=setInterval(()=>{
       _ensureFocusButton();
       _markSessionActiveDay();
+      _applyFocusClass(); // V9.14.17 — يلتقط بدء/إنهاء الجلسة لتفعيل/إلغاء تقليل النصوص
     },1500);
     // expose stop
     window._uiV99StopWatcher=()=>clearInterval(watcher);

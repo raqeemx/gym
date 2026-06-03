@@ -495,6 +495,8 @@
     else {status='جاهز للتمرين';scls='sbc-ready'}
     chips.push(`<span class="sb-chip ${scls}">${status}</span>`);
     if(wp && wp.week && wp.week%4===0) chips.push(`<span class="sb-chip sbc-deload">🛟 Deload</span>`);
+    // V9.14.17 (#8) — شارة ثقة: البيانات على الجهاز · يعمل بدون إنترنت
+    chips.push(`<span class="sb-chip sbc-offline">${_ic('check')} بياناتك على جهازك · بدون إنترنت</span>`);
     return `<div class="dash-statusbar">${chips.join('')}</div>`;
   }
 

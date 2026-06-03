@@ -840,6 +840,14 @@ function updateSessionProgress(){
   // V9.14.16 — حدّث شريط الجلسة السفلي (إجمالي/مكتمل)
   const bs=document.getElementById('sbbSets'); if(bs) bs.textContent=`${done}/${trackableTotal}`;
   const bd=document.getElementById('sbbDay'); if(bd && currentSession) bd.textContent=currentSession.dayType||'تمرين';
+  // V9.14.17 (#6) — حالة اكتمال اليوم واضحة
+  const bbar=document.getElementById('sessBottomBar');
+  if(bbar) bbar.classList.toggle('complete',pct>=100);
+  if(pct>=100 && currentSession && !currentSession._dayDoneToast){
+    currentSession._dayDoneToast=true;
+    if(typeof showToast==='function') showToast('🎉 تم إكمال تمرين اليوم!','var(--grn)',5000);
+    try{navigator.vibrate&&navigator.vibrate([100,50,100,50,150])}catch(e){}
+  }
   wrap.style.display='block';
   // أضف class عند ٨٠٪+ للون مختلف
   wrap.classList.toggle('almost-done',pct>=80);
