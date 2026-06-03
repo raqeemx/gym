@@ -18,6 +18,8 @@
 
 (function(){
   const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
+  // V9.14.15 — أيقونة outline موحّدة من الـ sprite (ترث currentColor)
+  const _ic=(n)=>`<svg class="ic" aria-hidden="true"><use href="#ic-${n}"></use></svg>`;
 
   // ---------- helpers ----------
   function _todayISO(){return new Date().toISOString().split('T')[0]}
@@ -458,7 +460,7 @@
     return `
       <details class="hero-v14">
         <summary class="hv-summary">
-          <div class="hv-brand">📖 اعرف البرنامج بعمق</div>
+          <div class="hv-brand">${_ic('book')} اعرف البرنامج بعمق</div>
           <div class="hv-tag">الفلسفة · الأجهزة · النصائح</div>
           <span class="hv-toggle">▾</span>
         </summary>
@@ -503,8 +505,8 @@
         <div class="dh-title">برنامج تضخيم ١٢ أسبوع <span>مصمم لجيمك</span></div>
         <p class="dh-desc">افتحه داخل الجيم، اتبع تمرين اليوم، سجّل أوزانك، واستخدم البدائل لو الجهاز مشغول.</p>
         <div class="dh-actions">
-          <button type="button" class="dh-cta dh-cta-primary" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
-          <button type="button" class="dh-cta dh-cta-secondary" onclick="switchToTab(8)">📅 عرض خطة الأسبوع</button>
+          <button type="button" class="dh-cta dh-cta-primary" onclick="switchToTab(1)">${_ic('play')} ابدأ تمرين اليوم</button>
+          <button type="button" class="dh-cta dh-cta-secondary" onclick="switchToTab(8)">${_ic('calendar')} عرض خطة الأسبوع</button>
         </div>
       </div>`;
   }
@@ -524,7 +526,7 @@
       const dayType=todayProg.type||todayProg.label||'التمرين';
       return `<div class="dash-card card-action dash-nextup">
         <div class="nu-lbl">التالي عليك</div>
-        <button type="button" class="nu-start" onclick="switchToTab(1)">▶ ابدأ تمرين ${E(dayType)} الآن</button>
+        <button type="button" class="nu-start" onclick="switchToTab(1)">${_ic('play')} ابدأ تمرين ${E(dayType)} الآن</button>
       </div>`;
     }
     // جلسة نشطة → أول تمرين لم يُسجَّل بعد في هذه الجلسة
@@ -568,17 +570,17 @@
   // ----- V9.14.13 — أدوات الجيم السريعة (#7): أزرار واضحة بدل إخفائها -----
   function _quickTools(activeSession){
     const tools=[
-      {ic:'⏱️',lbl:'مؤقت الراحة',act:'showT()'},
-      {ic:'🧮',lbl:'حاسبة البليتات',act:'openPlateCalc()'},
-      {ic:'🔄',lbl:'الجهاز مشغول؟',act:'openPlanBHint&&openPlanBHint()'},
-      {ic:'🏋️',lbl:'آخر أوزاني',act:"const w=document.querySelector('.dash-weights-card');if(w){w.scrollIntoView({behavior:'smooth',block:'start'})}else{switchToTab(1)}"}
+      {ic:'timer',lbl:'مؤقت الراحة',act:'showT()'},
+      {ic:'calculator',lbl:'حاسبة البليتات',act:'openPlateCalc()'},
+      {ic:'repeat',lbl:'الجهاز مشغول؟',act:'openPlanBHint&&openPlanBHint()'},
+      {ic:'dumbbell',lbl:'آخر أوزاني',act:"const w=document.querySelector('.dash-weights-card');if(w){w.scrollIntoView({behavior:'smooth',block:'start'})}else{switchToTab(1)}"}
     ];
-    if(activeSession) tools.push({ic:'⏹',lbl:'إنهاء الجلسة',act:'endSession&&endSession()',cls:'qt-end'});
+    if(activeSession) tools.push({ic:'x',lbl:'إنهاء الجلسة',act:'endSession&&endSession()',cls:'qt-end'});
     return `
       <div class="dash-card dash-quicktools">
-        <div class="dash-card-head dash-card-head-mini">⚡ أدوات سريعة</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('zap')} أدوات سريعة</div>
         <div class="qt-grid">
-          ${tools.map(t=>`<button type="button" class="qt-btn ${t.cls||''}" onclick="${t.act}"><span class="qt-ic">${t.ic}</span><span class="qt-lbl">${E(t.lbl)}</span></button>`).join('')}
+          ${tools.map(t=>`<button type="button" class="qt-btn ${t.cls||''}" onclick="${t.act}"><span class="qt-ic">${_ic(t.ic)}</span><span class="qt-lbl">${E(t.lbl)}</span></button>`).join('')}
         </div>
       </div>`;
   }
@@ -669,20 +671,20 @@
           </div>`:''}
         </div>
         <div class="tc-stats tc-stats-4">
-          <div class="tc-stat"><span class="tcs-ic">⏱</span><b class="tcs-val">${E(mins)}</b><span class="tcs-unit">دقيقة</span></div>
-          <div class="tc-stat"><span class="tcs-ic">🏋</span><b class="tcs-val">${E(exercises)}</b><span class="tcs-unit">تمارين</span></div>
-          <div class="tc-stat"><span class="tcs-ic">🔁</span><b class="tcs-val">${E(sets)}</b><span class="tcs-unit">سيت</span></div>
-          <div class="tc-stat"><span class="tcs-ic">⏸</span><b class="tcs-val">${E(restRange)}</b><span class="tcs-unit">ث راحة</span></div>
+          <div class="tc-stat"><span class="tcs-ic">${_ic('timer')}</span><b class="tcs-val">${E(mins)}</b><span class="tcs-unit">دقيقة</span></div>
+          <div class="tc-stat"><span class="tcs-ic">${_ic('dumbbell')}</span><b class="tcs-val">${E(exercises)}</b><span class="tcs-unit">تمارين</span></div>
+          <div class="tc-stat"><span class="tcs-ic">${_ic('repeat')}</span><b class="tcs-val">${E(sets)}</b><span class="tcs-unit">سيت</span></div>
+          <div class="tc-stat"><span class="tcs-ic">${_ic('timer')}</span><b class="tcs-val">${E(restRange)}</b><span class="tcs-unit">ث راحة</span></div>
         </div>
         ${progressLine}
         ${firstEx?`<div class="tc-first-ex">
           <span class="tc-fe-lbl">▶ أول تمرين</span>
           <b class="tc-fe-name">${E(firstEx)}</b>
         </div>`:''}
-        <button type="button" class="tc-cta tc-cta-primary tc-cta-hero" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+        <button type="button" class="tc-cta tc-cta-primary tc-cta-hero" onclick="switchToTab(1)">${_ic('play')} ابدأ تمرين اليوم</button>
         <div class="tc-actions tc-actions-2">
           <button type="button" class="tc-cta tc-cta-secondary" onclick="switchToTab(1)">عرض التمارين</button>
-          <button type="button" class="tc-cta tc-cta-tertiary" onclick="openPlanBHint&&openPlanBHint()">🔄 الجهاز مشغول؟</button>
+          <button type="button" class="tc-cta tc-cta-tertiary" onclick="openPlanBHint&&openPlanBHint()">${_ic('repeat')} الجهاز مشغول؟</button>
         </div>
       </div>`;
   }
@@ -691,16 +693,16 @@
   // V9.14.13 — ٤ بطاقات بارزة فقط (أهم أرقام البرنامج)
   function _programQuickSummary(){
     const items=[
-      {ic:'💪', val:'6', lbl:'أيام تمرين'},
-      {ic:'⏱', val:'55', lbl:'دقيقة للجلسة'},
-      {ic:'⏸', val:'60', lbl:'ث راحة'},
-      {ic:'🥩', val:'175g', lbl:'بروتين/يوم'}
+      {ic:'dumbbell', val:'6', lbl:'أيام تمرين'},
+      {ic:'timer', val:'55', lbl:'دقيقة للجلسة'},
+      {ic:'repeat', val:'60', lbl:'ث راحة'},
+      {ic:'utensils', val:'175g', lbl:'بروتين/يوم'}
     ];
     return `
       <div class="program-summary-grid">
         ${items.map(it=>`
           <div class="psg-card">
-            <div class="psg-ic">${it.ic}</div>
+            <div class="psg-ic">${_ic(it.ic)}</div>
             <div class="psg-val">${E(it.val)}</div>
             <div class="psg-lbl">${E(it.lbl)}</div>
           </div>`).join('')}
@@ -811,14 +813,14 @@
       motivation=`💪 يوم تدريب — كل سيت يبني عضل`;
     }
     // V9.12 (#1) — زر Plan B ثانوي: يفتح t1 ويرشد لاستخدام ⇄
-    const planBBtn=`<button class="dpr-cta-secondary dpr-cta-row" onclick="openPlanBHint&&openPlanBHint()" title="إذا كان الجهاز مشغولاً، اضغط زر ⇄ بجانب أي تمرين">🔄 الجهاز مشغول؟ Plan B</button>`;
+    const planBBtn=`<button class="dpr-cta-secondary dpr-cta-row" onclick="openPlanBHint&&openPlanBHint()" title="إذا كان الجهاز مشغولاً، اضغط زر ⇄ بجانب أي تمرين">${_ic('repeat')} الجهاز مشغول؟ Plan B</button>`;
     return `
       <div class="dash-primary">
         <div class="dpr-tag">⭐ جلسة اليوم</div>
         <div class="dpr-title">${E(dayType)}</div>
         <div class="dpr-meta">⏱ ~<b>${E(mins)}</b> دقيقة · 💪 <b>${E(sets)}</b> سيت · 🏋 <b>${E(exs)}</b> تمارين</div>
         ${firstEx?`<div class="dpr-first-ex"><span class="dpr-fe-lbl">▶ أول تمرين:</span><b>${E(firstEx)}</b></div>`:''}
-        <button class="dpr-cta" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+        <button class="dpr-cta" onclick="switchToTab(1)">${_ic('play')} ابدأ تمرين اليوم</button>
         <div class="dpr-actions-row">${planBBtn}</div>
         <div class="dpr-motivation">${motivation}</div>
       </div>`;
@@ -867,7 +869,7 @@
     const metricsBtn=`switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'metrics\\']');if(b)b.click()},120)`;
     return `
       <div class="dash-card card-stat dash-progress-summary">
-        <div class="dash-card-head dash-card-head-mini">📈 تقدّمك</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('trending-up')} تقدّمك</div>
         <div class="dps-grid">
           <div class="dps-item"><span class="dps-lbl">جلسات هذا الأسبوع</span><b class="dps-val">${sessionsDone} / ${target}</b></div>
           <div class="dps-item"><span class="dps-lbl">آخر رقم قياسي</span><b class="dps-val">${E(prTxt)}</b></div>
@@ -924,10 +926,18 @@
       } else {
         lastLine=info[ex].def?`الافتراضي للأسبوع الأول`:`لم تُسجّل بعد`;
       }
+      const range=info[ex].range;
+      const repsTxt=(range&&range.min&&range.max)?`${range.min}-${range.max} تكرار`:'';
+      const hasPlanB=(typeof EXERCISE_ALTERNATIVES!=='undefined' && typeof normalizeExName==='function' && !!EXERCISE_ALTERNATIVES[normalizeExName(ex)]);
       return `<div class="rw-card" data-ex="${E(ex)}">
         <div class="rw-card-main">
           <span class="rw-ex">${E(ex)}</span>
           <b class="rw-w">${E(bigW)}${bigUnit}</b>
+        </div>
+        <div class="rw-meta">
+          ${repsTxt?`<span class="rw-tag">${_ic('repeat')} ${E(repsTxt)}</span>`:''}
+          <span class="rw-tag rw-tag-rest">${_ic('timer')} راحة ٦٠ث</span>
+          ${hasPlanB?`<span class="rw-tag rw-tag-planb">${_ic('repeat')} Plan B متاح</span>`:''}
         </div>
         <div class="rw-card-sub">
           <span class="rw-last">${lastLine}</span>
@@ -937,7 +947,7 @@
     }).join('');
     return `
       <div class="dash-card card-exercise dash-weights-card">
-        <div class="dash-card-head dash-card-head-mini">🏋️ أوزانك لتمرين اليوم</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('dumbbell')} أوزانك لتمرين اليوم</div>
         <input type="search" class="rw-search" placeholder="🔎 ابحث عن تمرين…" aria-label="ابحث عن تمرين"
           oninput="const q=this.value.trim().toLowerCase();this.closest('.dash-weights-card').querySelectorAll('.rw-card').forEach(c=>{c.style.display=c.dataset.ex.toLowerCase().includes(q)?'':'none'})">
         <div class="rw-list">${cards}</div>
@@ -1035,7 +1045,7 @@
     }
     return `
       <div class="dash-card dash-week-card">
-        <div class="dash-card-head dash-card-head-mini">📅 جدول الأسبوع</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('calendar')} جدول الأسبوع</div>
         <div class="wday-list">${cards.join('')}</div>
       </div>`;
   }
@@ -1049,7 +1059,7 @@
     const unit=next.unit||'';
     return `
       <div class="dash-card dash-next-ach">
-        <div class="dash-card-head dash-card-head-mini">🏅 إنجاز قادم — قريب!</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('award')} إنجاز قادم — قريب!</div>
         <button type="button" class="dna-row" onclick="switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'achievements\\']');if(b)b.click()},120)">
           <div class="dna-icon">${E(next.ach.icon)}</div>
           <div class="dna-body">
@@ -1130,7 +1140,7 @@
     const mealRow=(ic,lbl,done)=>`<div class="nut-meal-row ${done?'done':''}"><span class="nmr-ic">${ic}</span><span class="nmr-lbl">${lbl}</span><span class="nmr-st">${done?'✓ مكتملة':'غير مكتملة'}</span></div>`;
     return `
       <div class="dash-card card-stat dash-nutrition-card">
-        <div class="dash-card-head dash-card-head-mini">🥗 تغذية اليوم</div>
+        <div class="dash-card-head dash-card-head-mini">${_ic('utensils')} تغذية اليوم</div>
         <div class="nut-mini-grid">
           <div class="nut-mini">
             <div class="nut-mini-top"><span class="nut-mini-lbl">🥩 بروتين</span><b class="nut-mini-val">${E(prot)}<small>/${E(tProt)}غ</small></b></div>

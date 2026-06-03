@@ -4682,6 +4682,30 @@ h1,h2,h3,.ct,.dash-card-head,.tc-title,.dh-title,.nu-next-name,.bn-drawer-title,
 .dash-quicktools{background:var(--s1)}
 .dash-quicktools .qt-btn{min-height:46px}
 
+/* ============================================================
+ * V9.14.15 — أيقونات outline موحّدة + مسافات + صفوف بطاقة التمرين
+ * ============================================================ */
+.ic{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.16em;
+  fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ic-lg{width:1.5em;height:1.5em}
+.ic-sm{width:1em;height:1em}
+.bn-ic .ic{width:21px;height:21px;vertical-align:0}
+.psg-ic .ic{width:20px;height:20px}
+.tcs-ic .ic,.qt-ic .ic{width:18px;height:18px}
+
+/* مسافات موحّدة: بين البطاقات ١٤px · مسافة قسم قبل العناصر الرئيسية */
+.dash-card,.program-summary-grid,.dash-statusbar,.dash-hero,.today-card{margin-bottom:14px}
+.dash-nutrition-card,.hero-v14{margin-top:26px} /* فاصل قسم أوضح قبل التغذية/الدليل */
+
+/* صفوف واضحة داخل بطاقة الأوزان: تكرار · راحة · Plan B */
+.rw-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.rw-tag{display:inline-flex;align-items:center;gap:5px;font-family:'Rubik',sans-serif;font-size:10.5px;
+  font-weight:700;color:var(--tx2);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:8px;padding:4px 9px}
+.rw-tag .ic{width:13px;height:13px}
+.rw-tag-rest{color:var(--blue);background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.22)}
+.rw-tag-planb{color:var(--g2);background:rgba(212,168,83,.08);border-color:rgba(212,168,83,.22)}
+
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
 .nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}
