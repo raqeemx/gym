@@ -27,10 +27,18 @@ async function injectTrackingInputs(){
 
     inputDiv.innerHTML=`
       <label>كجم</label>
-      <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${placeholderW}">
+      <span class="set-stepper">
+        <button type="button" class="ss-btn" onclick="stepSet(this,-2.5);event.stopPropagation()" aria-label="نقص الوزن">−</button>
+        <input type="number" inputmode="decimal" step="0.5" min="0" class="weight-input" data-ex="${exKey}" data-name="${exName}" placeholder="${placeholderW}">
+        <button type="button" class="ss-btn" onclick="stepSet(this,2.5);event.stopPropagation()" aria-label="زد الوزن">+</button>
+      </span>
       <button class="plate-calc-btn" type="button" onclick="openPlateCalcFromSet(this);event.stopPropagation()" title="افتح حاسبة البليتات بهذا الوزن">🧮</button>
       <label>تكرار</label>
-      <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
+      <span class="set-stepper">
+        <button type="button" class="ss-btn" onclick="stepSet(this,-1);event.stopPropagation()" aria-label="نقص التكرار">−</button>
+        <input type="number" inputmode="numeric" step="1" min="0" class="reps-input" data-ex="${exKey}" placeholder="${placeholderR}">
+        <button type="button" class="ss-btn" onclick="stepSet(this,1);event.stopPropagation()" aria-label="زد التكرار">+</button>
+      </span>
       <span class="rpe-chips" title="RPE اختياري — صعوبة السيت من 6 (سهل) إلى 10 (الفشل)" role="radiogroup" aria-label="RPE">
         <span class="rpe-lbl">RPE</span>
         <button type="button" class="rpe-chip" data-rpe="6" onclick="selectRpe(this);event.stopPropagation()" title="٦ — سهل">6</button>
@@ -191,6 +199,22 @@ function parseRepRange(stepEl, _rpeHint){
 //     - reps ≥ max → +٢.٥
 //     - reps < min → -٢.٥
 //     - داخل النطاق → بدون اقتراح
+// V9.14.16 — أزرار +/- لضبط الوزن/التكرار بإصبع واحد داخل الجيم
+function stepSet(btn,delta){
+  const wrap=btn.closest('.set-stepper'); if(!wrap) return;
+  const input=wrap.querySelector('input'); if(!input) return;
+  const isWeight=input.classList.contains('weight-input');
+  let v=parseFloat(input.value);
+  if(isNaN(v)) v=parseFloat(input.placeholder);
+  if(isNaN(v)) v=0;
+  v=v+delta;
+  if(v<0) v=0;
+  v=isWeight?Math.round(v*2)/2:Math.round(v);
+  input.value=(isWeight && !Number.isInteger(v))?v.toFixed(1):v;
+  input.classList.remove('suggested');
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
 function computeProgression(lastSet, repRange, lastRpe, deloadActive){
   if(!lastSet || !repRange) return null;
 
@@ -603,12 +627,13 @@ function startSessionTicker(){
   if(sessionTimerId) clearInterval(sessionTimerId);
   const tick=()=>{
     if(!currentSession){clearInterval(sessionTimerId);return}
+    const ms=Date.now()-new Date(currentSession.startTime).getTime();
+    const secs=Math.floor(ms/1000);
     const el=document.getElementById('sessElapsed');
-    if(el){
-      const ms=Date.now()-new Date(currentSession.startTime).getTime();
-      const secs=Math.floor(ms/1000);
-      el.textContent=fmtDuration(secs);
-    }
+    if(el) el.textContent=fmtDuration(secs);
+    // V9.14.16 — شريط الجلسة السفلي
+    const bt=document.getElementById('sbbTime'); if(bt) bt.textContent=fmtDuration(secs);
+    const bd=document.getElementById('sbbDay'); if(bd) bd.textContent=currentSession.dayType||'تمرين';
     // V7 (#17) — حدّث الـ pill المصغّر أيضاً
     if(SESSION_MINIMIZED) updateSessionPillUI();
   };
@@ -812,6 +837,9 @@ function updateSessionProgress(){
     const remain=Math.max(0,trackableTotal-done);
     meta.innerHTML=`<b>${done}</b>/${trackableTotal} سيت · تبقى <b>${100-pct}٪</b>`;
   }
+  // V9.14.16 — حدّث شريط الجلسة السفلي (إجمالي/مكتمل)
+  const bs=document.getElementById('sbbSets'); if(bs) bs.textContent=`${done}/${trackableTotal}`;
+  const bd=document.getElementById('sbbDay'); if(bd && currentSession) bd.textContent=currentSession.dayType||'تمرين';
   wrap.style.display='block';
   // أضف class عند ٨٠٪+ للون مختلف
   wrap.classList.toggle('almost-done',pct>=80);
