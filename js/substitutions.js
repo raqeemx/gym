@@ -307,14 +307,14 @@ function injectAltButtons(){
 
     const btn=document.createElement('button');
     btn.type='button';
-    // V9.14.10 — زر مُعَنوَن واضح "الجهاز مشغول؟" كصف مستقل أسفل التمرين (بدل أيقونة ⇄ الغامضة)
-    // يفتح bottom sheet بالبدائل فوراً. نُبقي الصنف alt-btn ليعمل معه flash التوهّج وفحص التوفّر.
+    // V9.14.18 — شريحة صغيرة مدمجة "مشغول؟" (بدل الصف الكامل الكبير) بأيقونة موحّدة
+    // تفتح bottom sheet بالبدائل. نُبقي الصنف alt-btn ليعمل معه flash التوهّج وفحص التوفّر.
     btn.className='alt-btn alt-busy-btn';
     btn.setAttribute('aria-label','الجهاز مشغول؟ اعرض البدائل');
     btn.title='الجهاز مشغول؟ اعرض بدائل هذا التمرين فوراً';
-    btn.innerHTML='🔄 الجهاز مشغول؟';
+    btn.innerHTML='<svg class="ic" aria-hidden="true"><use href="#ic-repeat"></use></svg><span>مشغول؟</span>';
     btn.onclick=(e)=>{e.stopPropagation();showAlternatives(step)};
-    step.appendChild(btn); // صف مستقل أسفل التمرين — لا يتداخل مع صف الأيقونات absolute
+    stepBody.appendChild(btn); // V9.14.18 — داخل step-body (block) كشريحة صغيرة، لا تتمدّد
     step.classList.add('has-alt');
   });
   if(typeof refreshAltButtonsAvailability==='function') refreshAltButtonsAvailability();
