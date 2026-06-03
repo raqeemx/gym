@@ -453,21 +453,21 @@
 
   // ----- 1. HERO SECTION (تفسيري، يفهم المستخدم البرنامج في ٣ ثوانٍ) -----
   function _heroSection(workouts){
-    // ابدأ compact للمستخدمين النشطين (٥+ جلسات)
-    const isActive=(workouts||[]).length>=5;
+    // V9.14.10 — الشرح الطويل مطويّ دائماً («افهم البرنامج بعمق») أسفل الصفحة،
+    // فلا يزاحم الفعل (بطاقة تمرين اليوم في الأعلى). يبقى متاحاً لمن يريد الفهم.
     return `
-      <details class="hero-v14${isActive?'':' open'}" ${isActive?'':'open'}>
+      <details class="hero-v14">
         <summary class="hv-summary">
-          <div class="hv-brand">💪 BULK MODE</div>
-          <div class="hv-tag">برنامج تضخيم ١٢ أسبوع</div>
+          <div class="hv-brand">📖 افهم البرنامج بعمق</div>
+          <div class="hv-tag">الفلسفة · التغذية · الأجهزة · النصائح</div>
           <span class="hv-toggle">▾</span>
         </summary>
         <div class="hv-body">
           <h1 class="hv-title">برنامج تضخيم ١٢ أسبوع — اتبع تمرين اليوم فقط</h1>
           <p class="hv-desc">خطة عربية للتضخيم باستخدام أجهزة الجيم، مع أوزان مقترحة، راحة محسوبة، و<b>Plan B</b> إذا كان الجهاز مشغولاً.</p>
           <div class="hv-actions">
-            <button type="button" class="hv-cta hv-cta-primary" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
-            <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(8)">📅 شاهد جدول الأسبوع</button>
+            <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(5)">📖 الدليل الشامل</button>
+            <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(8)">📅 جدول الأسبوع</button>
             <button type="button" class="hv-cta hv-cta-tertiary" onclick="switchToTab(6)">🎯 أول مرة في الجيم؟</button>
           </div>
         </div>
@@ -559,9 +559,10 @@
             <b class="tc-info-val">${E(targets)}</b>
           </div>`:''}
         </div>
-        <div class="tc-stats">
+        <div class="tc-stats tc-stats-4">
           <div class="tc-stat"><span class="tcs-ic">⏱</span><b class="tcs-val">${E(mins)}</b><span class="tcs-unit">دقيقة</span></div>
           <div class="tc-stat"><span class="tcs-ic">🏋</span><b class="tcs-val">${E(exercises)}</b><span class="tcs-unit">تمارين</span></div>
+          <div class="tc-stat"><span class="tcs-ic">🔁</span><b class="tcs-val">${E(sets)}</b><span class="tcs-unit">سيت</span></div>
           <div class="tc-stat"><span class="tcs-ic">⏸</span><b class="tcs-val">${E(restRange)}</b><span class="tcs-unit">ث راحة</span></div>
         </div>
         ${progressLine}
@@ -569,8 +570,8 @@
           <span class="tc-fe-lbl">▶ أول تمرين</span>
           <b class="tc-fe-name">${E(firstEx)}</b>
         </div>`:''}
-        <div class="tc-actions tc-actions-3">
-          <button type="button" class="tc-cta tc-cta-primary" onclick="switchToTab(1)">💪 ابدأ الجلسة</button>
+        <button type="button" class="tc-cta tc-cta-primary tc-cta-hero" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+        <div class="tc-actions tc-actions-2">
           <button type="button" class="tc-cta tc-cta-secondary" onclick="switchToTab(1)">عرض التمارين</button>
           <button type="button" class="tc-cta tc-cta-tertiary" onclick="openPlanBHint&&openPlanBHint()">🔄 الجهاز مشغول؟</button>
         </div>
@@ -778,6 +779,8 @@
   }
 
   // V9.14.4 (#7) — بطاقة "أوزانك جاهزة لتمرين اليوم"
+  // V9.14.10 — أوزان اليوم كبطاقات قابلة للبحث: الاسم · الوزن الحالي · آخر مرة · المقترح
+  // (بدل قائمة نصية كثيفة — سهل استخراج وزن تمرين معيّن بسرعة داخل الجيم)
   function _readyWeightsCard(todayProg,lastBest){
     if(!todayProg || todayProg.isRest || todayProg.type==='REST' || !todayProg.phases) return '';
     lastBest=lastBest||{};
@@ -785,29 +788,59 @@
       .replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'')
       .replace(/\s*[—-]\s*سيت[\s\S]*$/,'')
       .replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const toLatin=(s)=>String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const parseRange=(infoTxt)=>{
+      const m=toLatin(infoTxt||'').match(/(\d{1,2})\s*[-–—]\s*(\d{1,2})/);
+      if(m) return {min:+m[1],max:+m[2]};
+      return {min:8,max:12};
+    };
     const order=[]; const info={};
     todayProg.phases.forEach(p=>{
       if(p.type==='warmup') return;
       (p.steps||[]).forEach(s=>{
         if(!s || s.type==='rest') return;
         const ex=clean(s.name); if(!ex || info[ex]) return;
-        let def=''; const m=String(s.info||'').match(/([\d٠-٩.]+)\s*كجم/);
-        if(m) def=`${m[1]} كجم`;
-        info[ex]={def}; order.push(ex);
+        let def=''; const m=toLatin(s.info).match(/([\d.]+)\s*كجم/);
+        if(m) def=m[1];
+        info[ex]={def,range:parseRange(s.info)}; order.push(ex);
       });
     });
     if(!order.length) return '';
-    const rows=order.slice(0,6).map(ex=>{
+    const cards=order.map(ex=>{
       const lb=lastBest[ex];
-      const w=(lb && lb.lastSessionBest && lb.lastSessionBest.weight!=null)
-        ? `${lb.lastSessionBest.weight} كجم`
-        : (info[ex].def||'—');
-      return `<div class="rw-row"><span class="rw-ex">${E(ex)}</span><b class="rw-w">${E(w)}</b></div>`;
+      const last=lb && lb.lastSessionBest;
+      const bigW=last && last.weight!=null ? `${last.weight}` : (info[ex].def||'—');
+      const bigUnit=(bigW!=='—')?'<span class="rw-unit">كجم</span>':'';
+      let lastLine, sugLine='';
+      if(last && last.weight!=null){
+        lastLine=`آخر مرة: <b>${E(last.weight)}كجم × ${E(last.reps)}</b>${last.rpe?` · RPE ${E(last.rpe)}`:''}`;
+        let sug=null;
+        try{ sug=(typeof computeProgression==='function')?computeProgression(last,info[ex].range,last.rpe,false):null; }catch(e){}
+        if(sug && sug.suggestedWeight!=null){
+          sugLine=(sug.suggestedWeight!==last.weight)
+            ? `<span class="rw-sug rw-sug-${sug.kind}">المقترح: <b>${E(sug.suggestedWeight)}كجم</b></span>`
+            : `<span class="rw-sug rw-sug-maintain">المقترح: ثبّت الوزن وزد التكرار</span>`;
+        }
+      } else {
+        lastLine=info[ex].def?`الافتراضي للأسبوع الأول`:`لم تُسجّل بعد`;
+      }
+      return `<div class="rw-card" data-ex="${E(ex)}">
+        <div class="rw-card-main">
+          <span class="rw-ex">${E(ex)}</span>
+          <b class="rw-w">${E(bigW)}${bigUnit}</b>
+        </div>
+        <div class="rw-card-sub">
+          <span class="rw-last">${lastLine}</span>
+          ${sugLine}
+        </div>
+      </div>`;
     }).join('');
     return `
       <div class="dash-card dash-weights-card">
-        <div class="dash-card-head dash-card-head-mini">🏋️ أوزانك جاهزة لتمرين اليوم</div>
-        <div class="rw-list">${rows}</div>
+        <div class="dash-card-head dash-card-head-mini">🏋️ أوزانك لتمرين اليوم</div>
+        <input type="search" class="rw-search" placeholder="🔎 ابحث عن تمرين…" aria-label="ابحث عن تمرين"
+          oninput="const q=this.value.trim().toLowerCase();this.closest('.dash-weights-card').querySelectorAll('.rw-card').forEach(c=>{c.style.display=c.dataset.ex.toLowerCase().includes(q)?'':'none'})">
+        <div class="rw-list">${cards}</div>
         <button class="dash-card-more" onclick="openWorkoutDay(${todayProg.dayOfWeek})">✏️ تعديل الأوزان داخل التمرين ›</button>
       </div>`;
   }
@@ -1077,29 +1110,29 @@
         profileMissing=!p || (!p.age && !p.weight && !p.height);
       }catch(e){}
 
-      // V9.14 — البنية الجديدة:
-      //   1. Hero Section (تفسيري)
-      //   2. Today's Workout Card (أكبر عنصر)
-      //   3. Ready Weights (أوزان اليوم)
-      //   4. Program Quick Summary (6 badges)
-      //   5. Progress Summary
-      //   6. Quick Stats (3)
-      //   7. Week Grid
-      //   8. Next Achievement
-      //   9. PRs Carousel
-      //   10. Nutrition (مختصر + ٣ أزرار)
+      // V9.14.10 — الفعل أولاً، الشرح آخراً (يقلّل كثافة المعلومات قبل بدء التمرين):
+      //   1. شريط إكمال الملف (لو ناقص)
+      //   2. ★ تمرين اليوم (مركز التجربة — أكبر عنصر، في الأعلى مباشرةً)
+      //   3. أوزان اليوم (بطاقات قابلة للبحث)
+      //   4. إحصاءات سريعة (3)
+      //   5. ملخص البرنامج (6 شارات)
+      //   6. جدول الأسبوع
+      //   7. ملخص التقدّم
+      //   8. التغذية المختصرة
+      //   9. الإنجاز القادم + PRs
+      //   10. «افهم البرنامج بعمق» (الشرح الطويل — مطويّ في الأسفل)
       container.innerHTML=`
-        ${_heroSection(data.workouts)}
         ${profileMissing?`<div class="profile-missing-strip" onclick="openProfile()">👤 أكمل ملفك الشخصي لحساب الأهداف بدقة ›</div>`:''}
         ${_todayWorkoutCard(todayProg,activeSession,data.workouts,missedDay,smartReco)}
         ${_readyWeightsCard(todayProg,lastBest)}
-        ${_programQuickSummary()}
-        ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets,data.bodyMetrics)}
         ${_quickStats3(streak,week)}
+        ${_programQuickSummary()}
         ${_weekGridBlock(data.workouts)}
+        ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets,data.bodyMetrics)}
+        ${_nutritionBars(nutrition,nutritionTargets,daily)}
         ${_nextAchievementBlockFiltered(nextAch)}
         ${_prsCarousel(data.prs)}
-        ${_nutritionBars(nutrition,nutritionTargets,daily)}
+        ${_heroSection(data.workouts)}
       `;
     }catch(e){
       console.error('Dashboard refresh failed:',e);

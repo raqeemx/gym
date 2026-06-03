@@ -529,6 +529,11 @@ function cleanupLegacyLocalStorage(){
 function getExerciseName(stepEl){
   const nameEl=stepEl.querySelector('.step-name');
   if(!nameEl) return null;
+  // V9.14.10 — لو الاسم ثنائي اللغة (applyBilingualNames أضاف .sn-en/.sn-ar)،
+  // اعتمد على الاسم الإنجليزي القانوني فقط — وإلا يُدمج "Chest Pressضغط صدر"
+  // فلا يطابق مفاتيح EXERCISE_ALTERNATIVES (كان يكسر كل نقرات البدائل).
+  const enSpan=nameEl.querySelector('.sn-en');
+  if(enSpan && enSpan.textContent.trim()) return enSpan.textContent.trim();
   // V8.3 — اعتمد على النص النصي فقط (يتجاهل زر "ℹ️ form-note-btn" المحقون)
   let name='';
   for(const node of nameEl.childNodes){

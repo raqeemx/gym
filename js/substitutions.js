@@ -287,8 +287,9 @@ function ensureStepIds(){
 // حقن زر "⇄ بديل؟" بجانب كل تمرين قابل للاستبدال
 // V8.4 (P1-#3) — أصبح icon-only ويوضع داخل step-body بصف منسجم مع form-note + history
 function injectAltButtons(){
+  // V9.14.10 — زر "الجهاز مشغول؟" مرة واحدة لكل تمرين داخل كل يوم (لا لكل سيت)
+  const seenByDay=new Map();
   document.querySelectorAll('.step:not(.rest):not(.warmup)').forEach(step=>{
-    if(step.querySelector('.alt-btn')) return;
     const stepBody=step.querySelector('.step-body');
     const nameEl=step.querySelector('.step-name');
     if(!stepBody||!nameEl) return;
@@ -297,16 +298,24 @@ function injectAltButtons(){
     const norm=normalizeExName(getExerciseName(step));
     if(!EXERCISE_ALTERNATIVES[norm]) return;
 
+    // إزالة التكرار: تمرين واحد = زر واحد لكل يوم (.dy)، أو عالمياً في الجلسة النشطة
+    const dayKey=step.closest('.dy')||document.body;
+    let seen=seenByDay.get(dayKey); if(!seen){seen=new Set();seenByDay.set(dayKey,seen)}
+    if(seen.has(norm)) return;     // عولج هذا التمرين في هذا اليوم
+    seen.add(norm);
+    if(step.querySelector('.alt-busy-btn')) return; // idempotent: مزروع مسبقاً
+
     const btn=document.createElement('button');
     btn.type='button';
-    btn.className='alt-btn step-tool-btn';
-    btn.setAttribute('aria-label','عرض البدائل');
-    btn.title='بدائل لهذا التمرين';
-    btn.textContent='⇄';
+    // V9.14.10 — زر مُعَنوَن واضح "الجهاز مشغول؟" كصف مستقل أسفل التمرين (بدل أيقونة ⇄ الغامضة)
+    // يفتح bottom sheet بالبدائل فوراً. نُبقي الصنف alt-btn ليعمل معه flash التوهّج وفحص التوفّر.
+    btn.className='alt-btn alt-busy-btn';
+    btn.setAttribute('aria-label','الجهاز مشغول؟ اعرض البدائل');
+    btn.title='الجهاز مشغول؟ اعرض بدائل هذا التمرين فوراً';
+    btn.innerHTML='🔄 الجهاز مشغول؟';
     btn.onclick=(e)=>{e.stopPropagation();showAlternatives(step)};
-    stepBody.appendChild(btn);
+    step.appendChild(btn); // صف مستقل أسفل التمرين — لا يتداخل مع صف الأيقونات absolute
     step.classList.add('has-alt');
-    stepBody.classList.add('has-alt');
   });
   if(typeof refreshAltButtonsAvailability==='function') refreshAltButtonsAvailability();
 }

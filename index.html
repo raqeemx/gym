@@ -920,16 +920,20 @@
 <div class="bn-drawer" id="bnDrawer" aria-hidden="true">
   <div class="bn-drawer-handle"></div>
   <div class="bn-drawer-title">المزيد</div>
+  <!-- V9.14.10 — مستويان واضحان: أقسام للتصفّح · أدوات وإعدادات -->
+  <div class="bn-drawer-section">📂 أقسام</div>
   <div class="bn-drawer-items">
     <button type="button" class="bn-d-item" data-bn="8"><span>📅</span><b>التقويم</b></button>
     <button type="button" class="bn-d-item" data-bn="5"><span>📖</span><b>الدليل</b></button>
     <button type="button" class="bn-d-item" data-bn="2"><span>📈</span><b>زيادة الأوزان</b></button>
     <button type="button" class="bn-d-item" data-bn="4"><span>💡</span><b>نصائح</b></button>
     <button type="button" class="bn-d-item" data-bn="6"><span>🎯</span><b>أول مرة بالجيم</b></button>
+  </div>
+  <div class="bn-drawer-section">🛠 أدوات وإعدادات</div>
+  <div class="bn-drawer-items">
     <button type="button" class="bn-d-item" onclick="openProfile();closeBnDrawer()"><span>👤</span><b>ملفي الشخصي</b></button>
     <button type="button" class="bn-d-item" onclick="openPlateCalc();closeBnDrawer()"><span>🧮</span><b>حاسبة بليتات</b></button>
     <button type="button" class="bn-d-item" onclick="openGymManager();closeBnDrawer()"><span>🏋️</span><b>إدارة الجيمات</b></button>
-    <!-- V9.14.9 — أدوات نُقلت من الـ FAB العائم المحذوف -->
     <button type="button" class="bn-d-item" id="bnThemeItem" onclick="toggleTheme();closeBnDrawer()"><span>🌙</span><b>الوضع المضيء</b></button>
     <button type="button" class="bn-d-item" onclick="exportData();closeBnDrawer()"><span>💾</span><b>تصدير البيانات</b></button>
     <button type="button" class="bn-d-item" onclick="document.getElementById('importFile').click();closeBnDrawer()"><span>📥</span><b>استيراد البيانات</b></button>

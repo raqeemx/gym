@@ -4463,6 +4463,53 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
 .rw-ex{font-size:12.5px;color:var(--tx);font-weight:600}
 .rw-w{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--g2);font-weight:700;white-space:nowrap}
 
+/* ============================================================
+ * V9.14.10 — تحسينات UX: الفعل أولاً · أوزان قابلة للبحث · Plan B بارز · مستويان
+ * ============================================================ */
+/* بطاقة تمرين اليوم: ٤ إحصاءات + زر بدء مهيمن */
+.tc-stats-4{grid-template-columns:repeat(4,1fr) !important;gap:6px}
+.tc-stats-4 .tcs-val{font-size:15px}
+.tc-stats-4 .tc-stat{padding:10px 3px}
+.tc-cta-hero{font-size:15px !important;padding:18px 18px !important;margin-bottom:10px;
+  box-shadow:0 8px 26px rgba(212,168,83,.4) !important;letter-spacing:1.4px}
+.tc-actions-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;z-index:1}
+
+/* أوزان اليوم — بطاقات قابلة للبحث */
+.rw-search{width:100%;box-sizing:border-box;margin-bottom:10px;padding:10px 12px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--tx);
+  font-family:'Rubik',sans-serif;font-size:13px;-webkit-appearance:none;outline:none;direction:rtl}
+.rw-search:focus{border-color:rgba(212,168,83,.4);background:rgba(212,168,83,.05)}
+.rw-search::placeholder{color:var(--tx3)}
+.rw-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:11px;
+  padding:11px 13px;display:flex;flex-direction:column;gap:5px}
+.rw-card-main{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rw-card-main .rw-ex{font-size:14px}
+.rw-card-main .rw-w{font-size:20px}
+.rw-unit{font-size:11px;color:var(--tx3);margin-right:2px;font-weight:600}
+.rw-card-sub{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:'Rubik',sans-serif;font-size:11px;color:var(--tx3)}
+.rw-card-sub b{font-family:'JetBrains Mono',monospace;color:var(--tx2);font-weight:700}
+.rw-sug{font-weight:700;white-space:nowrap}
+.rw-sug b{font-family:'JetBrains Mono',monospace}
+.rw-sug-increase{color:var(--grn)} .rw-sug-increase b{color:var(--grn)}
+.rw-sug-decrease,.rw-sug-deload{color:var(--org)} .rw-sug-decrease b,.rw-sug-deload b{color:var(--org)}
+.rw-sug-maintain{color:var(--blue)} .rw-sug-maintain b{color:var(--blue)}
+
+/* Plan B — زر "الجهاز مشغول؟" كصف مستقل بارز أسفل كل تمرين */
+.alt-btn.alt-busy-btn{position:static;width:auto;height:auto;display:inline-flex;gap:6px;
+  margin:2px 0 10px;padding:9px 14px;font-size:12px;font-weight:700;border-radius:10px;
+  font-family:'Rubik',sans-serif;letter-spacing:0;
+  background:rgba(90,180,255,.08);border:1px solid rgba(90,180,255,.28);color:var(--blue)}
+.alt-btn.alt-busy-btn:hover{background:rgba(90,180,255,.16);border-color:rgba(90,180,255,.5);transform:none}
+.step.skipped .alt-busy-btn{opacity:.5}
+.exercise-substituted .alt-busy-btn{background:rgba(90,230,138,.08);border-color:rgba(90,230,138,.3);color:var(--grn)}
+
+/* درج «المزيد» — عناوين مستويين */
+.bn-drawer-section{font-family:'Outfit',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:1px;
+  text-transform:uppercase;color:var(--tx3);margin:14px 4px 7px;padding-bottom:5px;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.bn-drawer-section:first-of-type{margin-top:4px}
+
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
 .nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}
