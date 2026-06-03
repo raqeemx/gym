@@ -4510,6 +4510,54 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
   border-bottom:1px solid rgba(255,255,255,.06)}
 .bn-drawer-section:first-of-type{margin-top:4px}
 
+/* ============================================================
+ * V9.14.11 — أنواع بطاقات متمايزة (#6) + مؤقت يربط بالتالي (#8) + تغذية مختصرة (#9)
+ * ============================================================ */
+/* #6 — هوية بصرية لكل نوع بطاقة عبر شريط حافة + لون عنوان */
+.today-card.card-action{border-inline-start:4px solid var(--g1)}
+.dash-card.card-stat{border-inline-start:4px solid var(--blue)}
+.dash-card.card-stat .dash-card-head{color:var(--blue)}
+.dash-card.card-exercise{border-inline-start:4px solid var(--grn)}
+.dash-card.card-exercise .dash-card-head{color:var(--grn)}
+.dash-card.card-warn{border-inline-start:4px solid var(--org)}
+.dash-card.card-warn .dash-card-head{color:var(--org)}
+/* بطاقة الشرح (الدليل) — مكتومة لتنحسر خلف بطاقات الفعل */
+.hero-v14{border-inline-start:4px solid rgba(136,144,160,.4);opacity:.92}
+.hero-v14 .hv-brand{color:var(--tx2)}
+
+/* #8 — التمرين التالي داخل لوحة المؤقت */
+.t-next{margin-top:12px;padding:11px 13px;border-radius:12px;text-align:center;
+  background:rgba(212,168,83,.07);border:1px solid rgba(212,168,83,.22)}
+.t-next .tn-lbl{font-family:'Outfit',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1px;
+  text-transform:uppercase;color:var(--tx3);margin-bottom:3px}
+.t-next .tn-name{font-family:'Rubik',sans-serif;font-size:14.5px;font-weight:800;color:var(--g2);line-height:1.3}
+.t-next .tn-meta{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--tx2);margin-top:3px}
+.t-next .tn-alt{margin-top:9px;background:rgba(90,180,255,.1);border:1px solid rgba(90,180,255,.3);
+  color:var(--blue);border-radius:9px;padding:7px 14px;font-family:'Rubik',sans-serif;font-size:11.5px;
+  font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:.18s}
+.t-next .tn-alt:hover{background:rgba(90,180,255,.2)}
+.t-next .tn-done{font-family:'Rubik',sans-serif;font-size:12px;color:var(--grn);font-weight:700}
+
+/* #9 — تغذية الرئيسية المختصرة */
+.nut-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.nut-mini-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.nut-mini-lbl{font-family:'Rubik',sans-serif;font-size:12px;color:var(--tx2);font-weight:600}
+.nut-mini-val{font-family:'JetBrains Mono',monospace;font-size:14px;color:#fff;font-weight:800}
+[data-theme="light"] .nut-mini-val{color:#1A1D24}
+.nut-mini-val small{font-size:10px;color:var(--tx3);font-weight:600}
+.nut-mini-track{height:7px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+.nut-mini-fill{height:100%;border-radius:4px;transition:width .4s}
+.nut-mini-fill.low{background:linear-gradient(90deg,#C0564B,#E0884B)}
+.nut-mini-fill.ok{background:linear-gradient(90deg,#E0884B,#D4A853)}
+.nut-mini-fill.full{background:linear-gradient(90deg,#5AE68A,#3FD16F)}
+.nut-mini-fill.nut-water{background:linear-gradient(90deg,#5AB4FF,#7BC8FF)}
+.nut-timing{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.nut-time-chip{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05)}
+.nut-time-chip .ntc-ic{font-size:20px;flex-shrink:0}
+.nut-time-chip b{display:block;font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--tx);font-weight:700}
+.nut-time-chip span span,.nut-time-chip div span{font-family:'Rubik',sans-serif;font-size:11px;color:var(--tx3);line-height:1.4}
+
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
 .nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}

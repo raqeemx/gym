@@ -10,10 +10,10 @@
  *   - في README/CHANGELOG: نسخ يدوي عند bump
  * ============================================================ */
 
-const APP_VERSION = '9.14.10';
-const APP_BUILD   = '2026-06-01';
+const APP_VERSION = '9.14.11';
+const APP_BUILD   = '2026-06-03';
 const APP_NAME    = 'BULK MODE';
-const APP_TITLE   = 'BULK MODE V9 — برنامج التضخيم';
+const APP_TITLE   = 'BULK MODE — برنامج التضخيم';
 // CACHE_NAME المُولّد ديناميكياً (SW يستخدمه عبر importScripts)
 const APP_CACHE_NAME = 'bulkmode-v' + APP_VERSION.replace(/\./g, '-');
 

@@ -1520,9 +1520,9 @@ async function saveSet(btn){
     // V9.10 (#13) — تنبيه آخر سيتين / آخر سيت
     maybeShowLastSetsAlert(step);
 
-    // ابدأ مؤقت الراحة تلقائياً
+    // ابدأ مؤقت الراحة تلقائياً + اعرض التمرين التالي
     const restDur=getRestDuration(step);
-    startAutoRest(restDur);
+    startAutoRest(restDur,step);
 
     setTimeout(()=>{btn.textContent='حفظ';btn.classList.remove('saved')},2000);
   }catch(e){
@@ -1626,8 +1626,43 @@ const REST={
   audioCtx:null
 };
 
-function showT(){tFl().classList.add('show');tTr().classList.add('hid')}
+function showT(){tFl().classList.add('show');tTr().classList.add('hid');renderNextUp()}
 function hideT(){tFl().classList.remove('show');tTr().classList.remove('hid')}
+
+// V9.14.11 — "بعد الراحة ماذا أفعل؟": اعرض التمرين التالي + وزنه + تكراراته داخل لوحة المؤقت
+function renderNextUp(currentStep){
+  const el=document.getElementById('tNext');
+  if(!el) return;
+  // التمرين التالي = أول ستيب قابل للتتبّع غير مكتمل بعد الحالي (أو الأول لو فتح يدوياً)
+  const all=Array.from(document.querySelectorAll('#t1 .dy.open .step:not(.rest):not(.warmup), .step:not(.rest):not(.warmup)'));
+  const pending=all.filter(s=>!s.classList.contains('completed')&&!s.classList.contains('done')&&!s.classList.contains('skipped'));
+  let next=null;
+  if(currentStep){
+    const idx=all.indexOf(currentStep);
+    for(let i=idx+1;i<all.length;i++){
+      const s=all[i];
+      if(!s.classList.contains('completed')&&!s.classList.contains('done')&&!s.classList.contains('skipped')){next=s;break}
+    }
+  }
+  if(!next) next=pending[0]||null;
+  if(!next){
+    el.innerHTML='<div class="tn-done">✓ هذا آخر سيت — أنهِ الجلسة بعد الراحة</div>';
+    return;
+  }
+  const name=(typeof getExerciseName==='function'?getExerciseName(next):'')||'التمرين التالي';
+  // الوزن: من حقل الإدخال (اقتراح/قيمة) — والتكرار: من نص الستيب
+  const wInput=next.querySelector('.weight-input');
+  const w=wInput?(wInput.value||wInput.placeholder||''):'';
+  const repsM=(next.textContent||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).match(/(\d{1,2}\s*[-–]\s*\d{1,2})\s*تكرار/);
+  const meta=[w?`${w}كجم`:'',repsM?`${repsM[1]} تكرار`:''].filter(Boolean).join(' · ');
+  el.innerHTML=`
+    <div class="tn-lbl">التالي بعد الراحة</div>
+    <div class="tn-name">${escHTML(name)}</div>
+    ${meta?`<div class="tn-meta">${escHTML(meta)}</div>`:''}
+    <button type="button" class="tn-alt">🔄 عرض البديل</button>`;
+  const altBtn=el.querySelector('.tn-alt');
+  if(altBtn) altBtn.onclick=()=>{ if(typeof showAlternatives==='function') showAlternatives(next); };
+}
 
 function setT(s){
   REST.defaultDur=s;
@@ -1656,12 +1691,13 @@ function startT(){
   startAutoRest(REST.defaultDur);
 }
 
-function startAutoRest(seconds){
+function startAutoRest(seconds,currentStep){
   if(REST.intervalId) clearInterval(REST.intervalId);
   REST.defaultDur=seconds;
   REST.active=true;
   REST.endTime=Date.now()+seconds*1000;
   showT();
+  if(currentStep) renderNextUp(currentStep); // V9.14.11 — التمرين التالي بعد الراحة
   tTr().classList.add('active');
   tSb().textContent='⏸';
   tickRest();

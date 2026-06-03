@@ -543,7 +543,7 @@
     }
 
     return `
-      <div class="today-card today-train">
+      <div class="today-card card-action today-train">
         <div class="tc-ribbon">⭐ تمرين اليوم</div>
         <div class="tc-grid">
           <div class="tc-info-row tc-info-day">
@@ -758,7 +758,7 @@
     const photosBtn=`switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'photos\\']');if(b)b.click()},120)`;
     const metricsBtn=`switchToTab(7);setTimeout(()=>{const b=document.querySelector('.prog-tab[data-pt=\\'metrics\\']');if(b)b.click()},120)`;
     return `
-      <div class="dash-card dash-progress-summary">
+      <div class="dash-card card-stat dash-progress-summary">
         <div class="dash-card-head dash-card-head-mini">📈 تقدّمك</div>
         <div class="dps-grid">
           <div class="dps-item"><span class="dps-lbl">هذا الأسبوع</span><b class="dps-val">${sessionsDone} / ${target} تمارين</b></div>
@@ -836,7 +836,7 @@
       </div>`;
     }).join('');
     return `
-      <div class="dash-card dash-weights-card">
+      <div class="dash-card card-exercise dash-weights-card">
         <div class="dash-card-head dash-card-head-mini">🏋️ أوزانك لتمرين اليوم</div>
         <input type="search" class="rw-search" placeholder="🔎 ابحث عن تمرين…" aria-label="ابحث عن تمرين"
           oninput="const q=this.value.trim().toLowerCase();this.closest('.dash-weights-card').querySelectorAll('.rw-card').forEach(c=>{c.style.display=c.dataset.ex.toLowerCase().includes(q)?'':'none'})">
@@ -1014,41 +1014,33 @@
   }
 
   // V9.14.4 (#8) — تغذية مختصرة: هدف السعرات + ماكروز + الوجبة التالية + ٣ أزرار
+  // V9.14.11 — نسخة الرئيسية مختصرة: بروتين اليوم + ماء + وجبة قبل/بعد التمرين فقط.
+  // كل تفاصيل السعرات/الكارب/الدهون و٦ وجبات تبقى داخل تبويب التغذية.
   function _nutritionBars(nutrition,targets,daily){
-    const tCals = (targets&&targets.calories) || 2500;
     const tProt = (targets&&targets.protein) || 150;
-    const tCarb = (targets&&targets.carb) || 300;
-    const tFat  = (targets&&targets.fat) || 70;
-    const kcal = Math.round((nutrition && nutrition.kcal) || 0);
     const prot = Math.round((nutrition && nutrition.protein>0) ? nutrition.protein : ((daily&&daily.protein)||0));
-    const carb = Math.round((nutrition && nutrition.carbs) || 0);
-    const fat  = Math.round((nutrition && nutrition.fat) || 0);
-    const calPct=Math.min(100,Math.max(0,Math.round(kcal/tCals*100)));
-    const macros=[
-      {lbl:'بروتين',cur:prot,tgt:tProt,color:'protein'},
-      {lbl:'كارب',cur:carb,tgt:tCarb,color:'carb'},
-      {lbl:'دهون',cur:fat,tgt:tFat,color:'fat'}
-    ];
-    const nextMeal=_nextMealHint(daily);
-    const nextRow = nextMeal
-      ? `<div class="dash-next-meal"><span class="dnm-ic">${nextMeal.icon}</span><span>الوجبة التالية: <b>${E(nextMeal.name)}</b></span></div>`
-      : `<div class="dash-next-meal dnm-done">✓ سجّلت كل وجباتك اليوم!</div>`;
+    const protPct=Math.min(100,Math.max(0,Math.round(prot/tProt*100)));
+    const water = (daily&&daily.water!=null)?daily.water:0;
+    const tWater = 3; // لتر/يوم تقريبي
+    const waterPct=Math.min(100,Math.max(0,Math.round(water/tWater*100)));
     return `
-      <div class="dash-card dash-nutrition-card">
+      <div class="dash-card card-stat dash-nutrition-card">
         <div class="dash-card-head dash-card-head-mini">🥗 تغذية اليوم</div>
-        <div class="nut-target">
-          <div class="nut-target-main"><span class="nut-cal-cur">${E(kcal)}</span><span class="nut-cal-sep"> / </span><span class="nut-cal-tgt">${E(tCals)}</span> <small>سعرة</small></div>
-          <div class="nut-cal-track"><div class="nut-cal-fill ${calPct>=100?'full':calPct>=70?'ok':'low'}" style="width:${calPct}%"></div></div>
+        <div class="nut-mini-grid">
+          <div class="nut-mini">
+            <div class="nut-mini-top"><span class="nut-mini-lbl">🥩 بروتين</span><b class="nut-mini-val">${E(prot)}<small>/${E(tProt)}غ</small></b></div>
+            <div class="nut-mini-track"><div class="nut-mini-fill ${protPct>=100?'full':protPct>=70?'ok':'low'}" style="width:${protPct}%"></div></div>
+          </div>
+          <div class="nut-mini">
+            <div class="nut-mini-top"><span class="nut-mini-lbl">💧 ماء</span><b class="nut-mini-val">${E(water)}<small>/${E(tWater)}ل</small></b></div>
+            <div class="nut-mini-track"><div class="nut-mini-fill nut-water" style="width:${waterPct}%"></div></div>
+          </div>
         </div>
-        <div class="nut-macros">
-          ${macros.map(m=>`<div class="nut-macro nut-${m.color}"><div class="nm-lbl">${E(m.lbl)}</div><div class="nm-val"><b>${E(m.cur)}</b><small>/${E(m.tgt)}g</small></div></div>`).join('')}
+        <div class="nut-timing">
+          <div class="nut-time-chip"><span class="ntc-ic">🍌</span><div><b>قبل التمرين</b><span>كارب + بروتين خفيف قبل ٦٠–٩٠ دقيقة</span></div></div>
+          <div class="nut-time-chip"><span class="ntc-ic">🥛</span><div><b>بعد التمرين</b><span>بروتين + كارب سريع خلال ٤٥ دقيقة</span></div></div>
         </div>
-        ${nextRow}
-        <div class="dash-actions dash-actions-3 nut-actions">
-          <button class="dash-action" onclick="openFoodSearch&&openFoodSearch()"><span>➕</span><b>سجّل وجبة</b></button>
-          <button class="dash-action" onclick="switchToTab(3)"><span>📋</span><b>خطة الأكل</b></button>
-          <button class="dash-action" onclick="openShoppingList&&openShoppingList()"><span>🛒</span><b>المشتريات</b></button>
-        </div>
+        <button class="dash-card-more" onclick="switchToTab(3)">🍽️ خطة الأكل وتفاصيل الوجبات ›</button>
       </div>`;
   }
 

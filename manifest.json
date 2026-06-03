@@ -2,7 +2,7 @@
   "name": "BULK MODE — برنامج التضخيم",
   "short_name": "BULK MODE",
   "description": "برنامج تضخيم 12 أسبوع — UPPER PRIORITY · نظام تتبع شامل · يعمل أوفلاين",
-  "version": "9.14.10",
+  "version": "9.14.11",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
