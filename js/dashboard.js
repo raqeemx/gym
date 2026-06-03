@@ -474,6 +474,91 @@
       </details>`;
   }
 
+  // ----- V9.14.12 — شريط الحالة العلوي (#1): الأسبوع · اليوم · الحالة · Deload -----
+  function _statusBar(todayProg,wp,activeSession){
+    const chips=[];
+    if(wp && wp.week) chips.push(`<span class="sb-chip sb-week">الأسبوع <b>${E(wp.week)}/12</b></span>`);
+    const isRest=!todayProg || todayProg.isRest || todayProg.type==='REST';
+    const dayLbl=isRest?'راحة':(todayProg.type||todayProg.label||'تمرين');
+    chips.push(`<span class="sb-chip">اليوم: <b>${E(dayLbl)}</b></span>`);
+    let status,scls;
+    if(activeSession){status='جلسة نشطة';scls='sbc-active'}
+    else if(isRest){status='يوم راحة';scls='sbc-rest'}
+    else {status='جاهز للتمرين';scls='sbc-ready'}
+    chips.push(`<span class="sb-chip ${scls}">${status}</span>`);
+    if(wp && wp.week && wp.week%4===0) chips.push(`<span class="sb-chip sbc-deload">🛟 Deload</span>`);
+    return `<div class="dash-statusbar">${chips.join('')}</div>`;
+  }
+
+  // ----- V9.14.12 — Hero مختصر واضح (#2) -----
+  function _heroConcise(){
+    return `
+      <div class="dash-hero">
+        <div class="dh-title">برنامج تضخيم ١٢ أسبوع <span>مصمم لجيمك</span></div>
+        <p class="dh-desc">افتحه داخل الجيم، اتبع تمرين اليوم، سجّل أوزانك، واستخدم البدائل لو الجهاز مشغول.</p>
+        <div class="dh-actions">
+          <button type="button" class="dh-cta dh-cta-primary" onclick="switchToTab(1)">💪 ابدأ تمرين اليوم</button>
+          <button type="button" class="dh-cta dh-cta-secondary" onclick="switchToTab(8)">📅 عرض خطة الأسبوع</button>
+        </div>
+      </div>`;
+  }
+
+  // ----- V9.14.12 — قسم «التالي عليك» (#5): يحوّل الصفحة لمساعد تمرين -----
+  function _nextUpCard(todayProg,activeSession,lastBest,allSets){
+    lastBest=lastBest||{};
+    const isRest=!todayProg || todayProg.isRest || todayProg.type==='REST';
+    // لا جلسة نشطة
+    if(!activeSession){
+      if(isRest){
+        return `<div class="dash-card card-stat dash-nextup">
+          <div class="nu-lbl">التالي عليك</div>
+          <div class="nu-rest">🧘 اليوم راحة — جسمك يتعافى ويبني العضل. لا تفوّت وجباتك ونومك.</div>
+        </div>`;
+      }
+      const dayType=todayProg.type||todayProg.label||'التمرين';
+      return `<div class="dash-card card-action dash-nextup">
+        <div class="nu-lbl">التالي عليك</div>
+        <button type="button" class="nu-start" onclick="switchToTab(1)">▶ ابدأ تمرين ${E(dayType)} الآن</button>
+      </div>`;
+    }
+    // جلسة نشطة → أول تمرين لم يُسجَّل بعد في هذه الجلسة
+    const clean=(n)=>String(n||'').replace(/\s*[—-]\s*مجموعة\s+تسخين\s*$/,'').replace(/\s*[—-]\s*سيت[\s\S]*$/,'').replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const toLatin=(s)=>String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const logged=new Set((allSets||[]).filter(s=>s && s.workoutId===activeSession.id).map(s=>clean(s.exerciseName)));
+    let next=null,nextInfo='';
+    if(todayProg && todayProg.phases){
+      for(const ph of todayProg.phases){
+        if(ph.type==='warmup') continue;
+        for(const s of (ph.steps||[])){
+          if(!s || s.type==='rest') continue;
+          const nm=clean(s.name); if(!nm) continue;
+          if(!logged.has(nm)){ next=nm; nextInfo=s.info||''; break; }
+        }
+        if(next) break;
+      }
+    }
+    if(!next){
+      return `<div class="dash-card card-action dash-nextup">
+        <div class="nu-lbl">التالي عليك</div>
+        <div class="nu-done">🎉 أنهيت كل تمارين اليوم — أنهِ الجلسة!</div>
+        <button type="button" class="nu-back" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
+      </div>`;
+    }
+    const lb=lastBest[next];
+    const w=(lb && lb.lastSessionBest && lb.lastSessionBest.weight!=null)
+      ? `${lb.lastSessionBest.weight}كجم`
+      : (()=>{const m=toLatin(nextInfo).match(/([\d.]+)\s*كجم/);return m?`${m[1]}كجم`:''})();
+    const rm=toLatin(nextInfo).match(/(\d{1,2}\s*[-–]\s*\d{1,2})/);
+    const reps=rm?`${rm[1]} تكرار`:'';
+    const meta=[w,reps].filter(Boolean).join(' · ');
+    return `<div class="dash-card card-action dash-nextup">
+      <div class="nu-lbl">التالي في جلستك</div>
+      <div class="nu-next-name">${E(next)}</div>
+      ${meta?`<div class="nu-next-meta">${E(meta)}</div>`:''}
+      <button type="button" class="nu-back" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
+    </div>`;
+  }
+
   // ----- 2. TODAY'S WORKOUT CARD (أهم عنصر في الصفحة) -----
   function _todayWorkoutCard(todayProg,activeSession,workouts,missedDay,smartReco){
     const arDayNames=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
@@ -1113,13 +1198,18 @@
       //   8. التغذية المختصرة
       //   9. الإنجاز القادم + PRs
       //   10. «افهم البرنامج بعمق» (الشرح الطويل — مطويّ في الأسفل)
+      // V9.14.12 — تخطيط الرئيسية الجديد (مساعد تمرين):
+      //   شريط حالة → Hero مختصر → بطاقة اليوم → جدول الأسبوع → «التالي عليك» → الدعم → الشرح المطوي
       container.innerHTML=`
+        ${_statusBar(todayProg,wp,activeSession)}
+        ${_heroConcise()}
         ${profileMissing?`<div class="profile-missing-strip" onclick="openProfile()">👤 أكمل ملفك الشخصي لحساب الأهداف بدقة ›</div>`:''}
         ${_todayWorkoutCard(todayProg,activeSession,data.workouts,missedDay,smartReco)}
+        ${_weekGridBlock(data.workouts)}
+        ${_nextUpCard(todayProg,activeSession,lastBest,data.sets)}
         ${_readyWeightsCard(todayProg,lastBest)}
         ${_quickStats3(streak,week)}
         ${_programQuickSummary()}
-        ${_weekGridBlock(data.workouts)}
         ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets,data.bodyMetrics)}
         ${_nutritionBars(nutrition,nutritionTargets,daily)}
         ${_nextAchievementBlockFiltered(nextAch)}

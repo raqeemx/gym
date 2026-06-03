@@ -4558,6 +4558,54 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
 .nut-time-chip b{display:block;font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--tx);font-weight:700}
 .nut-time-chip span span,.nut-time-chip div span{font-family:'Rubik',sans-serif;font-size:11px;color:var(--tx3);line-height:1.4}
 
+/* ============================================================
+ * V9.14.12 — تخطيط الرئيسية الجديد: شريط حالة + Hero مختصر + «التالي عليك»
+ * ============================================================ */
+/* #1 — شريط الحالة العلوي */
+.dash-statusbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:14px}
+.sb-chip{font-family:'Rubik',sans-serif;font-size:11.5px;color:var(--tx2);font-weight:600;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:5px 11px;white-space:nowrap}
+.sb-chip b{color:var(--tx);font-family:'JetBrains Mono',monospace}
+.sb-chip.sb-week{background:rgba(212,168,83,.08);border-color:rgba(212,168,83,.22);color:var(--g2)}
+.sb-chip.sb-week b{color:var(--g2)}
+.sb-chip.sbc-ready{background:rgba(90,230,138,.1);border-color:rgba(90,230,138,.28);color:var(--grn)}
+.sb-chip.sbc-active{background:rgba(255,90,95,.12);border-color:rgba(255,90,95,.3);color:var(--red);animation:pulse 2s infinite}
+.sb-chip.sbc-rest{background:rgba(90,180,255,.1);border-color:rgba(90,180,255,.28);color:var(--blue)}
+.sb-chip.sbc-deload{background:rgba(90,180,255,.14);border-color:rgba(90,180,255,.4);color:var(--blue)}
+
+/* #2 — Hero مختصر */
+.dash-hero{background:linear-gradient(150deg,rgba(212,168,83,.1),rgba(212,168,83,.02));
+  border:1px solid rgba(212,168,83,.2);border-radius:16px;padding:18px 16px;margin-bottom:16px}
+.dash-hero .dh-title{font-family:'Outfit',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1.35}
+[data-theme="light"] .dash-hero .dh-title{color:#1A1D24}
+.dash-hero .dh-title span{color:var(--g2);display:inline}
+.dash-hero .dh-desc{font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--tx2);line-height:1.7;margin:8px 0 14px}
+.dash-hero .dh-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.dash-hero .dh-cta{padding:13px 14px;border-radius:12px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;
+  font-size:12.5px;font-weight:800;letter-spacing:.5px;transition:.2s;-webkit-tap-highlight-color:transparent}
+.dash-hero .dh-cta-primary{background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;box-shadow:0 5px 16px rgba(212,168,83,.3)}
+.dash-hero .dh-cta-primary:hover{transform:translateY(-1px)}
+.dash-hero .dh-cta-secondary{background:rgba(255,255,255,.05);color:var(--tx);border:1px solid rgba(212,168,83,.2)}
+.dash-hero .dh-cta-secondary:hover{background:rgba(212,168,83,.1);color:var(--g2)}
+
+/* #5 — قسم «التالي عليك» */
+.dash-nextup{text-align:center}
+.dash-nextup .nu-lbl{font-family:'Outfit',sans-serif;font-size:10px;font-weight:800;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--tx3);margin-bottom:9px}
+.dash-nextup .nu-start{width:100%;padding:16px;border:none;border-radius:13px;cursor:pointer;
+  background:linear-gradient(135deg,var(--g1),var(--g3));color:#000;font-family:'Outfit',sans-serif;
+  font-size:14.5px;font-weight:800;letter-spacing:.6px;box-shadow:0 6px 20px rgba(212,168,83,.32);transition:.2s;
+  -webkit-tap-highlight-color:transparent}
+.dash-nextup .nu-start:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(212,168,83,.45)}
+.dash-nextup .nu-next-name{font-family:'Rubik',sans-serif;font-size:18px;font-weight:800;color:var(--g2);line-height:1.3}
+.dash-nextup .nu-next-meta{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--tx);margin-top:4px}
+.dash-nextup .nu-rest{font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--blue);line-height:1.6}
+.dash-nextup .nu-done{font-family:'Rubik',sans-serif;font-size:14px;color:var(--grn);font-weight:700;margin-bottom:10px}
+.dash-nextup .nu-back{margin-top:11px;background:rgba(255,255,255,.05);border:1px solid rgba(212,168,83,.22);
+  color:var(--g2);border-radius:10px;padding:9px 18px;font-family:'Rubik',sans-serif;font-size:12px;font-weight:700;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:.2s}
+.dash-nextup .nu-back:hover{background:rgba(212,168,83,.1)}
+
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
 .nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}
