@@ -53,7 +53,7 @@ const ASSETS = [
   './assets/gifs/low-row.svg',
   './assets/gifs/reverse-fly.svg',
   './assets/gifs/crossover-cables.svg',
-  'https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Rubik:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap'
 ];
 
 // Install: precache all app-shell assets

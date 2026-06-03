@@ -1,4 +1,4 @@
-:root{--g1:#D4A853;--g2:#EDCA7A;--g3:#B08A3A;--g4:rgba(212,168,83,.14);--g5:rgba(212,168,83,.06);--bg:#050608;--s1:#0B0D11;--s2:#10131A;--s3:#161A24;--s4:#1D222E;--tx:#DEE0E6;--tx2:#9CA4B5;--tx3:#7A8093;--red:#FF5A5F;--blue:#5AB4FF;--grn:#5AE68A;--org:#FFB85A;--purple:#B08AFF;--r1:16px;--r2:20px;--grain-opacity:.18;
+:root{--g1:#D4A853;--g2:#EDCA7A;--g3:#B08A3A;--g4:rgba(212,168,83,.14);--g5:rgba(212,168,83,.06);--cta:#F59E0B;--cta2:#D4820A;--bg:#06080D;--s1:#0B0E15;--s2:#10141D;--s3:#171D29;--s4:#1F2734;--tx:#F4F6FA;--tx2:#9CA4B5;--tx3:#7A8093;--red:#EF4444;--blue:#38BDF8;--grn:#22C55E;--org:#F97316;--purple:#B08AFF;--r1:16px;--r2:18px;--font-head:'IBM Plex Sans Arabic','Rubik',sans-serif;--grain-opacity:.16;
   /* V8.4 (P1-#4) — Standardized z-index scale (low → high). تجنّب أرقام عشوائية في الكود. */
   --z-base: 0;
   --z-floating: 90;       /* week-float floating badge */
@@ -4646,6 +4646,41 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
 .hv-topics li::before{content:'›';position:absolute;right:11px;top:50%;transform:translateY(-50%);
   color:var(--g2);font-weight:800;font-size:15px}
 .hv-topics li b{color:var(--g2)}
+
+/* ============================================================
+ * V9.14.14 — Style Guide: خطوط · نصف قطر · أزرار · هرم بصري
+ * ============================================================ */
+/* العناوين: IBM Plex Sans Arabic (قراءة عربية أوضح) — الواجهة تبقى Rubik، الأرقام JetBrains Mono */
+h1,h2,h3,.ct,.dash-card-head,.tc-title,.dh-title,.nu-next-name,.bn-drawer-title,.onb-title,
+.sh-title,.dn,.tc-info-session-name,.es-text b{font-family:var(--font-head)}
+/* النصوص الطويلة (شرح/نصائح/أوصاف) — IBM Plex للقراءة المريحة */
+.hv-desc,.dh-desc,.tt,.tc-rest-desc,.es-text,.onb-sub{font-family:'IBM Plex Sans Arabic','Rubik',sans-serif}
+
+/* نصف قطر البطاقات ~18px + Padding (موبايل ١٦ · ديسكتوب أكبر) */
+.dash-card{border-radius:18px;padding:16px}
+.card{border-radius:18px}
+@media (min-width:601px){.dash-card{padding:22px}.card{padding:24px}}
+
+/* أحجام العناوين (Hero) — موبايل ثم ديسكتوب */
+.dash-hero .dh-title{font-size:23px;line-height:1.3}
+@media (min-width:601px){.dash-hero .dh-title{font-size:32px}}
+
+/* الأزرار: ارتفاع لا يقل عن 48px + حواف 14px */
+.tc-cta,.dh-cta,.nu-start,.nu-back,.dash-action,.qt-btn,.dash-card-more{min-height:48px;border-radius:14px}
+.dash-card-more{display:flex;align-items:center;justify-content:center}
+
+/* CTA قوي (#F59E0B): أهم أزرار البدء — ذهبي→برتقالي بنص أسود */
+.tc-cta-hero,.dh-cta-primary,.nu-start{
+  background:linear-gradient(135deg,var(--g2),var(--cta)) !important;color:#0A0A0A !important;
+  box-shadow:0 8px 24px rgba(245,158,11,.32) !important}
+.tc-cta-hero:hover,.dh-cta-primary:hover,.nu-start:hover{box-shadow:0 12px 30px rgba(245,158,11,.45) !important}
+
+/* هرم بصري: بطاقة تمرين اليوم الأقوى (ظل وحدّ أبرز) */
+.today-card{box-shadow:0 12px 36px rgba(0,0,0,.45)}
+.today-card.card-action{border-inline-start-width:5px}
+/* أدوات سريعة أخف وأصغر */
+.dash-quicktools{background:var(--s1)}
+.dash-quicktools .qt-btn{min-height:46px}
 
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
