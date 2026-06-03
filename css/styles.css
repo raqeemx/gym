@@ -4606,6 +4606,47 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
   cursor:pointer;-webkit-tap-highlight-color:transparent;transition:.2s}
 .dash-nextup .nu-back:hover{background:rgba(212,168,83,.1)}
 
+/* ============================================================
+ * V9.14.13 — ملخص 4 بطاقات (#6) + أدوات سريعة (#7) + تغذية بوجبات (#8) + مواضيع الدليل (#10)
+ * ============================================================ */
+/* #6 — ٤ بطاقات بارزة */
+.program-summary-grid{grid-template-columns:repeat(4,1fr) !important}
+.program-summary-grid .psg-val{font-size:16px;color:#fff}
+[data-theme="light"] .program-summary-grid .psg-val{color:#1A1D24}
+.program-summary-grid .psg-card{border-color:rgba(212,168,83,.14);background:linear-gradient(145deg,rgba(212,168,83,.05),rgba(212,168,83,.01))}
+@media (max-width:600px){.program-summary-grid .psg-val{font-size:15px}}
+
+/* #7 — أدوات سريعة */
+.qt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.qt-btn{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.035);
+  border:1px solid rgba(212,168,83,.16);border-radius:11px;padding:13px 12px;cursor:pointer;
+  color:var(--tx);font-family:'Rubik',sans-serif;font-size:12.5px;font-weight:700;transition:.2s;
+  -webkit-tap-highlight-color:transparent;text-align:right}
+.qt-btn:hover{background:rgba(212,168,83,.09);border-color:rgba(212,168,83,.32);transform:translateY(-1px)}
+.qt-btn .qt-ic{font-size:18px;flex-shrink:0}
+.qt-btn.qt-end{background:rgba(255,90,95,.08);border-color:rgba(255,90,95,.28);color:var(--red);grid-column:1/-1;justify-content:center}
+.qt-btn.qt-end:hover{background:rgba(255,90,95,.16)}
+
+/* #8 — صفوف وجبتي قبل/بعد التمرين */
+.nut-meals{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.nut-meal-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05)}
+.nut-meal-row .nmr-ic{font-size:17px;flex-shrink:0}
+.nut-meal-row .nmr-lbl{flex:1;font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--tx);font-weight:600}
+.nut-meal-row .nmr-st{font-family:'Rubik',sans-serif;font-size:11px;font-weight:700;color:var(--tx3);white-space:nowrap}
+.nut-meal-row.done{background:rgba(90,230,138,.06);border-color:rgba(90,230,138,.25)}
+.nut-meal-row.done .nmr-st{color:var(--grn)}
+.dash-actions.dash-actions-2{grid-template-columns:1fr 1fr}
+
+/* #10 — قائمة مواضيع الدليل */
+.hv-topics{list-style:none;margin:4px 0 14px;padding:0;display:flex;flex-direction:column;gap:7px}
+.hv-topics li{position:relative;padding:8px 28px 8px 10px;border-radius:9px;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);
+  font-family:'Rubik',sans-serif;font-size:12.5px;color:var(--tx2);line-height:1.5}
+.hv-topics li::before{content:'›';position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  color:var(--g2);font-weight:800;font-size:15px}
+.hv-topics li b{color:var(--g2)}
+
 /* ----- (#8) تغذية مختصرة ----- */
 .nut-target{margin-bottom:12px}
 .nut-target-main{font-family:'Outfit',sans-serif;text-align:center;margin-bottom:6px}

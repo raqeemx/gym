@@ -10,7 +10,7 @@
  *   - في README/CHANGELOG: نسخ يدوي عند bump
  * ============================================================ */
 
-const APP_VERSION = '9.14.12';
+const APP_VERSION = '9.14.13';
 const APP_BUILD   = '2026-06-03';
 const APP_NAME    = 'BULK MODE';
 const APP_TITLE   = 'BULK MODE — برنامج التضخيم';

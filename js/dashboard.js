@@ -458,17 +458,23 @@
     return `
       <details class="hero-v14">
         <summary class="hv-summary">
-          <div class="hv-brand">📖 افهم البرنامج بعمق</div>
-          <div class="hv-tag">الفلسفة · التغذية · الأجهزة · النصائح</div>
+          <div class="hv-brand">📖 اعرف البرنامج بعمق</div>
+          <div class="hv-tag">الفلسفة · الأجهزة · النصائح</div>
           <span class="hv-toggle">▾</span>
         </summary>
         <div class="hv-body">
-          <h1 class="hv-title">برنامج تضخيم ١٢ أسبوع — اتبع تمرين اليوم فقط</h1>
-          <p class="hv-desc">خطة عربية للتضخيم باستخدام أجهزة الجيم، مع أوزان مقترحة، راحة محسوبة، و<b>Plan B</b> إذا كان الجهاز مشغولاً.</p>
+          <p class="hv-desc">كل ما تحتاج فهمه عن البرنامج — اقرأه مرة واحدة وانطلق:</p>
+          <ul class="hv-topics">
+            <li>كيف يعمل نظام الأزواج (عضلتان متضادتان بالتناوب)</li>
+            <li>لماذا الراحة ٦٠ ثانية الموحّدة</li>
+            <li>استراتيجية الجيم وقت الزحمة</li>
+            <li><b>Plan B</b> — البديل لو الجهاز مشغول</li>
+            <li>الأجهزة حسب العضلة</li>
+            <li>النصائح والتحذيرات (علامات الخطر · Deload)</li>
+          </ul>
           <div class="hv-actions">
             <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(5)">📖 الدليل الشامل</button>
-            <button type="button" class="hv-cta hv-cta-secondary" onclick="switchToTab(8)">📅 جدول الأسبوع</button>
-            <button type="button" class="hv-cta hv-cta-tertiary" onclick="switchToTab(6)">🎯 أول مرة في الجيم؟</button>
+            <button type="button" class="hv-cta hv-cta-tertiary" onclick="switchToTab(4)">💡 النصائح والتحذيرات</button>
           </div>
         </div>
       </details>`;
@@ -557,6 +563,24 @@
       ${meta?`<div class="nu-next-meta">${E(meta)}</div>`:''}
       <button type="button" class="nu-back" onclick="switchToTab(1)">↩ ارجع للجلسة</button>
     </div>`;
+  }
+
+  // ----- V9.14.13 — أدوات الجيم السريعة (#7): أزرار واضحة بدل إخفائها -----
+  function _quickTools(activeSession){
+    const tools=[
+      {ic:'⏱️',lbl:'مؤقت الراحة',act:'showT()'},
+      {ic:'🧮',lbl:'حاسبة البليتات',act:'openPlateCalc()'},
+      {ic:'🔄',lbl:'الجهاز مشغول؟',act:'openPlanBHint&&openPlanBHint()'},
+      {ic:'🏋️',lbl:'آخر أوزاني',act:"const w=document.querySelector('.dash-weights-card');if(w){w.scrollIntoView({behavior:'smooth',block:'start'})}else{switchToTab(1)}"}
+    ];
+    if(activeSession) tools.push({ic:'⏹',lbl:'إنهاء الجلسة',act:'endSession&&endSession()',cls:'qt-end'});
+    return `
+      <div class="dash-card dash-quicktools">
+        <div class="dash-card-head dash-card-head-mini">⚡ أدوات سريعة</div>
+        <div class="qt-grid">
+          ${tools.map(t=>`<button type="button" class="qt-btn ${t.cls||''}" onclick="${t.act}"><span class="qt-ic">${t.ic}</span><span class="qt-lbl">${E(t.lbl)}</span></button>`).join('')}
+        </div>
+      </div>`;
   }
 
   // ----- 2. TODAY'S WORKOUT CARD (أهم عنصر في الصفحة) -----
@@ -664,14 +688,13 @@
   }
 
   // ----- 3. PROGRAM QUICK SUMMARY (6 badges صغيرة) -----
+  // V9.14.13 — ٤ بطاقات بارزة فقط (أهم أرقام البرنامج)
   function _programQuickSummary(){
     const items=[
-      {ic:'📅', val:'12', lbl:'أسبوع'},
       {ic:'💪', val:'6', lbl:'أيام تمرين'},
-      {ic:'⏱', val:'52–57', lbl:'دقيقة للجلسة'},
+      {ic:'⏱', val:'55', lbl:'دقيقة للجلسة'},
       {ic:'⏸', val:'60', lbl:'ث راحة'},
-      {ic:'🥩', val:'175g', lbl:'بروتين'},
-      {ic:'🔄', val:'Plan B', lbl:'لكل تمرين'}
+      {ic:'🥩', val:'175g', lbl:'بروتين/يوم'}
     ];
     return `
       <div class="program-summary-grid">
@@ -846,20 +869,12 @@
       <div class="dash-card card-stat dash-progress-summary">
         <div class="dash-card-head dash-card-head-mini">📈 تقدّمك</div>
         <div class="dps-grid">
-          <div class="dps-item"><span class="dps-lbl">هذا الأسبوع</span><b class="dps-val">${sessionsDone} / ${target} تمارين</b></div>
-          <div class="dps-item"><span class="dps-lbl">آخر جلسة</span><b class="dps-val">${E(lastSessionTxt)}</b></div>
-          <div class="dps-item"><span class="dps-lbl">آخر وزن جسم</span><b class="dps-val">${E(bwTxt)}</b></div>
+          <div class="dps-item"><span class="dps-lbl">جلسات هذا الأسبوع</span><b class="dps-val">${sessionsDone} / ${target}</b></div>
           <div class="dps-item"><span class="dps-lbl">آخر رقم قياسي</span><b class="dps-val">${E(prTxt)}</b></div>
+          <div class="dps-item"><span class="dps-lbl">إجمالي السيتات</span><b class="dps-val">${E(((sets||[]).length).toLocaleString('en'))}</b></div>
+          <div class="dps-item"><span class="dps-lbl">وزن الجسم (آخر قياس)</span><b class="dps-val">${E(bwTxt)}</b></div>
         </div>
-        <div class="dps-compliance">
-          <div class="dtp-head"><span class="dtp-ic">✅</span><span class="dtp-lbl">الالتزام</span><b class="dtp-val">${compliancePct}%</b></div>
-          <div class="dtp-track"><div class="dtp-fill dtp-fill-${compliancePct>=70?'good':compliancePct>=40?'ok':'low'}" style="width:${compliancePct}%"></div></div>
-        </div>
-        <div class="dash-actions dash-actions-3">
-          <button class="dash-action" onclick="switchToTab(7)"><span>📊</span><b>افتح التقدم</b></button>
-          <button class="dash-action" onclick="${metricsBtn}"><span>📏</span><b>سجل القياسات</b></button>
-          <button class="dash-action" onclick="${photosBtn}"><span>📸</span><b>صورة تقدم</b></button>
-        </div>
+        <button class="dash-card-more" onclick="switchToTab(7)">📊 افتح تقدمي ›</button>
       </div>`;
   }
 
@@ -1106,8 +1121,13 @@
     const prot = Math.round((nutrition && nutrition.protein>0) ? nutrition.protein : ((daily&&daily.protein)||0));
     const protPct=Math.min(100,Math.max(0,Math.round(prot/tProt*100)));
     const water = (daily&&daily.water!=null)?daily.water:0;
-    const tWater = 3; // لتر/يوم تقريبي
+    const tWater = 8; // أكواب/يوم
     const waterPct=Math.min(100,Math.max(0,Math.round(water/tWater*100)));
+    // وجبتا قبل/بعد التمرين من شيكات السجل اليومي (3=طاقة قبل · 4=بناء بعد)
+    // ملاحظة: _todayDaily يُرجع المصفوفة الأصلية باسم mealsArr (و meals = العدد)
+    const meals=(daily&&Array.isArray(daily.mealsArr))?daily.mealsArr:[];
+    const preDone=!!meals[3], postDone=!!meals[4];
+    const mealRow=(ic,lbl,done)=>`<div class="nut-meal-row ${done?'done':''}"><span class="nmr-ic">${ic}</span><span class="nmr-lbl">${lbl}</span><span class="nmr-st">${done?'✓ مكتملة':'غير مكتملة'}</span></div>`;
     return `
       <div class="dash-card card-stat dash-nutrition-card">
         <div class="dash-card-head dash-card-head-mini">🥗 تغذية اليوم</div>
@@ -1117,15 +1137,18 @@
             <div class="nut-mini-track"><div class="nut-mini-fill ${protPct>=100?'full':protPct>=70?'ok':'low'}" style="width:${protPct}%"></div></div>
           </div>
           <div class="nut-mini">
-            <div class="nut-mini-top"><span class="nut-mini-lbl">💧 ماء</span><b class="nut-mini-val">${E(water)}<small>/${E(tWater)}ل</small></b></div>
+            <div class="nut-mini-top"><span class="nut-mini-lbl">💧 ماء</span><b class="nut-mini-val">${E(water)}<small>/${E(tWater)} أكواب</small></b></div>
             <div class="nut-mini-track"><div class="nut-mini-fill nut-water" style="width:${waterPct}%"></div></div>
           </div>
         </div>
-        <div class="nut-timing">
-          <div class="nut-time-chip"><span class="ntc-ic">🍌</span><div><b>قبل التمرين</b><span>كارب + بروتين خفيف قبل ٦٠–٩٠ دقيقة</span></div></div>
-          <div class="nut-time-chip"><span class="ntc-ic">🥛</span><div><b>بعد التمرين</b><span>بروتين + كارب سريع خلال ٤٥ دقيقة</span></div></div>
+        <div class="nut-meals">
+          ${mealRow('🍌','وجبة قبل التمرين',preDone)}
+          ${mealRow('🥛','وجبة بعد التمرين',postDone)}
         </div>
-        <button class="dash-card-more" onclick="switchToTab(3)">🍽️ خطة الأكل وتفاصيل الوجبات ›</button>
+        <div class="dash-actions dash-actions-2 nut-actions">
+          <button class="dash-action" onclick="openFoodSearch&&openFoodSearch()"><span>➕</span><b>سجّل وجبة</b></button>
+          <button class="dash-action" onclick="switchToTab(3)"><span>🍽️</span><b>خطة الأكل</b></button>
+        </div>
       </div>`;
   }
 
@@ -1204,12 +1227,12 @@
         ${_statusBar(todayProg,wp,activeSession)}
         ${_heroConcise()}
         ${profileMissing?`<div class="profile-missing-strip" onclick="openProfile()">👤 أكمل ملفك الشخصي لحساب الأهداف بدقة ›</div>`:''}
+        ${_programQuickSummary()}
         ${_todayWorkoutCard(todayProg,activeSession,data.workouts,missedDay,smartReco)}
         ${_weekGridBlock(data.workouts)}
         ${_nextUpCard(todayProg,activeSession,lastBest,data.sets)}
+        ${_quickTools(activeSession)}
         ${_readyWeightsCard(todayProg,lastBest)}
-        ${_quickStats3(streak,week)}
-        ${_programQuickSummary()}
         ${_topProgressCard(data.workouts,data.prs,data.dailyLogs,data.sets,data.bodyMetrics)}
         ${_nutritionBars(nutrition,nutritionTargets,daily)}
         ${_nextAchievementBlockFiltered(nextAch)}
