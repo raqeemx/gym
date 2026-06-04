@@ -538,6 +538,13 @@ async function showAlternatives(step){
     </div>`;
   }).join('');
 
+  // V9.14.19 — زر دائم: لو ما ناسبك أي بديل، اختر من كل الأجهزة المتاحة
+  list.insertAdjacentHTML('beforeend',
+    `<button class="alt-more-equip" type="button" onclick="showAllEquipment()">
+      <svg class="ic" aria-hidden="true"><use href="#ic-dumbbell"></use></svg>
+      لم يناسبك شيء؟ اختر من كل الأجهزة المتاحة
+    </button>`);
+
   // animate match bars
   setTimeout(()=>{
     list.querySelectorAll('.alt-match-fill').forEach(el=>{
@@ -559,17 +566,38 @@ function closeAltModal(){
   document.body.style.overflow='';
 }
 
-// عرض كل الأجهزة (الـ "ما لقيت اللي يناسبك؟")
-function showAllEquipment(){
+// V9.14.19 — عرض كل الأجهزة المتاحة + اختيار نطاق التطبيق (سيت/يوم/دائماً)
+window._allEquipScope='day';
+function setAllEquipScope(s,btn){
+  window._allEquipScope=s;
+  const w=btn.closest('.alt-all-scope');
+  if(w) w.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===btn));
+}
+async function showAllEquipment(){
   const wrap=document.getElementById('altAllWrap');
-  if(wrap.style.display!=='none'){wrap.style.display='none';return}
+  if(wrap.style.display!=='none' && wrap.dataset.open==='1'){wrap.style.display='none';wrap.dataset.open='0';return}
   const modal=document.getElementById('altModal');
   const stepId=modal.dataset.targetStep;
-  wrap.innerHTML=`<div style="font-size:11px;color:var(--tx2);margin:8px 0">اضغط أي جهاز لاستخدامه كبديل:</div>
+  // أجهزة الجيم النشط لتمييز المتاح وترتيبه أولاً
+  let gymEq=[];
+  try{ const g=(typeof getActiveGym==='function')?await getActiveGym():null; gymEq=(g&&g.equipment)||[]; }catch(e){}
+  const avail=(name)=>gymEq.some(e=>e===name || name.startsWith(e+' ') || name.startsWith(e+'—') || e.startsWith(name));
+  const items=[...ALL_EQUIPMENT].sort((a,b)=>(avail(b.name)?1:0)-(avail(a.name)?1:0));
+  wrap.innerHTML=`
+    <div class="alt-all-head">اختر الجهاز ثم نطاق التطبيق:</div>
+    <div class="alt-all-scope" role="radiogroup" aria-label="نطاق التطبيق">
+      <button type="button" onclick="setAllEquipScope('set',this)">هذا السيت</button>
+      <button type="button" class="active" onclick="setAllEquipScope('day',this)">كل اليوم</button>
+      <button type="button" onclick="setAllEquipScope('always',this)">دائماً</button>
+    </div>
     <div class="alt-all">
-      ${ALL_EQUIPMENT.map(e=>`<div class="alt-all-item" onclick="applySubstitution('${stepId}','${e.name.replace(/'/g,"\\'")}',this)">${e.name}<span class="ai-cat">${e.cat}</span></div>`).join('')}
+      ${items.map(e=>{const nm=e.name.replace(/'/g,"\\'");const ok=avail(e.name);
+        return `<button type="button" class="alt-all-item ${ok?'avail':''}" onclick="applyScopedSubstitution(window._allEquipScope,'${stepId}','${nm}')">
+          <span class="aai-name">${ok?'<span class="aai-ok">✓</span>':''}${e.name}</span><span class="ai-cat">${e.cat}</span>
+        </button>`;}).join('')}
     </div>`;
   wrap.style.display='block';
+  wrap.dataset.open='1';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
