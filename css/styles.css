@@ -4563,6 +4563,35 @@ body.gym-mode-active .sess-bar .sb-gym{background:linear-gradient(135deg,var(--g
 .t-next .tn-alt:hover{background:rgba(90,180,255,.2)}
 .t-next .tn-done{font-family:'Rubik',sans-serif;font-size:12px;color:var(--grn);font-weight:700}
 
+/* ============================================================
+ * V9.14.20 — لوحة الراحة على اليسار كبطاقة مدمجة بكل مشتملاتها
+ *   (العدّاد · ابدأ/إيقاف · إعدادات مسبقة · +30/تخطي · التمرين التالي)
+ * ============================================================ */
+.tf{left:14px;right:auto;transform:none}
+.tf.show{transform:none;flex-direction:column;align-items:flex-start}
+.tf > div{width:min(230px,76vw);
+  background:linear-gradient(180deg,rgba(16,20,29,.98),rgba(11,14,21,.99));
+  border:1px solid rgba(212,168,83,.3);border-radius:18px;padding:14px 14px 12px;
+  box-shadow:0 18px 48px rgba(0,0,0,.55);
+  -webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
+/* العدّاد + أزرار التشغيل كصف علوي بعرض كامل (بدل الـ pill المنفصل) */
+.tf .tfl{background:none;border:none;box-shadow:none;animation:none;border-radius:0;
+  padding:0;gap:10px;justify-content:space-between;width:100%}
+.tf .td{font-size:30px;min-width:0;text-align:right}
+.tf .tla{font-size:9.5px;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;text-align:right}
+/* الإعدادات المسبقة محاذاة لليسار وتلتف */
+.tf .tps{justify-content:flex-start;flex-wrap:wrap;gap:6px;margin-top:12px}
+/* التمرين التالي يملأ عرض البطاقة */
+.tf .t-next{margin-top:12px;width:100%;box-sizing:border-box;text-align:right;
+  background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2)}
+.tf .t-next .tn-alt{width:100%}
+/* فوق الأشرطة السفلية على الموبايل */
+@media (max-width:600px){
+  .tf{left:12px;bottom:calc(70px + var(--sai-bottom)) !important}
+  body.sess-active .tf{bottom:calc(122px + var(--sai-bottom)) !important}
+  .tf > div{width:min(220px,72vw)}
+}
+
 /* #9 — تغذية الرئيسية المختصرة */
 .nut-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .nut-mini-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
