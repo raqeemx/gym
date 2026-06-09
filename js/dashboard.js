@@ -20,6 +20,12 @@
   const E=(typeof escHTML==='function')?escHTML:(x=>String(x==null?'':x));
   // V9.14.15 — أيقونة outline موحّدة من الـ sprite (ترث currentColor)
   const _ic=(n)=>`<svg class="ic" aria-hidden="true"><use href="#ic-${n}"></use></svg>`;
+  // V9.14.21 — عدّ السيتات القابلة للتتبّع (يطابق بطاقة اليوم في t1 والجلسة) — يستثني الراحة/التسخين
+  const _countSets=(day)=>{
+    if(!day||!day.phases) return null;
+    let n=0; day.phases.forEach(ph=>(ph.steps||[]).forEach(st=>{ if(st && st.type!=='rest' && st.type!=='warmup') n++; }));
+    return n||null;
+  };
 
   // ---------- helpers ----------
   function _todayISO(){return new Date().toISOString().split('T')[0]}
@@ -637,7 +643,7 @@
     // ج. يوم تدريب — البطاقة الكاملة
     const dayType=todayProg.type||todayProg.label;
     const targets=_muscleTargets(dayType);
-    const sets=(todayProg.stats&&todayProg.stats.sets)||'—';
+    const sets=_countSets(todayProg)||(todayProg.stats&&todayProg.stats.sets)||'—';
     const exercises=(todayProg.stats&&todayProg.stats.exercises)||'—';
     const mins=(todayProg.stats&&todayProg.stats.minutes)||'—';
     const restRange=todayProg.stats && todayProg.stats.restRange
@@ -784,7 +790,7 @@
     }
     // د. يوم تدريب — السيناريو الأساسي
     const dayType=todayProg.type||todayProg.label;
-    const sets=(todayProg.stats&&todayProg.stats.sets)||'—';
+    const sets=_countSets(todayProg)||(todayProg.stats&&todayProg.stats.sets)||'—';
     const mins=(todayProg.stats&&todayProg.stats.minutes)||'—';
     const exs=(todayProg.stats&&todayProg.stats.exercises)||'—';
     // V9.12 (#1) — أول تمرين فعلي (تخطّ phase الإحماء)

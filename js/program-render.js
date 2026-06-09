@@ -94,7 +94,7 @@ function renderDay(day){
     </div>
     <div class="dby"><div class="dbi">
 
-      ${renderDaySummary(day.stats)}
+      ${renderDaySummary(day.stats, _countDaySets(day))}
       ${introHtml}
 ${phasesHtml}
 
@@ -119,12 +119,27 @@ function renderRestDay(day){
   </div>${noteHtml}`;
 }
 
+// V9.14.21 — عدّ السيتات القابلة للتتبّع فعلياً (يطابق .step:not(.rest):not(.warmup)
+// و trackableTotal في الجلسة) — يستثني الراحة والتسخين.
+function _countDaySets(day){
+  let n=0;
+  (day&&day.phases||[]).forEach(ph=>{
+    (ph.steps||[]).forEach(st=>{
+      if(!st || st.type==='rest' || st.type==='warmup') return;
+      n++;
+    });
+  });
+  return n;
+}
+
 // ============ ملخّص اليوم ============
-function renderDaySummary(stats){
+function renderDaySummary(stats, actualSets){
   if(!stats) return '';
   const pairsLbl=stats.pairsLabel||'أزواج';
+  // V9.14.21 — عدد السيتات من العدّاد الفعلي (counter.n) ليطابق ما يُعرض ويُسجَّل، لا الرقم اليدوي
+  const setCount=(typeof actualSets==='number' && actualSets>0)?actualSets:stats.sets;
   return `<div class="day-summary">
-        <div class="ds-item"><span class="ds-num">${stats.sets}</span><div class="ds-lbl">سيت</div></div>
+        <div class="ds-item"><span class="ds-num">${setCount}</span><div class="ds-lbl">سيت</div></div>
         <div class="ds-item"><span class="ds-num">${stats.exercises}</span><div class="ds-lbl">تمارين</div></div>
         <div class="ds-item"><span class="ds-num">${stats.pairs}</span><div class="ds-lbl">${pairsLbl}</div></div>
         <div class="ds-item"><span class="ds-num">${stats.minutes}</span><div class="ds-lbl">دقيقة</div></div>
@@ -277,7 +292,8 @@ function renderStep(step,counter){
   }
   else if(step.type==='solo-set') classes.push('solo-set');
   // ستيب 'set' عادي بدون class إضافي
-  if(step.last) classes.push('done');
+  // V9.14.21 — السيت الأخير سيت حقيقي قابل للتسجيل والعدّ (لا يُعلَّم done لئلا يُستثنى)
+  if(step.last) classes.push('last-set');
   return `<div class="${classes.join(' ')}">`+
          `<div class="step-num">${counter.n}</div>`+
          `<div class="step-body">`+

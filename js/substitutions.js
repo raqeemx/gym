@@ -287,23 +287,15 @@ function ensureStepIds(){
 // حقن زر "⇄ بديل؟" بجانب كل تمرين قابل للاستبدال
 // V8.4 (P1-#3) — أصبح icon-only ويوضع داخل step-body بصف منسجم مع form-note + history
 function injectAltButtons(){
-  // V9.14.10 — زر "الجهاز مشغول؟" مرة واحدة لكل تمرين داخل كل يوم (لا لكل سيت)
-  const seenByDay=new Map();
+  // V9.14.21 — زر "مشغول؟" على كل سيت قابل للتتبّع (بما فيها التمارين بلا بدائل في
+  // الكتالوج — تفتح "اختر من كل الأجهزة"). شريحة صغيرة، فلا إزعاج بصري.
   document.querySelectorAll('.step:not(.rest):not(.warmup)').forEach(step=>{
+    if(step.querySelector('.alt-busy-btn')) return; // idempotent: مزروع مسبقاً
     const stepBody=step.querySelector('.step-body');
     const nameEl=step.querySelector('.step-name');
     if(!stepBody||!nameEl) return;
     const rawName=nameEl.textContent.trim();
     if(rawName.includes('تجديف')||rawName.includes('مجموعة تسخين')) return;
-    const norm=normalizeExName(getExerciseName(step));
-    if(!EXERCISE_ALTERNATIVES[norm]) return;
-
-    // إزالة التكرار: تمرين واحد = زر واحد لكل يوم (.dy)، أو عالمياً في الجلسة النشطة
-    const dayKey=step.closest('.dy')||document.body;
-    let seen=seenByDay.get(dayKey); if(!seen){seen=new Set();seenByDay.set(dayKey,seen)}
-    if(seen.has(norm)) return;     // عولج هذا التمرين في هذا اليوم
-    seen.add(norm);
-    if(step.querySelector('.alt-busy-btn')) return; // idempotent: مزروع مسبقاً
 
     const btn=document.createElement('button');
     btn.type='button';
@@ -424,8 +416,24 @@ async function showAlternatives(step){
   const original=normalizeExName(rawOriginal);
   const currentSub=step.dataset.substitute || null;
   const rawAlts=EXERCISE_ALTERNATIVES[original]||[];
+  // V9.14.21 — لا بدائل في الكتالوج → افتح النافذة على "اختر من كل الأجهزة المتاحة" مباشرةً
   if(!rawAlts.length){
-    showToast('⚠️ لا توجد بدائل مسجلة لهذا التمرين','var(--red)');
+    const modal=document.getElementById('altModal');
+    const title=document.getElementById('altTitle');
+    const list=document.getElementById('altList');
+    const peakWarn=document.getElementById('altPeakWarn');
+    const smart=document.getElementById('altSmartSuggest');
+    const gymCtx=document.getElementById('altGymContext');
+    if(peakWarn) peakWarn.innerHTML=''; if(smart) smart.innerHTML='';
+    if(gymCtx) gymCtx.style.display='none';
+    if(title) title.innerHTML=`🔄 بديل لـ <b>${original}</b>`;
+    if(list) list.innerHTML=`<div class="alt-nocat">لا بدائل جاهزة لهذا التمرين — اختر جهازاً بديلاً من المتاح:</div>`;
+    modal.dataset.targetStep=step.id;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    const w=document.getElementById('altAllWrap'); if(w){w.style.display='none';w.dataset.open='0'}
+    if(typeof showAllEquipment==='function') showAllEquipment();
     return;
   }
 
