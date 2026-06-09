@@ -407,6 +407,8 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 /* V9.14.21 — السيت الأخير (سيت حقيقي قابل للتسجيل): لمسة ذهبية احتفالية، لا "مكتمل" */
 .step.last-set:not(.completed) .step-num{background:rgba(212,168,83,.15);border-color:rgba(212,168,83,.32);color:var(--g2)}
 .step.last-set:not(.completed) .step-name{color:var(--g2)}
+/* V9.14.23 — شارة التسخين 🔥 (لا تحمل رقم سيت) */
+.step-num.step-num-warmup{background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.22);font-size:15px}
 
 /* Floating action button */
 .fab{position:fixed;bottom:24px;left:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g3));border:none;color:#000;font-size:24px;cursor:pointer;box-shadow:0 8px 24px rgba(212,168,83,.4);z-index:var(--z-fab);display:flex;align-items:center;justify-content:center;transition:.3s}

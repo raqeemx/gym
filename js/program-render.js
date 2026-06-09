@@ -281,17 +281,23 @@ function renderStep(step,counter){
            `<div class="step-info">${_splitStepInfo(step.info)}</div>`+
            `</div></div>`;
   }
-  // ستيب تدريبي — عدّاد متسلسل
+  // V9.14.23 — التسخين لا يستهلك ترقيم السيتات (الترقيم للسيتات العاملة فقط
+  // ليطابق عدّ اليوم والشريط السفلي /24؛ كان يَعُدّ التسخين فيصير آخر سيت 26).
+  if(step.type==='warmup'){
+    const wcls=['step','warmup'];
+    // V8.3 — التسخين بنصف وزن العمل لتمرين معيّن = ستيب قابل للتتبع
+    if(/مجموعة\s+تسخين/.test(step.name)) wcls.push('trackable-warmup');
+    return `<div class="${wcls.join(' ')}">`+
+           `<div class="step-num step-num-warmup">🔥</div>`+
+           `<div class="step-body">`+
+           `<div class="step-name">${_pre(step.name)}</div>`+
+           `<div class="step-info">${_splitStepInfo(step.info)}</div>`+
+           `</div></div>`;
+  }
+  // ستيب تدريبي عامل — عدّاد متسلسل
   counter.n++;
   const classes=['step'];
-  if(step.type==='warmup'){
-    classes.push('warmup');
-    // V8.3 — التسخين بنصف وزن العمل لتمرين معيّن = ستيب قابل للتتبع
-    // الكاردِيو (Skillrow) أو إحماء عام يبقى غير قابل للتتبع
-    if(/مجموعة\s+تسخين/.test(step.name)) classes.push('trackable-warmup');
-  }
-  else if(step.type==='solo-set') classes.push('solo-set');
-  // ستيب 'set' عادي بدون class إضافي
+  if(step.type==='solo-set') classes.push('solo-set');
   // V9.14.21 — السيت الأخير سيت حقيقي قابل للتسجيل والعدّ (لا يُعلَّم done لئلا يُستثنى)
   if(step.last) classes.push('last-set');
   return `<div class="${classes.join(' ')}">`+
