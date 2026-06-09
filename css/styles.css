@@ -214,7 +214,9 @@ h1 em{font-style:normal;color:var(--g2);font-weight:800}
 .da{color:var(--tx3);font-size:13px;transition:.4s cubic-bezier(.16,1,.3,1);margin-right:4px}
 .dy.open .da{transform:rotate(180deg);color:var(--g2)}
 .dby{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.16,1,.3,1)}
-.dy.open .dby{max-height:14000px}
+/* V9.14.22 — سقف كبير كفاية لمحتوى اليوم الكامل (السيتات صارت أطول مع خانات الإدخال/البدائل).
+   كان 14000px فيُقتطع آخر تمرين في الأيام الطويلة (ظهر "Reverse Fly لا تظهر بالكامل"). */
+.dy.open .dby{max-height:30000px}
 .dbi{padding:18px 22px 22px;border-top:1px solid rgba(255,255,255,.04)}
 
 /* EXERCISE TABLE */
